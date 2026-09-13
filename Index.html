@@ -140,6 +140,14 @@
             debugLog.innerText += `\nResponse received (${text.length} chars)`;
             try {
               const payload = JSON.parse(text);
+              
+              // NEW: Catch the formatted backend crash
+              if (payload.isCrash) {
+                loadingText.innerText = "Database Error";
+                debugLog.innerText += `\n\nSERVER CRASH: ${payload.error}`;
+                return;
+              }
+
               if (payload.success && payload.data.found) {
                 renderCharacterSheet(payload.data);
                 switchScreen('sheet-screen');

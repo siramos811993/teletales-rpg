@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+    body { background-color: var(--tg-theme-secondary-bg-color, #f4f4f5); color: var(--tg-theme-text-color, #000000); font-family: -apple-system, sans-serif; height: var(--tg-viewport-stable-height, 100vh); overflow: hidden; display: flex; flex-direction: column; }
+    .screen { display: none; flex: 1; overflow-y: auto; flex-direction: column; padding: 16px; }
+    .active-screen { display: flex; }
+    #debug-log { margin-top: 20px; font-size: 11px; color: #d32f2f; background: #ffebee; padding: 10px; border-radius: 8px; font-family: monospace; word-wrap: break-word; text-align: left; }
+    #loading-screen { justify-content: center; align-items: center; text-align: center; }
+    #creation-screen { justify-content: center; }
+    .form-box { background: var(--tg-theme-bg-color, #fff); padding: 24px; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+    .form-title { font-size: 24px; margin-bottom: 20px; text-align: center; }
+    .input-group { margin-bottom: 16px; display: flex; flex-direction: column; }
+    .input-group label { font-size: 14px; margin-bottom: 8px; color: var(--tg-theme-hint-color, #888); }
+    .input-group input, .input-group select { padding: 12px; border-radius: 8px; border: 1px solid var(--tg-theme-hint-color, #ccc); background: var(--tg-theme-bg-color, #fff); color: var(--tg-theme-text-color, #000); font-size: 16px; }
+    .primary-btn { width: 100%; padding: 14px; background: var(--tg-theme-button-color, #3390ec); color: var(--tg-theme-button-text-color, #fff); border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 8px; }
+    #sheet-screen { padding-top: calc(var(--tg-safe-area-inset-top, 0px) + 16px); padding-bottom: calc(var(--tg-safe-area-inset-bottom, 0px) + 80px); }
+    .profile-card { background: var(--tg-theme-bg-color, #fff); border-radius: 16px; padding: 16px; display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
+    .portrait { width: 80px; height: 80px; border-radius: 12px; object-fit: cover; }
+    .profile-info h1 { font-size: 20px; margin-bottom: 4px; }
+    .profile-info p { color: var(--tg-theme-hint-color, #888); font-size: 14px; }
+    .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; }
+    .stat-box { background: var(--tg-theme-bg-color, #fff); padding: 12px; border-radius: 12px; text-align: center; }
+    .stat-value { font-size: 18px; font-weight: bold; color: var(--tg-theme-button-color, #3390ec); }
+    .stat-label { font-size: 12px; color: var(--tg-theme-hint-color, #888); margin-top: 4px; }
+    .section-title { font-size: 18px; margin-bottom: 12px; font-weight: 600; display: flex; justify-content: space-between; }
+    .inventory-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 12px; }
+    .inventory-slot { aspect-ratio: 1; background: var(--tg-theme-bg-color, #fff); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 32px; position: relative; cursor: pointer; }
+    .qty-badge { position: absolute; bottom: 4px; right: 4px; background: var(--tg-theme-button-color, #3390ec); color: #fff; font-size: 10px; font-weight: bold; padding: 2px 4px; border-radius: 6px; }
+    .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: var(--tg-theme-bg-color, #fff); display: none; justify-content: space-around; padding-bottom: calc(var(--tg-safe-area-inset-bottom, 0px) + 8px); padding-top: 12px; border-top: 1px solid rgba(0,0,0,0.05); }
+    .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--tg-theme-hint-color, #888); font-size: 12px; }
+    .nav-item.active { color: var(--tg-theme-button-color, #3390ec); }
+  </style>
+</head>
+<body>
+
+  <!-- Screen 1: Loading & Diagnostics -->
+  <div id="loading-screen" class="screen active-screen">
+    <h2 id="loading-text">Connecting to server...</h2>
+    <div id="debug-log">Log initiated...</div>
+  </div>
+
+  <!-- Screen 2: Creation -->
+  <div id="creation-screen" class="screen">
+    <div class="form-box">
+      <h2 class="form-title">Forge Your Legend</h2>
+      <div class="input-group">
+        <label>Character Name</label>
+        <input type="text" id="input-name" placeholder="Enter name..." maxlength="20">
+      </div>
+      <div class="input-group">
+        <label>Class Lineage</label>
+        <select id="input-class">
+          <option value="Warrior">Warrior (High HP & Strength)</option>
+          <option value="Rogue">Rogue (High Dexterity)</option>
+          <option value="Mage">Mage (High Intelligence)</option>
+        </select>
+      </div>
+      <button class="primary-btn" onclick="submitCharacter()">Create Hero</button>
+    </div>
+  </div>
+
+  <!-- Screen 3: Character Sheet -->
+  <div id="sheet-screen" class="screen">
+    <div class="profile-card">
+      <img src="" alt="Hero" class="portrait" id="hero-portrait">
+      <div class="profile-info">
+        <h1 id="hero-name">-</h1>
+        <p id="hero-subtext">-</p>
+      </div>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-box"><div class="stat-value" id="stat-hp">-</div><div class="stat-label">Health</div></div>
+      <div class="stat-box"><div class="stat-value" id="stat-str">-</div><div class="stat-label">Strength</div></div>
+      <div class="stat-box"><div class="stat-value" id="stat-dex">-</div><div class="stat-label">Dexterity</div></div>
+    </div>
+    <div class="section-title"><span>Backpack</span> <span id="gold-display" style="color: #ff9800;">🪙 0</span></div>
+    <div class="inventory-grid" id="inventory-grid"></div>
+  </div>
+
+  <div id="bottom-nav" class="bottom-nav">
+    <div class="nav-item active"><div class="nav-icon">🎒</div><span>Inventory</span></div>
+    <div class="nav-item"><div class="nav-icon">⚔️</div><span>Skills</span></div>
+  </div>
+
+  <script>
+    // Delay execution until the DOM is fully loaded to prevent script failure
+    window.addEventListener('DOMContentLoaded', (event) => {
+      const debugLog = document.getElementById('debug-log');
+      const loadingText = document.getElementById('loading-text');
+
+      window.onerror = function(message, source, lineno) {
+        loadingText.innerText = "App Crashed";
+        debugLog.innerText += `\n\nCRASH: ${message} (Line ${lineno})`;
+        return true; 
+      };
+
+      try {
+        debugLog.innerText += "\nBooting JavaScript...";
+        
+        if (typeof window.Telegram === 'undefined') {
+          throw new Error("Telegram SDK blocked or failed to load.");
+        }
+        
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        tg.ready();
+        if (tg.disableVerticalSwipes) tg.disableVerticalSwipes();
+        
+        debugLog.innerText += "\nTelegram SDK Initialized.";
+
+        const GAS_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycby_adXdcF6rtxVdLZ3pesHHDGQPmDI6viSuyCqezp1b87KEH5OkeZHTBM-jCEsJ0ryWgA/exec";
+
+        const itemDict = {
+          "iron_sword": { icon: "🗡️", name: "Iron Sword" },
+          "wood_shield": { icon: "🛡️", name: "Wooden Shield" },
+          "hp_potion": { icon: "🧪", name: "Health Potion" },
+          "leather_armor": { icon: "🧥", name: "Leather Armor" }
+        };
+
+        function switchScreen(screenId) {
+          document.querySelectorAll('.screen').forEach(s => s.classList.remove('active-screen'));
+          document.getElementById(screenId).classList.add('active-screen');
+          document.getElementById('bottom-nav').style.display = (screenId === 'sheet-screen') ? 'flex' : 'none';
+        }
+
+        function fetchCharacterData() {
+          debugLog.innerText += "\nFetching data from Google...";
+          
+          fetch(GAS_WEBHOOK_URL, {
+            method: 'POST', 
+            redirect: 'follow', 
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({ initData: tg.initData, action: 'get_character' })
+          })
+          .then(res => res.text()) 
+          .then(text => {
+            debugLog.innerText += `\nResponse received (${text.length} chars)`;
+            try {
+              const payload = JSON.parse(text);
+              if (payload.success && payload.data.found) {
+                renderCharacterSheet(payload.data);
+                switchScreen('sheet-screen');
+              } else {
+                switchScreen('creation-screen');
+              }
+            } catch (e) {
+              loadingText.innerText = "Parse Error";
+              debugLog.innerText += `\n\nGoogle returned HTML instead of JSON:\n${text.substring(0, 200)}`;
+            }
+          })
+          .catch(err => {
+            loadingText.innerText = "Network Error";
+            debugLog.innerText += `\n\nFetch failed: ${err.message}`;
+          });
+        }
+
+        // Expose submitCharacter to global scope so the HTML button onclick works
+        window.submitCharacter = function() {
+          const name = document.getElementById('input-name').value;
+          const charClass = document.getElementById('input-class').value;
+          
+          if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+          switchScreen('loading-screen'); 
+          debugLog.innerText = "Creating character...";
+
+          fetch(GAS_WEBHOOK_URL, {
+            method: 'POST', 
+            redirect: 'follow', 
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({ initData: tg.initData, action: 'create_character', name: name, charClass: charClass })
+          })
+          .then(res => res.json())
+          .then(payload => {
+            if (payload.success) {
+              fetchCharacterData(); 
+            } else {
+              tg.showAlert(payload.message || "Failed to create character.");
+              switchScreen('creation-screen');
+            }
+          })
+          .catch(err => {
+            debugLog.innerText = `\nCreation Fetch failed: ${err.message}`;
+          });
+        };
+
+        function renderCharacterSheet(data) {
+          const char = data.profile;
+          const stats = data.stats;
+          
+          document.getElementById('hero-portrait').src = char.portrait || `https://via.placeholder.com/150/3390ec/ffffff?text=${char.className.substring(0,3)}`;
+          document.getElementById('hero-name').innerText = `Lv.${char.level} ${char.className}`;
+          document.getElementById('hero-subtext').innerText = `${char.name} • ${char.xp} XP`;
+          document.getElementById('gold-display').innerText = `🪙 ${char.gold}`;
+          
+          document.getElementById('stat-hp').innerText = `${stats.hp}/${stats.maxHp}`;
+          document.getElementById('stat-str').innerText = stats.str;
+          document.getElementById('stat-dex').innerText = stats.dex;
+
+          const grid = document.getElementById('inventory-grid');
+          grid.innerHTML = '';
+          
+          data.inventory.forEach(item => {
+            const slot = document.createElement('div');
+            slot.className = 'inventory-slot';
+            const itemData = itemDict[item.itemId] || { icon: "❓", name: "Unknown" };
+            
+            let html = `<div>${itemData.icon}</div>`;
+            if (item.quantity > 1) html += `<div class="qty-badge">x${item.quantity}</div>`;
+            slot.innerHTML = html;
+            
+            slot.onclick = () => {
+              if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+              tg.showAlert(`${itemData.name} (Owned: ${item.quantity})`);
+            };
+            grid.appendChild(slot);
+          });
+
+          for (let i = data.inventory.length; i < 16; i++) {
+            const emptySlot = document.createElement('div');
+            emptySlot.className = 'inventory-slot';
+            grid.appendChild(emptySlot);
+          }
+        }
+
+        fetchCharacterData();
+
+      } catch (criticalError) {
+        loadingText.innerText = "Boot Failure";
+        debugLog.innerText += `\n\nBOOT ERROR: ${criticalError.message}`;
+      }
+    });
+  </script>
+</body>
+</html>

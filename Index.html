@@ -99,9 +99,7 @@
       try {
         debugLog.innerText += "\nBooting JavaScript...";
         
-        if (typeof window.Telegram === 'undefined') {
-          throw new Error("Telegram SDK blocked or failed to load.");
-        }
+        if (typeof window.Telegram === 'undefined') throw new Error("Telegram SDK blocked or failed to load.");
         
         const tg = window.Telegram.WebApp;
         tg.expand();
@@ -110,14 +108,17 @@
         
         debugLog.innerText += "\nTelegram SDK Initialized.";
 
-        // The live backend API URL
         const GAS_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycby_adXdcF6rtxVdLZ3pesHHDGQPmDI6viSuyCqezp1b87KEH5OkeZHTBM-jCEsJ0ryWgA/exec";
 
         const itemDict = {
           "iron_sword": { icon: "🗡️", name: "Iron Sword" },
           "wood_shield": { icon: "🛡️", name: "Wooden Shield" },
           "hp_potion": { icon: "🧪", name: "Health Potion" },
-          "leather_armor": { icon: "🧥", name: "Leather Armor" }
+          "leather_armor": { icon: "🧥", name: "Leather Armor" },
+          "steel_armor": { icon: "🪖", name: "Steel Armor" },
+          "magic_staff": { icon: "🪄", name: "Magic Staff" },
+          "rogue_dagger": { icon: "🔪", name: "Rogue Dagger" },
+          "gold_ring": { icon: "💍", name: "Gold Ring" }
         };
 
         function switchScreen(screenId) {
@@ -140,14 +141,11 @@
             debugLog.innerText += `\nResponse received (${text.length} chars)`;
             try {
               const payload = JSON.parse(text);
-              
-              // NEW: Catch the formatted backend crash
               if (payload.isCrash) {
                 loadingText.innerText = "Database Error";
                 debugLog.innerText += `\n\nSERVER CRASH: ${payload.error}`;
                 return;
               }
-
               if (payload.success && payload.data.found) {
                 renderCharacterSheet(payload.data);
                 switchScreen('sheet-screen');
@@ -181,9 +179,8 @@
           })
           .then(res => res.json())
           .then(payload => {
-            if (payload.success) {
-              fetchCharacterData(); 
-            } else {
+            if (payload.success) fetchCharacterData(); 
+            else {
               tg.showAlert(payload.message || "Failed to create character.");
               switchScreen('creation-screen');
             }
@@ -212,7 +209,8 @@
           data.inventory.forEach(item => {
             const slot = document.createElement('div');
             slot.className = 'inventory-slot';
-            const itemData = itemDict[item.itemId] || { icon: "❓", name: "Unknown" };
+            // Fallback for AI generated loot items not explicitly in the dictionary
+            const itemData = itemDict[item.itemId] || { icon: "📦", name: item.itemId.replace(/_/g, ' ') };
             
             let html = `<div>${itemData.icon}</div>`;
             if (item.quantity > 1) html += `<div class="qty-badge">x${item.quantity}</div>`;

@@ -7,89 +7,105 @@
   
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
-    body { background-color: #1a1a1a; color: #fff; font-family: -apple-system, sans-serif; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
-    .screen { display: none; flex: 1; overflow-y: auto; flex-direction: column; padding: 16px; }
+    body { background-color: #f4f6f8; color: #2c3e50; font-family: -apple-system, sans-serif; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+    .screen { display: none; flex: 1; overflow-y: auto; flex-direction: column; padding: 20px; }
     .active-screen { display: flex; }
     
     #loading-screen { justify-content: center; align-items: center; text-align: center; }
+    #loading-text { color: #64748b; font-weight: 500; font-size: 18px; }
     #debug-log { margin-top: 20px; font-size: 11px; color: #d32f2f; background: #ffebee; padding: 10px; border-radius: 8px; font-family: monospace; word-wrap: break-word; text-align: left; display: none; }
     
-    .form-box { background: #2a2a2a; padding: 24px; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
-    .form-title { font-size: 24px; margin-bottom: 20px; text-align: center; font-weight: bold; }
+    .form-box { background: #ffffff; padding: 24px; border-radius: 16px; box-shadow: 0 4px 16px rgba(0,0,0,0.05); }
+    .form-title { font-size: 22px; margin-bottom: 20px; text-align: center; font-weight: 700; color: #1e293b; }
     .input-group { margin-bottom: 16px; display: flex; flex-direction: column; }
-    .input-group label { font-size: 14px; margin-bottom: 8px; color: #aaa; }
-    .input-group input, .input-group select { padding: 12px; border-radius: 8px; border: 1px solid #555; background: #111; color: #fff; font-size: 16px; }
+    .input-group label { font-size: 13px; margin-bottom: 6px; color: #64748b; font-weight: 500; }
+    .input-group input, .input-group select { padding: 12px; border-radius: 10px; border: 1px solid #cbd5e1; background: #f8fafc; color: #334155; font-size: 16px; outline: none; transition: border 0.2s; }
+    .input-group input:focus, .input-group select:focus { border-color: #3b82f6; }
     
-    .primary-btn { width: 100%; padding: 14px; background: #3390ec; color: #fff; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 8px; }
-    .secondary-btn { background: #555; margin-top: 16px; }
+    .primary-btn { width: 100%; padding: 14px; background: #3b82f6; color: #fff; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 8px; transition: background 0.2s; }
+    .primary-btn:active { background: #2563eb; }
+    .secondary-btn { background: #94a3b8; margin-top: 16px; }
 
-    .char-card { background: #2a2a2a; border-radius: 12px; padding: 16px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border: 1px solid #444; }
+    .char-card { background: #ffffff; border-radius: 16px; padding: 16px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); border: 1px solid #f1f5f9; }
     .char-card-info { flex: 1; }
-    .char-card-name { font-size: 18px; font-weight: bold; margin-bottom: 4px; }
-    .char-card-sub { font-size: 13px; color: #aaa; }
+    .char-card-name { font-size: 18px; font-weight: 700; margin-bottom: 4px; color: #0f172a; }
+    .char-card-sub { font-size: 13px; color: #64748b; }
     .char-card-actions { display: flex; gap: 8px; }
-    .action-icon { width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 20px; cursor: pointer; color: #fff; }
-    .play-btn { background: #3390ec; }
-    .del-btn { background: #e53935; }
+    .action-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; cursor: pointer; color: #fff; }
+    .play-btn { background: #10b981; }
+    .del-btn { background: #ef4444; }
 
-    .equipment-container { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; justify-items: center; align-items: center; background: #2a2a2a; padding: 16px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #444; }
-    .eq-slot { width: 70px; height: 70px; border: 2px solid #555; border-radius: 8px; background: #111; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; cursor: pointer; }
-    .eq-slot img { width: 80%; height: 80%; object-fit: contain; }
-    .eq-label { position: absolute; bottom: -12px; background: #000; font-size: 10px; padding: 2px 6px; border-radius: 4px; border: 1px solid #555; color: #aaa; z-index: 2; }
+    /* Minimalist Equipment Grid */
+    .equipment-container { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; justify-items: center; align-items: center; background: #ffffff; padding: 20px; border-radius: 16px; margin-bottom: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
+    .eq-slot { width: 72px; height: 72px; border: 1px dashed #cbd5e1; border-radius: 12px; background: #f8fafc; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; cursor: pointer; transition: all 0.2s; }
+    .eq-slot.filled { border-style: solid; border-color: #3b82f6; background: #eff6ff; }
+    .eq-slot img { width: 70%; height: 70%; object-fit: contain; }
+    .eq-label { position: absolute; bottom: -8px; background: #ffffff; font-size: 10px; padding: 2px 6px; border-radius: 6px; border: 1px solid #e2e8f0; color: #64748b; font-weight: 600; z-index: 2; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
     
-    .slot-amulet { grid-column: 1; grid-row: 1; border-color: #9c27b0; }
-    .slot-head { grid-column: 2; grid-row: 1; border-color: #ff9800; }
-    .slot-cape { grid-column: 3; grid-row: 1; border-color: #9c27b0; }
-    .slot-weapon { grid-column: 1; grid-row: 2; border-color: #2196f3; }
-    .slot-upper { grid-column: 2; grid-row: 2; border-color: #ff9800; }
-    .slot-shield { grid-column: 3; grid-row: 2; border-color: #607d8b; }
-    .slot-ring1 { grid-column: 1; grid-row: 3; border-color: #4caf50; }
-    .slot-lower { grid-column: 2; grid-row: 3; border-color: #4caf50; }
-    .slot-ring2 { grid-column: 3; grid-row: 3; border-color: #4caf50; }
-    .slot-boots { grid-column: 2; grid-row: 4; border-color: #9c27b0; }
+    .slot-amulet { grid-column: 1; grid-row: 1; }
+    .slot-head { grid-column: 2; grid-row: 1; }
+    .slot-cape { grid-column: 3; grid-row: 1; }
+    .slot-weapon { grid-column: 1; grid-row: 2; }
+    .slot-upper { grid-column: 2; grid-row: 2; }
+    .slot-shield { grid-column: 3; grid-row: 2; }
+    .slot-ring1 { grid-column: 1; grid-row: 3; }
+    .slot-lower { grid-column: 2; grid-row: 3; }
+    .slot-ring2 { grid-column: 3; grid-row: 3; }
+    .slot-boots { grid-column: 2; grid-row: 4; }
 
-    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 24px; }
-    .stat-box { background: #2a2a2a; padding: 10px; border-radius: 8px; text-align: center; position: relative; border: 1px solid #444; }
-    .stat-value { font-size: 16px; font-weight: bold; color: #4caf50; }
-    .stat-bonus { font-size: 12px; color: #2196f3; }
-    .stat-label { font-size: 11px; color: #888; margin-top: 4px; text-transform: uppercase; }
-    .add-stat-btn { position: absolute; top: -8px; right: -8px; width: 20px; height: 20px; background: #ff9800; color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.5); }
-    .stat-points-banner { background: #3e2723; color: #ff9800; text-align: center; padding: 8px; border-radius: 8px; font-weight: bold; margin-bottom: 12px; border: 1px solid #ff9800; }
+    /* Modern Stats Grid with Batching */
+    .stats-container { background: #ffffff; padding: 16px; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); margin-bottom: 24px; }
+    .stat-points-banner { background: #fffbeb; color: #d97706; text-align: center; padding: 10px; border-radius: 8px; font-weight: 600; margin-bottom: 16px; font-size: 13px; display: none; border: 1px solid #fde68a; }
+    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+    .stat-box { display: flex; flex-direction: column; align-items: center; padding: 12px 0; background: #f8fafc; border-radius: 12px; position: relative; }
+    .stat-value { font-size: 18px; font-weight: 700; color: #0f172a; }
+    .stat-pending { color: #10b981; font-size: 12px; font-weight: bold; position: absolute; top: 4px; right: 4px; display: none;}
+    .stat-bonus { font-size: 11px; color: #3b82f6; font-weight: 600; min-height: 14px; margin-top: 2px;}
+    .stat-label { font-size: 11px; color: #64748b; font-weight: 600; text-transform: uppercase; margin-top: 4px; }
+    
+    .stat-controls { display: flex; gap: 8px; margin-top: 8px; display: none; }
+    .stat-btn { width: 24px; height: 24px; border-radius: 6px; border: none; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer; }
+    .btn-plus { background: #3b82f6; color: white; }
+    .btn-minus { background: #e2e8f0; color: #64748b; }
+    
+    #btn-confirm-stats { background: #10b981; margin-top: 16px; display: none; }
 
-    .inventory-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 10px; }
-    .inventory-slot { aspect-ratio: 1; background: #2a2a2a; border: 1px solid #444; border-radius: 8px; display: flex; align-items: center; justify-content: center; position: relative; cursor: pointer; }
+    /* Inventory */
+    .inventory-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 12px; }
+    .inventory-slot { aspect-ratio: 1; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; display: flex; align-items: center; justify-content: center; position: relative; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
     .inventory-slot img { width: 70%; height: 70%; object-fit: contain; }
-    .qty-badge { position: absolute; bottom: 2px; right: 2px; background: #3390ec; color: #fff; font-size: 10px; padding: 2px 4px; border-radius: 4px; }
+    .qty-badge { position: absolute; bottom: -4px; right: -4px; background: #3b82f6; color: #fff; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 6px; border: 2px solid #ffffff; }
     
     #sheet-screen { padding-top: calc(var(--tg-safe-area-inset-top, 0px) + 16px); padding-bottom: calc(var(--tg-safe-area-inset-bottom, 0px) + 80px); }
-    .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: #111; display: none; justify-content: space-around; padding-bottom: 20px; padding-top: 12px; border-top: 1px solid #333; }
-    .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: #888; font-size: 12px; cursor: pointer; }
-    .nav-item.active { color: #3390ec; }
+    .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: #ffffff; display: none; justify-content: space-around; padding-bottom: 20px; padding-top: 12px; border-top: 1px solid #e2e8f0; box-shadow: 0 -4px 12px rgba(0,0,0,0.03); z-index: 50; }
+    .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: #94a3b8; font-size: 12px; font-weight: 500; cursor: pointer; }
+    .nav-item.active { color: #3b82f6; }
 
     /* Item Details Modal */
-    .modal-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); display:none; justify-content:center; align-items:center; z-index:100; }
-    .modal-content { background:#2a2a2a; padding:24px; border-radius:16px; width:85%; max-width:320px; border:1px solid #444; text-align: center; }
-    .modal-title { font-size:20px; font-weight:bold; color:#ff9800; margin-bottom:8px; }
-    .modal-stats { font-size:14px; color:#ddd; margin-bottom:20px; line-height:1.5; background: #111; padding: 12px; border-radius: 8px;}
-    .modal-btn { width:100%; padding:12px; margin-bottom:8px; border-radius:8px; font-weight:bold; font-size: 15px; cursor:pointer; border:none; }
-    .btn-equip { background:#4caf50; color:#fff; }
-    .btn-unequip { background:#ff9800; color:#fff; }
-    .btn-discard { background:#e53935; color:#fff; }
-    .btn-trade { background:#2196f3; color:#fff; }
-    .btn-close { background:#555; color:#fff; margin-bottom:0; }
-    .trade-dropdown { padding: 12px; border-radius: 8px; border: 1px solid #555; background: #111; color: #fff; width: 100%; margin-bottom: 8px; }
+    .modal-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); display:none; justify-content:center; align-items:center; z-index:100; }
+    .modal-content { background:#ffffff; padding:24px; border-radius:20px; width:85%; max-width:320px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; }
+    .modal-title { font-size:20px; font-weight:800; color:#1e293b; margin-bottom:6px; }
+    .modal-stats { font-size:14px; color:#475569; margin-bottom:20px; line-height:1.6; background: #f8fafc; padding: 16px; border-radius: 12px; border: 1px solid #f1f5f9; text-align: left; }
+    .modal-btn { width:100%; padding:14px; margin-bottom:10px; border-radius:12px; font-weight:700; font-size: 15px; cursor:pointer; border:none; transition: opacity 0.2s; }
+    .modal-btn:active { opacity: 0.8; }
+    .btn-equip { background:#10b981; color:#fff; }
+    .btn-unequip { background:#f59e0b; color:#fff; }
+    .btn-discard { background:#ef4444; color:#fff; }
+    .btn-trade { background:#3b82f6; color:#fff; }
+    .btn-close { background:#e2e8f0; color:#475569; margin-bottom:0; }
+    .trade-dropdown { padding: 12px; border-radius: 10px; border: 1px solid #cbd5e1; background: #f8fafc; color: #1e293b; font-weight: 500; width: 100%; margin-bottom: 10px; outline: none; }
   </style>
 </head>
 <body>
 
   <div id="loading-screen" class="screen active-screen">
-    <h2 id="loading-text" style="color:#fff;">Syncing Realm Data...</h2>
+    <h2 id="loading-text">Syncing Realm Data...</h2>
     <div id="debug-log"></div>
   </div>
 
   <div id="selection-screen" class="screen">
     <h2 class="form-title" style="text-align: left; margin-bottom: 8px;">Your Heroes</h2>
-    <p style="color: #aaa; font-size: 14px; margin-bottom: 24px;">Select a character or create a new one.</p>
+    <p style="color: #64748b; font-size: 14px; margin-bottom: 24px;">Select a character or create a new one.</p>
     <div id="character-list"></div>
     <button id="btn-create-slot" class="primary-btn secondary-btn" onclick="openCreation()">+ Forge New Legend</button>
   </div>
@@ -115,33 +131,45 @@
   </div>
 
   <div id="sheet-screen" class="screen">
-    <h1 id="hero-name" style="font-size: 20px; text-align: center; margin-bottom: 12px;">-</h1>
-    <div id="stat-points-banner" class="stat-points-banner" style="display: none;">You have unspent Attribute Points!</div>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h1 id="hero-name" style="font-size: 20px; font-weight: 800; color: #0f172a;">-</h1>
+        <span id="gold-display" style="color: #d97706; font-weight: 700; background: #fef3c7; padding: 4px 10px; border-radius: 20px; font-size: 13px;">🪙 0</span>
+    </div>
     
-    <div class="stats-grid">
-      <div class="stat-box">
-        <div class="stat-value" id="stat-hp">-</div>
-        <div class="stat-label">HP</div>
-        <div class="add-stat-btn" onclick="allocateStat('hp')" style="display:none;">+</div>
-      </div>
-      <div class="stat-box">
-        <div class="stat-value" id="stat-str">-</div>
-        <div class="stat-bonus" id="bonus-str"></div>
-        <div class="stat-label">STR</div>
-        <div class="add-stat-btn" onclick="allocateStat('str')" style="display:none;">+</div>
-      </div>
-      <div class="stat-box">
-        <div class="stat-value" id="stat-dex">-</div>
-        <div class="stat-bonus" id="bonus-dex"></div>
-        <div class="stat-label">DEX</div>
-        <div class="add-stat-btn" onclick="allocateStat('dex')" style="display:none;">+</div>
-      </div>
-      <div class="stat-box">
-        <div class="stat-value" id="stat-int">-</div>
-        <div class="stat-bonus" id="bonus-int"></div>
-        <div class="stat-label">INT</div>
-        <div class="add-stat-btn" onclick="allocateStat('int')" style="display:none;">+</div>
-      </div>
+    <div class="stats-container">
+        <div id="stat-points-banner" class="stat-points-banner">You have <span id="avail-points">0</span> Attribute Points!</div>
+        
+        <div class="stats-grid">
+          <div class="stat-box">
+            <div class="stat-value" id="stat-hp">-</div>
+            <div class="stat-pending" id="pend-hp"></div>
+            <div class="stat-bonus" id="bonus-hp"></div>
+            <div class="stat-label">HP</div>
+            <div class="stat-controls"><button class="stat-btn btn-minus" onclick="modifyStat('hp', -1)">-</button><button class="stat-btn btn-plus" onclick="modifyStat('hp', 1)">+</button></div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value" id="stat-str">-</div>
+            <div class="stat-pending" id="pend-str"></div>
+            <div class="stat-bonus" id="bonus-str"></div>
+            <div class="stat-label">STR</div>
+            <div class="stat-controls"><button class="stat-btn btn-minus" onclick="modifyStat('str', -1)">-</button><button class="stat-btn btn-plus" onclick="modifyStat('str', 1)">+</button></div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value" id="stat-dex">-</div>
+            <div class="stat-pending" id="pend-dex"></div>
+            <div class="stat-bonus" id="bonus-dex"></div>
+            <div class="stat-label">DEX</div>
+            <div class="stat-controls"><button class="stat-btn btn-minus" onclick="modifyStat('dex', -1)">-</button><button class="stat-btn btn-plus" onclick="modifyStat('dex', 1)">+</button></div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value" id="stat-int">-</div>
+            <div class="stat-pending" id="pend-int"></div>
+            <div class="stat-bonus" id="bonus-int"></div>
+            <div class="stat-label">INT</div>
+            <div class="stat-controls"><button class="stat-btn btn-minus" onclick="modifyStat('int', -1)">-</button><button class="stat-btn btn-plus" onclick="modifyStat('int', 1)">+</button></div>
+          </div>
+        </div>
+        <button id="btn-confirm-stats" class="primary-btn" onclick="confirmStats()">Confirm Allocations</button>
     </div>
 
     <div class="equipment-container">
@@ -160,13 +188,13 @@
       <div class="eq-slot slot-boots"><div class="eq-label">Feet</div><img id="eq-Boots" src=""></div>
     </div>
 
-    <h3 style="margin-bottom: 12px; font-size: 16px;">Backpack <span id="gold-display" style="float:right; color: #ff9800;">🪙 0</span></h3>
+    <h3 style="margin-bottom: 12px; font-size: 16px; color: #1e293b;">Backpack</h3>
     <div class="inventory-grid" id="inventory-grid"></div>
   </div>
 
   <div id="bottom-nav" class="bottom-nav">
-    <div class="nav-item active"><div class="nav-icon">🎒</div><span>Gear</span></div>
-    <div class="nav-item" onclick="switchScreen('selection-screen')"><div class="nav-icon">👥</div><span>Roster</span></div>
+    <div class="nav-item active"><div class="nav-icon" style="font-size: 18px;">🎒</div><span>Gear</span></div>
+    <div class="nav-item" onclick="switchScreen('selection-screen')"><div class="nav-icon" style="font-size: 18px;">👥</div><span>Roster</span></div>
   </div>
 
   <!-- Item Modal -->
@@ -192,6 +220,10 @@
       
       const GAS_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycby_adXdcF6rtxVdLZ3pesHHDGQPmDI6viSuyCqezp1b87KEH5OkeZHTBM-jCEsJ0ryWgA/exec";
       let allCharacters = []; let currentActiveChar = null; window.partyMembers = [];
+      
+      // Batch Stat Logic Variables
+      let availablePoints = 0;
+      let pendingStats = { hp: 0, str: 0, dex: 0, int: 0 };
 
       window.onerror = function(message, source, lineno) { debugLog.style.display = "block"; debugLog.innerText += `\nCRASH: ${message} (Line ${lineno})`; return true; };
 
@@ -215,20 +247,14 @@
             allCharacters = payload.data.characters || [];
             window.partyMembers = payload.data.partyMembers || [];
             
-            // Auto-select active hero in party
-            if (payload.data.activeCharName && !currentActiveChar) {
-               currentActiveChar = allCharacters.find(c => c.profile.name === payload.data.activeCharName);
-            }
+            if (payload.data.activeCharName && !currentActiveChar) currentActiveChar = allCharacters.find(c => c.profile.name === payload.data.activeCharName);
             
             if (allCharacters.length === 0) openCreation();
             else {
               renderSelectionScreen();
               if (currentActiveChar) {
                 currentActiveChar = allCharacters.find(c => c.profile.name === currentActiveChar.profile.name);
-                if (currentActiveChar) {
-                  renderCharacterSheet(currentActiveChar); 
-                  switchScreen('sheet-screen'); // FIXED THE HANG BUG HERE
-                }
+                if (currentActiveChar) { renderCharacterSheet(currentActiveChar); switchScreen('sheet-screen'); }
               } else switchScreen('selection-screen'); 
             }
           }
@@ -255,8 +281,6 @@
         const name = document.getElementById('input-name').value; const charClass = document.getElementById('input-class').value;
         if (!name.trim()) return tg.showAlert("Please enter a name."); postAction('create_character', { name: name, charClass: charClass });
       };
-      
-      window.allocateStat = function(stat) { postAction('allocate_stat', { charName: currentActiveChar.profile.name, stat: stat }); }
 
       function postAction(action, dataPayload) {
         if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
@@ -266,9 +290,39 @@
         .then(res => res.json()).then(p => { if (p.success) fetchCharacterData(); else { tg.showAlert(p.message); fetchCharacterData(); } });
       }
 
+      // --- BATCH STAT LOGIC ---
+      window.modifyStat = function(stat, amount) {
+          if (amount > 0 && availablePoints <= 0) return;
+          if (amount < 0 && pendingStats[stat] <= 0) return;
+          
+          if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+          availablePoints -= amount;
+          pendingStats[stat] += amount;
+          
+          document.getElementById('avail-points').innerText = availablePoints;
+          
+          ['hp', 'str', 'dex', 'int'].forEach(s => {
+              let pendEl = document.getElementById(`pend-${s}`);
+              if (pendingStats[s] > 0) {
+                  let val = (s==='hp') ? pendingStats[s]*5 : pendingStats[s];
+                  pendEl.innerText = `+${val}`; pendEl.style.display = "block";
+              } else { pendEl.style.display = "none"; }
+          });
+          
+          let totalPending = pendingStats.hp + pendingStats.str + pendingStats.dex + pendingStats.int;
+          document.getElementById('btn-confirm-stats').style.display = totalPending > 0 ? "block" : "none";
+      }
+
+      window.confirmStats = function() {
+          let totalPending = pendingStats.hp + pendingStats.str + pendingStats.dex + pendingStats.int;
+          if (totalPending <= 0) return;
+          tg.showConfirm(`Confirm allocation of ${totalPending} stat points?`, function(c) {
+             if (c) postAction('allocate_stats', { charName: currentActiveChar.profile.name, stats: pendingStats }); 
+          });
+      }
+
       // --- ITEM MODAL LOGIC ---
       let selectedItemForModal = null; let isSelectedItemEquipped = false;
-        
       window.openItemModal = function(item, isEquipped, slotName = null) {
           if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
           selectedItemForModal = { ...item, slot: slotName }; isSelectedItemEquipped = isEquipped;
@@ -276,20 +330,20 @@
           let cleanName = item.def ? item.def.name : item.itemId.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
           document.getElementById('modal-item-name').innerText = cleanName;
           
-          let statsText = `Type: ${item.def ? item.def.type : 'Unknown'}\n`;
+          let statsText = `<b>Type:</b> ${item.def ? item.def.type : 'Unknown'}<br><br>`;
           if (item.def) {
-              if (parseInt(item.def.hp) !== 0) statsText += `❤️ HP: ${item.def.hp > 0 ? '+'+item.def.hp : item.def.hp}   `;
-              if (parseInt(item.def.str) !== 0) statsText += `💪 STR: ${item.def.str > 0 ? '+'+item.def.str : item.def.str}   `;
-              if (parseInt(item.def.dex) !== 0) statsText += `🎯 DEX: ${item.def.dex > 0 ? '+'+item.def.dex : item.def.dex}\n`;
-              if (parseInt(item.def.int) !== 0) statsText += `🧠 INT: ${item.def.int > 0 ? '+'+item.def.int : item.def.int}`;
+              if (parseInt(item.def.hp) !== 0) statsText += `❤️ HP: <b>${item.def.hp > 0 ? '+'+item.def.hp : item.def.hp}</b><br>`;
+              if (parseInt(item.def.str) !== 0) statsText += `💪 STR: <b>${item.def.str > 0 ? '+'+item.def.str : item.def.str}</b><br>`;
+              if (parseInt(item.def.dex) !== 0) statsText += `🎯 DEX: <b>${item.def.dex > 0 ? '+'+item.def.dex : item.def.dex}</b><br>`;
+              if (parseInt(item.def.int) !== 0) statsText += `🧠 INT: <b>${item.def.int > 0 ? '+'+item.def.int : item.def.int}</b>`;
           }
-          document.getElementById('modal-item-stats').innerText = statsText;
+          document.getElementById('modal-item-stats').innerHTML = statsText;
           
           document.getElementById('btn-modal-equip').style.display = (!isEquipped) ? "block" : "none";
           document.getElementById('btn-modal-unequip').style.display = (isEquipped) ? "block" : "none";
           document.getElementById('btn-modal-discard').style.display = (!isEquipped) ? "block" : "none";
           
-          if (!isEquipped && item.def && item.def.type === 'Consumable') document.getElementById('btn-modal-equip').innerText = "Use Potion";
+          if (!isEquipped && item.def && item.def.type === 'Consumable') document.getElementById('btn-modal-equip').innerText = "Use Item";
           else document.getElementById('btn-modal-equip').innerText = "Equip Item";
 
           const tSelect = document.getElementById('modal-trade-select'); const tBtn = document.getElementById('btn-modal-trade');
@@ -311,25 +365,31 @@
       // --- CHARACTER RENDER ---
       window.renderCharacterSheet = function(data) {
         const char = data.profile; const stats = data.stats; const eqB = data.equipBonuses;
-        document.getElementById('hero-name').innerText = `Lv.${char.level} ${char.className} — ${char.name}`; document.getElementById('gold-display').innerText = `🪙 ${char.gold}`;
         
+        // Reset local batch logic
+        availablePoints = char.statPoints || 0;
+        pendingStats = { hp: 0, str: 0, dex: 0, int: 0 };
+        document.getElementById('btn-confirm-stats').style.display = "none";
+        ['hp', 'str', 'dex', 'int'].forEach(s => document.getElementById(`pend-${s}`).style.display = "none");
+
+        document.getElementById('hero-name').innerText = `Lv.${char.level} ${char.className} — ${char.name}`; document.getElementById('gold-display').innerText = `🪙 ${char.gold}`;
         document.getElementById('stat-hp').innerText = `${stats.hp}/${stats.maxHp + eqB.hp}`;
         document.getElementById('stat-str').innerText = stats.str; document.getElementById('bonus-str').innerText = eqB.str > 0 ? `+${eqB.str}` : (eqB.str < 0 ? eqB.str : "");
         document.getElementById('stat-dex').innerText = stats.dex; document.getElementById('bonus-dex').innerText = eqB.dex > 0 ? `+${eqB.dex}` : (eqB.dex < 0 ? eqB.dex : "");
         document.getElementById('stat-int').innerText = stats.int; document.getElementById('bonus-int').innerText = eqB.int > 0 ? `+${eqB.int}` : (eqB.int < 0 ? eqB.int : "");
 
-        const hasPoints = char.statPoints > 0;
+        const hasPoints = availablePoints > 0;
         document.getElementById('stat-points-banner').style.display = hasPoints ? "block" : "none";
-        document.getElementById('stat-points-banner').innerText = `You have ${char.statPoints} Attribute Points!`;
-        document.querySelectorAll('.add-stat-btn').forEach(btn => btn.style.display = hasPoints ? "flex" : "none");
+        document.getElementById('avail-points').innerText = availablePoints;
+        document.querySelectorAll('.stat-controls').forEach(btn => btn.style.display = hasPoints ? "flex" : "none");
 
         const slots = ["Amulet", "Head", "Cape", "Weapon", "Upper", "Shield", "Ring1", "Lower", "Ring2", "Boots"];
-        slots.forEach(slot => { const el = document.getElementById(`eq-${slot}`); if (el) { el.src = ""; el.parentElement.style.borderColor = "#555"; el.parentElement.onclick = null; } }); 
+        slots.forEach(slot => { const el = document.getElementById(`eq-${slot}`); if (el) { el.src = ""; el.parentElement.classList.remove('filled'); el.parentElement.onclick = null; } }); 
         
         for (const [slot, item] of Object.entries(data.equipped)) {
           const el = document.getElementById(`eq-${slot}`);
           if (el) { 
-             el.src = item.img || ""; el.parentElement.style.borderColor = "#ff9800"; 
+             el.src = item.img || ""; el.parentElement.classList.add('filled'); 
              el.parentElement.onclick = () => openItemModal({ itemId: item.id, def: item }, true, slot);
           }
         }
@@ -337,7 +397,7 @@
         const grid = document.getElementById('inventory-grid'); grid.innerHTML = '';
         data.inventory.forEach(item => {
           const slotDiv = document.createElement('div'); slotDiv.className = 'inventory-slot';
-          let imgHtml = item.def && item.def.img ? `<img src="${item.def.img}">` : `<div>📦</div>`;
+          let imgHtml = item.def && item.def.img ? `<img src="${item.def.img}">` : `<div style="font-size: 24px;">📦</div>`;
           slotDiv.innerHTML = `${imgHtml}<div class="qty-badge">x${item.quantity}</div>`;
           slotDiv.onclick = () => openItemModal(item, false);
           grid.appendChild(slotDiv);

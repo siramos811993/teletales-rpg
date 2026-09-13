@@ -39,13 +39,11 @@
 </head>
 <body>
 
-  <!-- Screen 1: Loading & Diagnostics -->
   <div id="loading-screen" class="screen active-screen">
     <h2 id="loading-text">Connecting to server...</h2>
     <div id="debug-log">Log initiated...</div>
   </div>
 
-  <!-- Screen 2: Creation -->
   <div id="creation-screen" class="screen">
     <div class="form-box">
       <h2 class="form-title">Forge Your Legend</h2>
@@ -65,7 +63,6 @@
     </div>
   </div>
 
-  <!-- Screen 3: Character Sheet -->
   <div id="sheet-screen" class="screen">
     <div class="profile-card">
       <img src="" alt="Hero" class="portrait" id="hero-portrait">
@@ -89,7 +86,6 @@
   </div>
 
   <script>
-    // Delay execution until the DOM is fully loaded to prevent script failure
     window.addEventListener('DOMContentLoaded', (event) => {
       const debugLog = document.getElementById('debug-log');
       const loadingText = document.getElementById('loading-text');
@@ -114,6 +110,7 @@
         
         debugLog.innerText += "\nTelegram SDK Initialized.";
 
+        // The live backend API URL
         const GAS_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycby_adXdcF6rtxVdLZ3pesHHDGQPmDI6viSuyCqezp1b87KEH5OkeZHTBM-jCEsJ0ryWgA/exec";
 
         const itemDict = {
@@ -160,7 +157,6 @@
           });
         }
 
-        // Expose submitCharacter to global scope so the HTML button onclick works
         window.submitCharacter = function() {
           const name = document.getElementById('input-name').value;
           const charClass = document.getElementById('input-class').value;

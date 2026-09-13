@@ -23,7 +23,6 @@
     .primary-btn { width: 100%; padding: 14px; background: #3390ec; color: #fff; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 8px; }
     .secondary-btn { background: #555; margin-top: 16px; }
 
-    /* Character Selection Screen */
     .char-card { background: #2a2a2a; border-radius: 12px; padding: 16px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border: 1px solid #444; }
     .char-card-info { flex: 1; }
     .char-card-name { font-size: 18px; font-weight: bold; margin-bottom: 4px; }
@@ -33,7 +32,6 @@
     .play-btn { background: #3390ec; }
     .del-btn { background: #e53935; }
 
-    /* Equipment Grid */
     .equipment-container { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; justify-items: center; align-items: center; background: #2a2a2a; padding: 16px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #444; }
     .eq-slot { width: 70px; height: 70px; border: 2px solid #555; border-radius: 8px; background: #111; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; cursor: pointer; }
     .eq-slot img { width: 80%; height: 80%; object-fit: contain; }
@@ -50,7 +48,6 @@
     .slot-ring2 { grid-column: 3; grid-row: 3; border-color: #4caf50; }
     .slot-boots { grid-column: 2; grid-row: 4; border-color: #9c27b0; }
 
-    /* Stats Grid */
     .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 24px; }
     .stat-box { background: #2a2a2a; padding: 10px; border-radius: 8px; text-align: center; position: relative; border: 1px solid #444; }
     .stat-value { font-size: 16px; font-weight: bold; color: #4caf50; }
@@ -59,7 +56,6 @@
     .add-stat-btn { position: absolute; top: -8px; right: -8px; width: 20px; height: 20px; background: #ff9800; color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.5); }
     .stat-points-banner { background: #3e2723; color: #ff9800; text-align: center; padding: 8px; border-radius: 8px; font-weight: bold; margin-bottom: 12px; border: 1px solid #ff9800; }
 
-    /* Inventory */
     .inventory-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 10px; }
     .inventory-slot { aspect-ratio: 1; background: #2a2a2a; border: 1px solid #444; border-radius: 8px; display: flex; align-items: center; justify-content: center; position: relative; cursor: pointer; }
     .inventory-slot img { width: 70%; height: 70%; object-fit: contain; }
@@ -69,6 +65,19 @@
     .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: #111; display: none; justify-content: space-around; padding-bottom: 20px; padding-top: 12px; border-top: 1px solid #333; }
     .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: #888; font-size: 12px; cursor: pointer; }
     .nav-item.active { color: #3390ec; }
+
+    /* Item Details Modal */
+    .modal-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); display:none; justify-content:center; align-items:center; z-index:100; }
+    .modal-content { background:#2a2a2a; padding:24px; border-radius:16px; width:85%; max-width:320px; border:1px solid #444; text-align: center; }
+    .modal-title { font-size:20px; font-weight:bold; color:#ff9800; margin-bottom:8px; }
+    .modal-stats { font-size:14px; color:#ddd; margin-bottom:20px; line-height:1.5; background: #111; padding: 12px; border-radius: 8px;}
+    .modal-btn { width:100%; padding:12px; margin-bottom:8px; border-radius:8px; font-weight:bold; font-size: 15px; cursor:pointer; border:none; }
+    .btn-equip { background:#4caf50; color:#fff; }
+    .btn-unequip { background:#ff9800; color:#fff; }
+    .btn-discard { background:#e53935; color:#fff; }
+    .btn-trade { background:#2196f3; color:#fff; }
+    .btn-close { background:#555; color:#fff; margin-bottom:0; }
+    .trade-dropdown { padding: 12px; border-radius: 8px; border: 1px solid #555; background: #111; color: #fff; width: 100%; margin-bottom: 8px; }
   </style>
 </head>
 <body>
@@ -80,7 +89,7 @@
 
   <div id="selection-screen" class="screen">
     <h2 class="form-title" style="text-align: left; margin-bottom: 8px;">Your Heroes</h2>
-    <p style="color: #aaa; font-size: 14px; margin-bottom: 24px;">Select a character or create a new one (Max 2).</p>
+    <p style="color: #aaa; font-size: 14px; margin-bottom: 24px;">Select a character or create a new one.</p>
     <div id="character-list"></div>
     <button id="btn-create-slot" class="primary-btn secondary-btn" onclick="openCreation()">+ Forge New Legend</button>
   </div>
@@ -136,19 +145,19 @@
     </div>
 
     <div class="equipment-container">
-      <div class="eq-slot slot-amulet" onclick="unequip('Amulet')"><div class="eq-label">Amulet</div><img id="eq-Amulet" src=""></div>
-      <div class="eq-slot slot-head" onclick="unequip('Head')"><div class="eq-label">Head</div><img id="eq-Head" src=""></div>
-      <div class="eq-slot slot-cape" onclick="unequip('Cape')"><div class="eq-label">Cape</div><img id="eq-Cape" src=""></div>
+      <div class="eq-slot slot-amulet"><div class="eq-label">Amulet</div><img id="eq-Amulet" src=""></div>
+      <div class="eq-slot slot-head"><div class="eq-label">Head</div><img id="eq-Head" src=""></div>
+      <div class="eq-slot slot-cape"><div class="eq-label">Cape</div><img id="eq-Cape" src=""></div>
       
-      <div class="eq-slot slot-weapon" onclick="unequip('Weapon')"><div class="eq-label">Weapon</div><img id="eq-Weapon" src=""></div>
-      <div class="eq-slot slot-upper" onclick="unequip('Upper')"><div class="eq-label">Chest</div><img id="eq-Upper" src=""></div>
-      <div class="eq-slot slot-shield" onclick="unequip('Shield')"><div class="eq-label">Shield</div><img id="eq-Shield" src=""></div>
+      <div class="eq-slot slot-weapon"><div class="eq-label">Weapon</div><img id="eq-Weapon" src=""></div>
+      <div class="eq-slot slot-upper"><div class="eq-label">Chest</div><img id="eq-Upper" src=""></div>
+      <div class="eq-slot slot-shield"><div class="eq-label">Shield</div><img id="eq-Shield" src=""></div>
       
-      <div class="eq-slot slot-ring1" onclick="unequip('Ring1')"><div class="eq-label">Ring 1</div><img id="eq-Ring1" src=""></div>
-      <div class="eq-slot slot-lower" onclick="unequip('Lower')"><div class="eq-label">Legs</div><img id="eq-Lower" src=""></div>
-      <div class="eq-slot slot-ring2" onclick="unequip('Ring2')"><div class="eq-label">Ring 2</div><img id="eq-Ring2" src=""></div>
+      <div class="eq-slot slot-ring1"><div class="eq-label">Ring 1</div><img id="eq-Ring1" src=""></div>
+      <div class="eq-slot slot-lower"><div class="eq-label">Legs</div><img id="eq-Lower" src=""></div>
+      <div class="eq-slot slot-ring2"><div class="eq-label">Ring 2</div><img id="eq-Ring2" src=""></div>
       
-      <div class="eq-slot slot-boots" onclick="unequip('Boots')"><div class="eq-label">Feet</div><img id="eq-Boots" src=""></div>
+      <div class="eq-slot slot-boots"><div class="eq-label">Feet</div><img id="eq-Boots" src=""></div>
     </div>
 
     <h3 style="margin-bottom: 12px; font-size: 16px;">Backpack <span id="gold-display" style="float:right; color: #ff9800;">🪙 0</span></h3>
@@ -160,20 +169,31 @@
     <div class="nav-item" onclick="switchScreen('selection-screen')"><div class="nav-icon">👥</div><span>Roster</span></div>
   </div>
 
+  <!-- Item Modal -->
+  <div id="item-modal" class="modal-overlay">
+    <div class="modal-content">
+       <div class="modal-title" id="modal-item-name">Item Name</div>
+       <div class="modal-stats" id="modal-item-stats">Stats here</div>
+       <button class="modal-btn btn-equip" id="btn-modal-equip" style="display:none;">Equip</button>
+       <button class="modal-btn btn-unequip" id="btn-modal-unequip" style="display:none;">Unequip</button>
+       
+       <select class="trade-dropdown" id="modal-trade-select" style="display:none;"></select>
+       <button class="modal-btn btn-trade" id="btn-modal-trade" style="display:none;">Trade to Player</button>
+       
+       <button class="modal-btn btn-discard" id="btn-modal-discard" style="display:none;">Discard</button>
+       <button class="modal-btn btn-close" onclick="closeModal()">Close</button>
+    </div>
+  </div>
+
   <script>
     window.addEventListener('DOMContentLoaded', (event) => {
       const debugLog = document.getElementById('debug-log');
-      const loadingText = document.getElementById('loading-text');
       const tg = window.Telegram.WebApp; tg.expand(); tg.ready();
       
       const GAS_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycby_adXdcF6rtxVdLZ3pesHHDGQPmDI6viSuyCqezp1b87KEH5OkeZHTBM-jCEsJ0ryWgA/exec";
-      let allCharacters = []; let currentActiveChar = null;
+      let allCharacters = []; let currentActiveChar = null; window.partyMembers = [];
 
-      window.onerror = function(message, source, lineno) {
-        debugLog.style.display = "block";
-        debugLog.innerText += `\nCRASH: ${message} (Line ${lineno})`;
-        return true; 
-      };
+      window.onerror = function(message, source, lineno) { debugLog.style.display = "block"; debugLog.innerText += `\nCRASH: ${message} (Line ${lineno})`; return true; };
 
       window.switchScreen = function(screenId) {
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active-screen'));
@@ -182,8 +202,7 @@
       }
 
       window.openCreation = function() {
-        document.getElementById('btn-cancel-create').style.display = allCharacters.length > 0 ? "block" : "none";
-        switchScreen('creation-screen');
+        document.getElementById('btn-cancel-create').style.display = allCharacters.length > 0 ? "block" : "none"; switchScreen('creation-screen');
       }
 
       function fetchCharacterData() {
@@ -194,12 +213,22 @@
           if (payload.isCrash) { debugLog.style.display="block"; debugLog.innerText = `SERVER CRASH: ${payload.error}`; return; }
           if (payload.success) {
             allCharacters = payload.data.characters || [];
+            window.partyMembers = payload.data.partyMembers || [];
+            
+            // Auto-select active hero in party
+            if (payload.data.activeCharName && !currentActiveChar) {
+               currentActiveChar = allCharacters.find(c => c.profile.name === payload.data.activeCharName);
+            }
+            
             if (allCharacters.length === 0) openCreation();
             else {
               renderSelectionScreen();
               if (currentActiveChar) {
                 currentActiveChar = allCharacters.find(c => c.profile.name === currentActiveChar.profile.name);
-                if (currentActiveChar) renderCharacterSheet(currentActiveChar);
+                if (currentActiveChar) {
+                  renderCharacterSheet(currentActiveChar); 
+                  switchScreen('sheet-screen'); // FIXED THE HANG BUG HERE
+                }
               } else switchScreen('selection-screen'); 
             }
           }
@@ -210,17 +239,7 @@
         const list = document.getElementById('character-list'); list.innerHTML = "";
         allCharacters.forEach((charData, index) => {
           const char = charData.profile;
-          list.innerHTML += `
-            <div class="char-card">
-              <div class="char-card-info">
-                <div class="char-card-name">${char.name}</div>
-                <div class="char-card-sub">Lv.${char.level} ${char.className} • ${char.gold} Gold</div>
-              </div>
-              <div class="char-card-actions">
-                <div class="action-icon play-btn" onclick="playCharacter(${index})">▶️</div>
-                <div class="action-icon del-btn" onclick="confirmDelete('${char.name}')">🗑️</div>
-              </div>
-            </div>`;
+          list.innerHTML += `<div class="char-card"><div class="char-card-info"><div class="char-card-name">${char.name}</div><div class="char-card-sub">Lv.${char.level} ${char.className} • ${char.gold} Gold</div></div><div class="char-card-actions"><div class="action-icon play-btn" onclick="playCharacter(${index})">▶️</div><div class="action-icon del-btn" onclick="confirmDelete('${char.name}')">🗑️</div></div></div>`;
         });
         document.getElementById('btn-create-slot').style.display = allCharacters.length >= 2 ? "none" : "block";
       }
@@ -228,58 +247,76 @@
       window.playCharacter = function(index) {
         if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
         currentActiveChar = allCharacters[index];
-        renderCharacterSheet(currentActiveChar);
-        switchScreen('sheet-screen');
+        renderCharacterSheet(currentActiveChar); switchScreen('sheet-screen');
       }
 
-      window.confirmDelete = function(charName) {
-        tg.showConfirm(`Permanently delete ${charName}?`, function(confirmed) { if (confirmed) postAction('delete_character', { charName: charName }); });
-      }
+      window.confirmDelete = function(charName) { tg.showConfirm(`Permanently delete ${charName}?`, function(confirmed) { if (confirmed) postAction('delete_character', { charName: charName }); }); }
       window.submitCharacter = function() {
-        const name = document.getElementById('input-name').value;
-        const charClass = document.getElementById('input-class').value;
-        if (!name.trim()) return tg.showAlert("Please enter a name.");
-        postAction('create_character', { name: name, charClass: charClass });
+        const name = document.getElementById('input-name').value; const charClass = document.getElementById('input-class').value;
+        if (!name.trim()) return tg.showAlert("Please enter a name."); postAction('create_character', { name: name, charClass: charClass });
       };
-      window.unequip = function(slot) {
-        if (!currentActiveChar.equipped[slot]) return;
-        tg.showConfirm(`Unequip ${currentActiveChar.equipped[slot].name}?`, function(c) { if (c) postAction('unequip_item', { charName: currentActiveChar.profile.name, slot: slot }); });
-      }
+      
       window.allocateStat = function(stat) { postAction('allocate_stat', { charName: currentActiveChar.profile.name, stat: stat }); }
 
-        function postAction(action, dataPayload) {
+      function postAction(action, dataPayload) {
         if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
         switchScreen('loading-screen');
         const body = Object.assign({ initData: tg.initData, action: action }, dataPayload);
-        
-        // FIX: Added redirect: 'follow' to prevent CORS and HTML token errors
-        fetch(GAS_WEBHOOK_URL, { 
-          method: 'POST', 
-          redirect: 'follow', 
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
-          body: JSON.stringify(body) 
-        })
-        .then(res => res.json())
-        .then(p => { 
-          if (p.success) fetchCharacterData(); 
-          else { tg.showAlert(p.message); fetchCharacterData(); } 
-        })
-        .catch(err => { 
-          document.getElementById('debug-log').style.display="block"; 
-          document.getElementById('debug-log').innerText = `Action failed: ${err.message}`; 
-          switchScreen('sheet-screen'); 
-        });
+        fetch(GAS_WEBHOOK_URL, { method: 'POST', redirect: 'follow', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body) })
+        .then(res => res.json()).then(p => { if (p.success) fetchCharacterData(); else { tg.showAlert(p.message); fetchCharacterData(); } });
       }
 
+      // --- ITEM MODAL LOGIC ---
+      let selectedItemForModal = null; let isSelectedItemEquipped = false;
+        
+      window.openItemModal = function(item, isEquipped, slotName = null) {
+          if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+          selectedItemForModal = { ...item, slot: slotName }; isSelectedItemEquipped = isEquipped;
+          
+          let cleanName = item.def ? item.def.name : item.itemId.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+          document.getElementById('modal-item-name').innerText = cleanName;
+          
+          let statsText = `Type: ${item.def ? item.def.type : 'Unknown'}\n`;
+          if (item.def) {
+              if (parseInt(item.def.hp) !== 0) statsText += `❤️ HP: ${item.def.hp > 0 ? '+'+item.def.hp : item.def.hp}   `;
+              if (parseInt(item.def.str) !== 0) statsText += `💪 STR: ${item.def.str > 0 ? '+'+item.def.str : item.def.str}   `;
+              if (parseInt(item.def.dex) !== 0) statsText += `🎯 DEX: ${item.def.dex > 0 ? '+'+item.def.dex : item.def.dex}\n`;
+              if (parseInt(item.def.int) !== 0) statsText += `🧠 INT: ${item.def.int > 0 ? '+'+item.def.int : item.def.int}`;
+          }
+          document.getElementById('modal-item-stats').innerText = statsText;
+          
+          document.getElementById('btn-modal-equip').style.display = (!isEquipped) ? "block" : "none";
+          document.getElementById('btn-modal-unequip').style.display = (isEquipped) ? "block" : "none";
+          document.getElementById('btn-modal-discard').style.display = (!isEquipped) ? "block" : "none";
+          
+          if (!isEquipped && item.def && item.def.type === 'Consumable') document.getElementById('btn-modal-equip').innerText = "Use Potion";
+          else document.getElementById('btn-modal-equip').innerText = "Equip Item";
+
+          const tSelect = document.getElementById('modal-trade-select'); const tBtn = document.getElementById('btn-modal-trade');
+          if (!isEquipped && window.partyMembers.length > 1) {
+              tSelect.style.display = "block"; tBtn.style.display = "block"; tSelect.innerHTML = "";
+              window.partyMembers.forEach(m => { if (m.name !== currentActiveChar.profile.name) { tSelect.innerHTML += `<option value="${m.id}">${m.name}</option>`; } });
+          } else { tSelect.style.display = "none"; tBtn.style.display = "none"; }
+          
+          document.getElementById('item-modal').style.display = "flex";
+      }
+      
+      window.closeModal = function() { document.getElementById('item-modal').style.display = "none"; }
+      
+      document.getElementById('btn-modal-equip').onclick = () => { closeModal(); let actionName = (selectedItemForModal.def && selectedItemForModal.def.type === 'Consumable') ? 'use_item' : 'equip_item'; let tSlot = selectedItemForModal.def ? selectedItemForModal.def.type : null; if (tSlot === 'Weapon1H' || tSlot === 'Weapon2H') tSlot = 'Weapon'; if (tSlot === 'Ring') tSlot = currentActiveChar.equipped['Ring1'] ? 'Ring2' : 'Ring1'; postAction(actionName, { charName: currentActiveChar.profile.name, itemId: selectedItemForModal.itemId, targetSlot: tSlot }); };
+      document.getElementById('btn-modal-unequip').onclick = () => { closeModal(); postAction('unequip_item', { charName: currentActiveChar.profile.name, slot: selectedItemForModal.slot }); };
+      document.getElementById('btn-modal-discard').onclick = () => { closeModal(); postAction('discard_item', { charName: currentActiveChar.profile.name, itemId: selectedItemForModal.itemId }); };
+      document.getElementById('btn-modal-trade').onclick = () => { closeModal(); let sel = document.getElementById('modal-trade-select'); let tId = sel.value; let tName = sel.options[sel.selectedIndex].text; postAction('trade_item', { senderChar: currentActiveChar.profile.name, targetId: tId, targetChar: tName, itemId: selectedItemForModal.itemId }); };
+
+      // --- CHARACTER RENDER ---
       window.renderCharacterSheet = function(data) {
         const char = data.profile; const stats = data.stats; const eqB = data.equipBonuses;
-        document.getElementById('hero-name').innerText = `Lv.${char.level} ${char.className} — ${char.name}`;
-        document.getElementById('gold-display').innerText = `🪙 ${char.gold}`;
+        document.getElementById('hero-name').innerText = `Lv.${char.level} ${char.className} — ${char.name}`; document.getElementById('gold-display').innerText = `🪙 ${char.gold}`;
         
         document.getElementById('stat-hp').innerText = `${stats.hp}/${stats.maxHp + eqB.hp}`;
-        document.getElementById('stat-str').innerText = stats.str; document.getElementById('bonus-str').innerText = eqB.str > 0 ? `+${eqB.str}` : "";
-        document.getElementById('stat-dex').innerText = stats.dex; document.getElementById('bonus-dex').innerText = eqB.dex > 0 ? `+${eqB.dex}` : "";
-        document.getElementById('stat-int').innerText = stats.int; document.getElementById('bonus-int').innerText = eqB.int > 0 ? `+${eqB.int}` : "";
+        document.getElementById('stat-str').innerText = stats.str; document.getElementById('bonus-str').innerText = eqB.str > 0 ? `+${eqB.str}` : (eqB.str < 0 ? eqB.str : "");
+        document.getElementById('stat-dex').innerText = stats.dex; document.getElementById('bonus-dex').innerText = eqB.dex > 0 ? `+${eqB.dex}` : (eqB.dex < 0 ? eqB.dex : "");
+        document.getElementById('stat-int').innerText = stats.int; document.getElementById('bonus-int').innerText = eqB.int > 0 ? `+${eqB.int}` : (eqB.int < 0 ? eqB.int : "");
 
         const hasPoints = char.statPoints > 0;
         document.getElementById('stat-points-banner').style.display = hasPoints ? "block" : "none";
@@ -287,10 +324,14 @@
         document.querySelectorAll('.add-stat-btn').forEach(btn => btn.style.display = hasPoints ? "flex" : "none");
 
         const slots = ["Amulet", "Head", "Cape", "Weapon", "Upper", "Shield", "Ring1", "Lower", "Ring2", "Boots"];
-        slots.forEach(slot => { const el = document.getElementById(`eq-${slot}`); if (el) { el.src = ""; el.parentElement.style.borderColor = "#555"; } }); 
+        slots.forEach(slot => { const el = document.getElementById(`eq-${slot}`); if (el) { el.src = ""; el.parentElement.style.borderColor = "#555"; el.parentElement.onclick = null; } }); 
+        
         for (const [slot, item] of Object.entries(data.equipped)) {
           const el = document.getElementById(`eq-${slot}`);
-          if (el) { el.src = item.img || ""; el.parentElement.style.borderColor = "#ff9800"; }
+          if (el) { 
+             el.src = item.img || ""; el.parentElement.style.borderColor = "#ff9800"; 
+             el.parentElement.onclick = () => openItemModal({ itemId: item.id, def: item }, true, slot);
+          }
         }
 
         const grid = document.getElementById('inventory-grid'); grid.innerHTML = '';
@@ -298,22 +339,7 @@
           const slotDiv = document.createElement('div'); slotDiv.className = 'inventory-slot';
           let imgHtml = item.def && item.def.img ? `<img src="${item.def.img}">` : `<div>📦</div>`;
           slotDiv.innerHTML = `${imgHtml}<div class="qty-badge">x${item.quantity}</div>`;
-          
-          slotDiv.onclick = () => {
-            if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
-            let actionName = (item.def && item.def.type === 'Consumable') ? "Use" : "Equip";
-            tg.showConfirm(`${actionName} ${item.def ? item.def.name : item.itemId}?`, function(c) {
-              if (c) {
-                if (actionName === "Use") postAction('use_item', { charName: char.name, itemId: item.itemId });
-                else {
-                  let tSlot = item.def.type;
-                  if (tSlot === 'Weapon1H' || tSlot === 'Weapon2H') tSlot = 'Weapon';
-                  if (tSlot === 'Ring') tSlot = data.equipped['Ring1'] ? 'Ring2' : 'Ring1'; 
-                  postAction('equip_item', { charName: char.name, itemId: item.itemId, targetSlot: tSlot });
-                }
-              }
-            });
-          };
+          slotDiv.onclick = () => openItemModal(item, false);
           grid.appendChild(slotDiv);
         });
       }

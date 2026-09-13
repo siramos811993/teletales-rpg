@@ -11,14 +11,31 @@
     .screen { display: none; flex: 1; overflow-y: auto; flex-direction: column; padding: 16px; }
     .active-screen { display: flex; }
     #debug-log { margin-top: 20px; font-size: 11px; color: #d32f2f; background: #ffebee; padding: 10px; border-radius: 8px; font-family: monospace; word-wrap: break-word; text-align: left; }
+    
     #loading-screen { justify-content: center; align-items: center; text-align: center; }
     #creation-screen { justify-content: center; }
+    
     .form-box { background: var(--tg-theme-bg-color, #fff); padding: 24px; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-    .form-title { font-size: 24px; margin-bottom: 20px; text-align: center; }
+    .form-title { font-size: 24px; margin-bottom: 20px; text-align: center; font-weight: bold; }
     .input-group { margin-bottom: 16px; display: flex; flex-direction: column; }
     .input-group label { font-size: 14px; margin-bottom: 8px; color: var(--tg-theme-hint-color, #888); }
     .input-group input, .input-group select { padding: 12px; border-radius: 8px; border: 1px solid var(--tg-theme-hint-color, #ccc); background: var(--tg-theme-bg-color, #fff); color: var(--tg-theme-text-color, #000); font-size: 16px; }
+    
     .primary-btn { width: 100%; padding: 14px; background: var(--tg-theme-button-color, #3390ec); color: var(--tg-theme-button-text-color, #fff); border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 8px; }
+    .danger-btn { background: #e53935; margin-top: 8px; }
+    .secondary-btn { background: var(--tg-theme-hint-color, #888); margin-top: 16px; }
+
+    /* Character Selection Screen */
+    .char-card { background: var(--tg-theme-bg-color, #fff); border-radius: 12px; padding: 16px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); }
+    .char-card-info { flex: 1; }
+    .char-card-name { font-size: 18px; font-weight: bold; margin-bottom: 4px; }
+    .char-card-sub { font-size: 13px; color: var(--tg-theme-hint-color, #888); }
+    .char-card-actions { display: flex; gap: 8px; }
+    .action-icon { width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 20px; cursor: pointer; color: #fff; }
+    .play-btn { background: var(--tg-theme-button-color, #3390ec); }
+    .del-btn { background: #e53935; }
+
+    /* Character Sheet */
     #sheet-screen { padding-top: calc(var(--tg-safe-area-inset-top, 0px) + 16px); padding-bottom: calc(var(--tg-safe-area-inset-bottom, 0px) + 80px); }
     .profile-card { background: var(--tg-theme-bg-color, #fff); border-radius: 16px; padding: 16px; display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
     .portrait { width: 80px; height: 80px; border-radius: 12px; object-fit: cover; }
@@ -32,8 +49,9 @@
     .inventory-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 12px; }
     .inventory-slot { aspect-ratio: 1; background: var(--tg-theme-bg-color, #fff); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 32px; position: relative; cursor: pointer; }
     .qty-badge { position: absolute; bottom: 4px; right: 4px; background: var(--tg-theme-button-color, #3390ec); color: #fff; font-size: 10px; font-weight: bold; padding: 2px 4px; border-radius: 6px; }
+    
     .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: var(--tg-theme-bg-color, #fff); display: none; justify-content: space-around; padding-bottom: calc(var(--tg-safe-area-inset-bottom, 0px) + 8px); padding-top: 12px; border-top: 1px solid rgba(0,0,0,0.05); }
-    .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--tg-theme-hint-color, #888); font-size: 12px; }
+    .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--tg-theme-hint-color, #888); font-size: 12px; cursor: pointer; }
     .nav-item.active { color: var(--tg-theme-button-color, #3390ec); }
   </style>
 </head>
@@ -42,6 +60,13 @@
   <div id="loading-screen" class="screen active-screen">
     <h2 id="loading-text">Connecting to server...</h2>
     <div id="debug-log">Log initiated...</div>
+  </div>
+
+  <div id="selection-screen" class="screen">
+    <h2 class="form-title" style="text-align: left; margin-bottom: 8px;">Your Heroes</h2>
+    <p style="color: var(--tg-theme-hint-color, #888); font-size: 14px; margin-bottom: 24px;">Select a character or create a new one (Max 2).</p>
+    <div id="character-list"></div>
+    <button id="btn-create-slot" class="primary-btn secondary-btn" onclick="openCreation()">+ Forge New Legend</button>
   </div>
 
   <div id="creation-screen" class="screen">
@@ -60,6 +85,7 @@
         </select>
       </div>
       <button class="primary-btn" onclick="submitCharacter()">Create Hero</button>
+      <button class="primary-btn secondary-btn" id="btn-cancel-create" onclick="switchScreen('selection-screen')" style="display:none;">Cancel</button>
     </div>
   </div>
 
@@ -82,13 +108,15 @@
 
   <div id="bottom-nav" class="bottom-nav">
     <div class="nav-item active"><div class="nav-icon">🎒</div><span>Inventory</span></div>
-    <div class="nav-item"><div class="nav-icon">⚔️</div><span>Skills</span></div>
+    <div class="nav-item" onclick="switchScreen('selection-screen')"><div class="nav-icon">👥</div><span>Roster</span></div>
   </div>
 
   <script>
     window.addEventListener('DOMContentLoaded', (event) => {
       const debugLog = document.getElementById('debug-log');
       const loadingText = document.getElementById('loading-text');
+      
+      let allCharacters = [];
 
       window.onerror = function(message, source, lineno) {
         loadingText.innerText = "App Crashed";
@@ -97,84 +125,115 @@
       };
 
       try {
-        debugLog.innerText += "\nBooting JavaScript...";
-        
         if (typeof window.Telegram === 'undefined') throw new Error("Telegram SDK blocked or failed to load.");
-        
         const tg = window.Telegram.WebApp;
         tg.expand();
         tg.ready();
         if (tg.disableVerticalSwipes) tg.disableVerticalSwipes();
         
-        debugLog.innerText += "\nTelegram SDK Initialized.";
-
         const GAS_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycby_adXdcF6rtxVdLZ3pesHHDGQPmDI6viSuyCqezp1b87KEH5OkeZHTBM-jCEsJ0ryWgA/exec";
 
-        const itemDict = {
-          "iron_sword": { icon: "🗡️", name: "Iron Sword" },
-          "wood_shield": { icon: "🛡️", name: "Wooden Shield" },
-          "hp_potion": { icon: "🧪", name: "Health Potion" },
-          "leather_armor": { icon: "🧥", name: "Leather Armor" },
-          "steel_armor": { icon: "🪖", name: "Steel Armor" },
-          "magic_staff": { icon: "🪄", name: "Magic Staff" },
-          "rogue_dagger": { icon: "🔪", name: "Rogue Dagger" },
-          "gold_ring": { icon: "💍", name: "Gold Ring" }
-        };
+        const itemDict = { "iron_sword": { icon: "🗡️", name: "Iron Sword" }, "hp_potion": { icon: "🧪", name: "Health Potion" } };
 
-        function switchScreen(screenId) {
+        window.switchScreen = function(screenId) {
           document.querySelectorAll('.screen').forEach(s => s.classList.remove('active-screen'));
           document.getElementById(screenId).classList.add('active-screen');
           document.getElementById('bottom-nav').style.display = (screenId === 'sheet-screen') ? 'flex' : 'none';
         }
 
+        window.openCreation = function() {
+          document.getElementById('btn-cancel-create').style.display = allCharacters.length > 0 ? "block" : "none";
+          switchScreen('creation-screen');
+        }
+
         function fetchCharacterData() {
-          debugLog.innerText += "\nFetching data from Google...";
-          
+          switchScreen('loading-screen');
           fetch(GAS_WEBHOOK_URL, {
-            method: 'POST', 
-            redirect: 'follow', 
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({ initData: tg.initData, action: 'get_character' })
+            method: 'POST', redirect: 'follow', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({ initData: tg.initData, action: 'get_characters' })
           })
-          .then(res => res.text()) 
+          .then(res => res.text())
           .then(text => {
-            debugLog.innerText += `\nResponse received (${text.length} chars)`;
-            try {
-              const payload = JSON.parse(text);
-              if (payload.isCrash) {
-                loadingText.innerText = "Database Error";
-                debugLog.innerText += `\n\nSERVER CRASH: ${payload.error}`;
-                return;
-              }
-              if (payload.success && payload.data.found) {
-                renderCharacterSheet(payload.data);
-                switchScreen('sheet-screen');
+            const payload = JSON.parse(text);
+            if (payload.isCrash) {
+              loadingText.innerText = "Database Error";
+              debugLog.innerText = `SERVER CRASH: ${payload.error}`;
+              return;
+            }
+            if (payload.success) {
+              allCharacters = payload.data.characters || [];
+              if (allCharacters.length === 0) {
+                openCreation();
               } else {
-                switchScreen('creation-screen');
+                renderSelectionScreen();
+                switchScreen('selection-screen');
               }
-            } catch (e) {
-              loadingText.innerText = "Parse Error";
-              debugLog.innerText += `\n\nGoogle returned HTML instead of JSON:\n${text.substring(0, 200)}`;
             }
           })
-          .catch(err => {
-            loadingText.innerText = "Network Error";
-            debugLog.innerText += `\n\nFetch failed: ${err.message}`;
+          .catch(err => { loadingText.innerText = "Network Error"; debugLog.innerText = `Fetch failed: ${err.message}`; });
+        }
+
+        function renderSelectionScreen() {
+          const list = document.getElementById('character-list');
+          list.innerHTML = "";
+          
+          allCharacters.forEach((charData, index) => {
+            const char = charData.profile;
+            list.innerHTML += `
+              <div class="char-card">
+                <div class="char-card-info">
+                  <div class="char-card-name">${char.name}</div>
+                  <div class="char-card-sub">Lv.${char.level} ${char.className} • ${char.gold} Gold</div>
+                </div>
+                <div class="char-card-actions">
+                  <div class="action-icon play-btn" onclick="playCharacter(${index})">▶️</div>
+                  <div class="action-icon del-btn" onclick="confirmDelete('${char.name}')">🗑️</div>
+                </div>
+              </div>
+            `;
+          });
+          
+          document.getElementById('btn-create-slot').style.display = allCharacters.length >= 2 ? "none" : "block";
+        }
+
+        window.playCharacter = function(index) {
+          if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+          renderCharacterSheet(allCharacters[index]);
+          switchScreen('sheet-screen');
+        }
+
+        window.confirmDelete = function(charName) {
+          if(tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('warning');
+          tg.showConfirm(`Are you sure you want to permanently delete ${charName}?`, function(confirmed) {
+            if (confirmed) deleteCharacter(charName);
+          });
+        }
+
+        function deleteCharacter(charName) {
+          switchScreen('loading-screen');
+          loadingText.innerText = "Deleting hero...";
+          fetch(GAS_WEBHOOK_URL, {
+            method: 'POST', redirect: 'follow', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({ initData: tg.initData, action: 'delete_character', charName: charName })
+          })
+          .then(res => res.json())
+          .then(payload => {
+            if (payload.success) fetchCharacterData();
+            else { tg.showAlert(payload.message || "Failed to delete."); fetchCharacterData(); }
           });
         }
 
         window.submitCharacter = function() {
           const name = document.getElementById('input-name').value;
           const charClass = document.getElementById('input-class').value;
+          if (!name.trim()) return tg.showAlert("Please enter a name.");
           
           if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
           switchScreen('loading-screen'); 
-          debugLog.innerText = "Creating character...";
+          loadingText.innerText = "Creating hero...";
 
           fetch(GAS_WEBHOOK_URL, {
-            method: 'POST', 
-            redirect: 'follow', 
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            method: 'POST', redirect: 'follow', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
             body: JSON.stringify({ initData: tg.initData, action: 'create_character', name: name, charClass: charClass })
           })
           .then(res => res.json())
@@ -185,9 +244,6 @@
               switchScreen('creation-screen');
             }
           })
-          .catch(err => {
-            debugLog.innerText = `\nCreation Fetch failed: ${err.message}`;
-          });
         };
 
         function renderCharacterSheet(data) {
@@ -209,17 +265,11 @@
           data.inventory.forEach(item => {
             const slot = document.createElement('div');
             slot.className = 'inventory-slot';
-            // Fallback for AI generated loot items not explicitly in the dictionary
             const itemData = itemDict[item.itemId] || { icon: "📦", name: item.itemId.replace(/_/g, ' ') };
-            
             let html = `<div>${itemData.icon}</div>`;
             if (item.quantity > 1) html += `<div class="qty-badge">x${item.quantity}</div>`;
             slot.innerHTML = html;
-            
-            slot.onclick = () => {
-              if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
-              tg.showAlert(`${itemData.name} (Owned: ${item.quantity})`);
-            };
+            slot.onclick = () => tg.showAlert(`${itemData.name} (Owned: ${item.quantity})`);
             grid.appendChild(slot);
           });
 

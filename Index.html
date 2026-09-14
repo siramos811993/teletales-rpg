@@ -80,11 +80,10 @@
     .btn-minus { background: var(--bg-surface-elevated); color: var(--text-secondary); }
     .mp-display { text-align: center; margin-top: 16px; font-size: 14px; font-weight: 700; color: #60a5fa; background: rgba(59, 130, 246, 0.1); padding: 8px; border-radius: 10px; border: 1px solid rgba(59, 130, 246, 0.2); }
 
-    /* FIXED EQUIPMENT GRID */
     .equipment-container { padding: 24px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; justify-items: center; align-items: center; }
     .eq-slot { width: 76px; height: 76px; border: 1px dashed var(--bg-surface-elevated); border-radius: 16px; background: rgba(0,0,0,0.15); display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
     .eq-slot.filled { border-style: solid; border-color: rgba(99, 102, 241, 0.4); background: rgba(99, 102, 241, 0.05); box-shadow: inset 0 0 20px rgba(99, 102, 241, 0.1); }
-    .eq-slot img { width: 70%; height: 70%; object-fit: contain; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.4)); display: none; } /* Hidden by default to prevent broken image icons */
+    .eq-slot img { width: 70%; height: 70%; object-fit: contain; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.4)); display: none; }
     .eq-label { position: absolute; bottom: -10px; background: var(--bg-surface-elevated); font-size: 10px; padding: 3px 8px; border-radius: 8px; border: 1px solid var(--border-color); color: var(--text-primary); font-weight: 700; z-index: 2; box-shadow: 0 4px 6px rgba(0,0,0,0.2); letter-spacing: 0.3px; }
     
     .slot-amulet { grid-column: 1; grid-row: 1; } .slot-head { grid-column: 2; grid-row: 1; } .slot-cape { grid-column: 3; grid-row: 1; }
@@ -116,7 +115,6 @@
     .nav-item.active { color: var(--accent-primary); opacity: 1; transform: translateY(-2px); }
     .nav-icon { font-size: 22px; margin-bottom: 2px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2)); }
 
-    /* NEW FLEX ACTION BAR */
     #action-bar-container { display: none; position: fixed; bottom: 100px; left: 24px; right: 24px; gap: 12px; z-index: 60; }
     #btn-reset { flex: 1; background: var(--bg-surface-elevated); color: var(--text-primary); padding: 16px; border-radius: 16px; text-align: center; font-weight: 800; font-size: 15px; cursor: pointer; border: 1px solid var(--border-color); box-shadow: 0 10px 25px rgba(0,0,0,0.3); transition: transform 0.2s; }
     #btn-apply { flex: 2; background: linear-gradient(135deg, var(--success), #059669); color: white; padding: 16px; border-radius: 16px; text-align: center; font-weight: 800; font-size: 15px; cursor: pointer; box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3); transition: transform 0.2s; border: 1px solid rgba(255,255,255,0.1); letter-spacing: 0.5px; }
@@ -216,7 +214,6 @@
     <div id="skills-list"></div>
   </div>
 
-  <!-- Dual Action Buttons -->
   <div id="action-bar-container">
     <div id="btn-reset" onclick="resetLocalState()">🔄 Reset</div>
     <div id="btn-apply" onclick="applyOptimisticChanges()">💾 Apply (<span id="queue-count">0</span>)</div>
@@ -260,17 +257,34 @@
 
       window.onerror = function(message, source, lineno) { debugLog.style.display = "block"; debugLog.innerText += `\nCRASH: ${message} (Line ${lineno})`; return true; };
 
-      const effectDescriptions = {
-          "AGGRO": "Forces enemies to target you. Enhances defense significantly while bracing.",
-          "BUFF_ATK": "Roars to boost the entire party's attack power for the encounter.",
-          "PARTY_SHIELD": "Forms a magical barrier, reducing incoming damage for the party.",
-          "FLEE_FORCE": "Throws a diversion, guaranteeing an escape from non-boss battles.",
-          "DEBUFF_AC": "Exploits a weak point, permanently reducing the enemy's Armor Class.",
-          "DOT_POISON": "Coats weapons in venom, dealing true damage over time if successful.",
-          "HEAL_SINGLE": "Channels magic to restore a large amount of HP to a single ally.",
-          "HEAL_PARTY": "Releases a wave of restoration, healing the entire party.",
-          "REVIVE": "Defies the void, reviving a fallen party member with a fraction of their health."
-      };
+      function getSkillEffectText(type, currentLv) {
+          if (currentLv === 0) {
+              if (type === "AGGRO") return "Next Level: Forces enemies to target you. -55% damage taken.";
+              if (type === "BUFF_ATK") return "Next Level: Party ATK +1.";
+              if (type === "PARTY_SHIELD") return "Next Level: Party takes -10% damage.";
+              if (type === "FLEE_FORCE") return "Next Level: Guarantees flee from non-bosses. Cost -1 MP.";
+              if (type === "DEBUFF_AC") return "Next Level: Enemy AC -1.";
+              if (type === "DOT_POISON") return "Next Level: 60% chance to poison enemy.";
+              if (type === "HEAL_SINGLE") return "Next Level: Heals ally for 1d8 + INT + 1d4+1.";
+              if (type === "HEAL_PARTY") return "Next Level: Heals party for 1d4 + INT + 1d4+1.";
+              if (type === "REVIVE") return "Next Level: Revives fallen ally at 20% HP.";
+          } else {
+              let nxt = currentLv < 5 ? `<br><span style="color:#60a5fa; font-size:13px; font-weight: 600; display: block; margin-top: 4px;">Next Lv: ` : "";
+              if (type === "AGGRO") {
+                  let curDmg = 50 + (currentLv * 5); let nDmg = 50 + ((currentLv+1)*5);
+                  return `Forces enemies to target you. -${curDmg}% damage taken.` + (currentLv < 5 ? nxt + `-${nDmg}% damage</span>` : "");
+              }
+              if (type === "BUFF_ATK") { return `Party ATK +${currentLv}.` + (currentLv < 5 ? nxt + `+${currentLv+1}</span>` : ""); }
+              if (type === "PARTY_SHIELD") { return `Party takes -${10*currentLv}% damage.` + (currentLv < 5 ? nxt + `-${10*(currentLv+1)}%</span>` : ""); }
+              if (type === "FLEE_FORCE") { return `Guarantees flee from non-bosses. Cost -${currentLv} MP.` + (currentLv < 5 ? nxt + `-${currentLv+1} MP</span>` : ""); }
+              if (type === "DEBUFF_AC") { return `Enemy AC -${currentLv}.` + (currentLv < 5 ? nxt + `-${currentLv+1}</span>` : ""); }
+              if (type === "DOT_POISON") { return `${50 + (10*currentLv)}% chance to poison enemy.` + (currentLv < 5 ? nxt + `${50 + (10*(currentLv+1))}% chance</span>` : ""); }
+              if (type === "HEAL_SINGLE") { return `Heals ally for 1d8 + INT + ${currentLv}d4+${currentLv}.` + (currentLv < 5 ? nxt + `1d8 + INT + ${currentLv+1}d4+${currentLv+1}</span>` : ""); }
+              if (type === "HEAL_PARTY") { return `Heals party for 1d4 + INT + ${currentLv}d4+${currentLv}.` + (currentLv < 5 ? nxt + `1d4 + INT + ${currentLv+1}d4+${currentLv+1}</span>` : ""); }
+              if (type === "REVIVE") { return `Revives ally at ${10 + (10*currentLv)}% HP.` + (currentLv < 5 ? nxt + `${10 + (10*(currentLv+1))}% HP</span>` : ""); }
+          }
+          return "A mysterious magical effect.";
+      }
 
       window.switchScreen = function(screenId) {
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active-screen'));
@@ -287,7 +301,7 @@
       }
 
       window.handleRosterClick = function() {
-          if (getTotalPendingTasks() > 0) return tg.showAlert("Please Apply Changes before switching characters!");
+          if (getTotalPendingTasks() > 0) return tg.showAlert("Please Apply or Reset your changes before switching characters.");
           switchScreen('selection-screen');
       }
 
@@ -299,21 +313,14 @@
           const payload = JSON.parse(text);
           if (payload.isCrash) { debugLog.style.display="block"; debugLog.innerText = `SERVER CRASH: ${payload.error}`; return; }
           if (payload.success) {
-            allCharacters = payload.data.characters || [];
-            window.partyMembers = payload.data.partyMembers || [];
-            globalSkills = payload.data.allSkills || [];
-            
+            allCharacters = payload.data.characters || []; window.partyMembers = payload.data.partyMembers || []; globalSkills = payload.data.allSkills || [];
             if (payload.data.activeCharName && !activeCharRaw) activeCharRaw = allCharacters.find(c => c.profile.name === payload.data.activeCharName);
-            
             if (allCharacters.length === 0) openCreation();
             else {
               renderSelectionScreen();
               if (activeCharRaw) {
                 activeCharRaw = allCharacters.find(c => c.profile.name === activeCharRaw.profile.name);
-                if (activeCharRaw) {
-                   window.resetLocalState();
-                   switchTab('sheet-screen'); 
-                }
+                if (activeCharRaw) { window.resetLocalState(); switchTab('sheet-screen'); }
               } else switchScreen('selection-screen'); 
             }
           }
@@ -336,98 +343,59 @@
 
       window.playCharacter = function(index) {
         if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
-        activeCharRaw = allCharacters[index];
-        window.resetLocalState();
-        switchTab('sheet-screen');
+        activeCharRaw = allCharacters[index]; window.resetLocalState(); switchTab('sheet-screen');
       }
 
       window.confirmDelete = function(charName) { tg.showConfirm(`Permanently sever ${charName} from the realm?`, function(confirmed) { if (confirmed) { switchScreen('loading-screen'); fetch(GAS_WEBHOOK_URL, { method: 'POST', redirect: 'follow', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ initData: tg.initData, action: 'delete_character', charName: charName }) }).then(()=>fetchCharacterData()); } }); }
 
       window.resetLocalState = function() {
           localChar = JSON.parse(JSON.stringify(activeCharRaw));
-          pendingStats = { hp: 0, str: 0, dex: 0, int: 0 };
-          pendingSkills = {};
-          actionQueue = [];
-          renderLocalUI();
+          pendingStats = { hp: 0, str: 0, dex: 0, int: 0 }; pendingSkills = {}; actionQueue = []; renderLocalUI();
       }
 
       function getTotalPendingTasks() {
-          let statCount = pendingStats.hp + pendingStats.str + pendingStats.dex + pendingStats.int;
-          let skillCount = Object.values(pendingSkills).reduce((a,b)=>a+b, 0);
-          return statCount + skillCount + actionQueue.length;
+          let statCount = pendingStats.hp + pendingStats.str + pendingStats.dex + pendingStats.int; let skillCount = Object.values(pendingSkills).reduce((a,b)=>a+b, 0); return statCount + skillCount + actionQueue.length;
       }
 
       function updateApplyBanner() {
           let total = getTotalPendingTasks();
           const bar = document.getElementById('action-bar-container');
-          if (total > 0) {
-              bar.style.display = 'flex';
-              document.getElementById('queue-count').innerText = total;
-          } else {
-              bar.style.display = 'none';
-          }
+          if (total > 0) { bar.style.display = 'flex'; document.getElementById('queue-count').innerText = total; } else { bar.style.display = 'none'; }
       }
 
-      function renderLocalUI() {
-          renderCharacterSheetLocal();
-          renderSkillsTabLocal();
-          updateApplyBanner();
-      }
+      function renderLocalUI() { renderCharacterSheetLocal(); renderSkillsTabLocal(); updateApplyBanner(); }
 
       window.modifyStatLocally = function(stat, amount) {
           if (amount > 0 && localChar.profile.statPoints <= 0) return;
           if (amount < 0 && pendingStats[stat] <= 0) return;
-          
           if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
-          localChar.profile.statPoints -= amount;
-          pendingStats[stat] += amount;
-          
-          if (stat === 'hp') {
-              localChar.stats.hp += (amount * 5); localChar.stats.maxHp += (amount * 5);
-          } else {
-              localChar.stats[stat] += amount;
-          }
+          localChar.profile.statPoints -= amount; pendingStats[stat] += amount;
+          if (stat === 'hp') { localChar.stats.hp += (amount * 5); localChar.stats.maxHp += (amount * 5); } else { localChar.stats[stat] += amount; }
           renderLocalUI();
       }
 
       window.modifySkillLocally = function(skillId, amount) {
-          if (amount > 0 && localChar.profile.skillPoints <= 0) return;
-          let currentLv = localChar.skillLevels[skillId] || 0;
+          if (amount > 0 && localChar.profile.skillPoints <= 0) return; let currentLv = localChar.skillLevels[skillId] || 0;
           if (amount > 0 && currentLv >= 5) return tg.showAlert("Maximum mastery achieved.");
           if (amount < 0 && (!pendingSkills[skillId] || pendingSkills[skillId] <= 0)) return;
-
           if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
-          localChar.profile.skillPoints -= amount;
-          pendingSkills[skillId] = (pendingSkills[skillId] || 0) + amount;
-          localChar.skillLevels[skillId] = currentLv + amount;
-          renderLocalUI();
+          localChar.profile.skillPoints -= amount; pendingSkills[skillId] = (pendingSkills[skillId] || 0) + amount; localChar.skillLevels[skillId] = currentLv + amount; renderLocalUI();
       }
 
       function recomputeEquipBonuses() {
           let b = {hp:0, str:0, dex:0, int:0};
-          for (let slot in localChar.equipped) {
-              let itm = localChar.equipped[slot];
-              b.hp += parseInt(itm.hp||0); b.str += parseInt(itm.str||0); b.dex += parseInt(itm.dex||0); b.int += parseInt(itm.int||0);
-          }
+          for (let slot in localChar.equipped) { let itm = localChar.equipped[slot]; b.hp += parseInt(itm.hp||0); b.str += parseInt(itm.str||0); b.dex += parseInt(itm.dex||0); b.int += parseInt(itm.int||0); }
           localChar.equipBonuses = b;
       }
 
-      function localRemoveInv(itemId) {
-          let idx = localChar.inventory.findIndex(i => i.itemId === itemId);
-          if(idx !== -1) { if(localChar.inventory[idx].quantity > 1) localChar.inventory[idx].quantity--; else localChar.inventory.splice(idx, 1); }
-      }
-      function localAddInv(itemId, itemDef) {
-          let existing = localChar.inventory.find(i => i.itemId === itemId);
-          if(existing) existing.quantity++; else localChar.inventory.push({itemId: itemId, quantity: 1, def: itemDef});
-      }
+      function localRemoveInv(itemId) { let idx = localChar.inventory.findIndex(i => i.itemId === itemId); if(idx !== -1) { if(localChar.inventory[idx].quantity > 1) localChar.inventory[idx].quantity--; else localChar.inventory.splice(idx, 1); } }
+      function localAddInv(itemId, itemDef) { let existing = localChar.inventory.find(i => i.itemId === itemId); if(existing) existing.quantity++; else localChar.inventory.push({itemId: itemId, quantity: 1, def: itemDef}); }
 
       let selectedItemForModal = null; let isSelectedItemEquipped = false;
       window.openItemModal = function(item, isEquipped, slotName = null) {
           if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
           selectedItemForModal = { ...item, slot: slotName }; isSelectedItemEquipped = isEquipped;
-          let cleanName = item.def ? item.def.name : item.itemId.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-          document.getElementById('modal-item-name').innerText = cleanName;
-          
+          let cleanName = item.def ? item.def.name : item.itemId.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()); document.getElementById('modal-item-name').innerText = cleanName;
           let statsText = `<b>Classification:</b> ${item.def ? item.def.type : 'Unknown Object'}<br><br>`;
           if (item.def) {
               if (parseInt(item.def.hp) !== 0) statsText += `❤️ Vitality: <b style="color:#60a5fa">${item.def.hp > 0 ? '+'+item.def.hp : item.def.hp}</b><br>`;
@@ -452,7 +420,9 @@
           
           if (def && def.type === 'Consumable') {
               localRemoveInv(selectedItemForModal.itemId);
-              let heal = parseInt(def.hp || 20); localChar.stats.hp = Math.min(localChar.stats.maxHp, localChar.stats.hp + heal);
+              let heal = parseInt(def.hp || 20); 
+              let effMaxHp = localChar.stats.maxHp + localChar.equipBonuses.hp;
+              localChar.stats.hp = Math.min(effMaxHp, localChar.stats.hp + heal);
               actionQueue.push({ action: 'use_item', payload: { charName: localChar.profile.name, itemId: selectedItemForModal.itemId } });
           } else {
               if (def && def.type === 'Weapon2H' && localChar.equipped['Shield']) return tg.showAlert("You must unequip your Shield to wield a 2H Weapon.");
@@ -471,22 +441,15 @@
           closeModal(); let slot = selectedItemForModal.slot; let def = localChar.equipped[slot];
           delete localChar.equipped[slot]; localAddInv(def.id, def); 
           recomputeEquipBonuses(); 
+          let effMaxHp = localChar.stats.maxHp + localChar.equipBonuses.hp;
+          if (localChar.stats.hp > effMaxHp) localChar.stats.hp = effMaxHp;
           actionQueue.push({ action: 'unequip_item', payload: { charName: localChar.profile.name, slot: slot } });
           renderLocalUI();
       };
       
-      document.getElementById('btn-modal-discard').onclick = () => { 
-          closeModal(); localRemoveInv(selectedItemForModal.itemId);
-          actionQueue.push({ action: 'discard_item', payload: { charName: localChar.profile.name, itemId: selectedItemForModal.itemId } });
-          renderLocalUI();
-      };
+      document.getElementById('btn-modal-discard').onclick = () => { closeModal(); localRemoveInv(selectedItemForModal.itemId); actionQueue.push({ action: 'discard_item', payload: { charName: localChar.profile.name, itemId: selectedItemForModal.itemId } }); renderLocalUI(); };
       
-      document.getElementById('btn-modal-trade').onclick = () => { 
-          closeModal(); let sel = document.getElementById('modal-trade-select'); let tId = sel.value; let tName = sel.options[sel.selectedIndex].text;
-          localRemoveInv(selectedItemForModal.itemId);
-          actionQueue.push({ action: 'trade_item', payload: { senderChar: localChar.profile.name, targetId: tId, targetChar: tName, itemId: selectedItemForModal.itemId } });
-          renderLocalUI();
-      };
+      document.getElementById('btn-modal-trade').onclick = () => { closeModal(); let sel = document.getElementById('modal-trade-select'); let tId = sel.value; let tName = sel.options[sel.selectedIndex].text; localRemoveInv(selectedItemForModal.itemId); actionQueue.push({ action: 'trade_item', payload: { senderChar: localChar.profile.name, targetId: tId, targetChar: tName, itemId: selectedItemForModal.itemId } }); renderLocalUI(); };
 
       window.applyOptimisticChanges = async function() {
           document.getElementById('action-bar-container').style.display = 'none';
@@ -495,13 +458,8 @@
           try {
               let statTotal = pendingStats.hp + pendingStats.str + pendingStats.dex + pendingStats.int;
               if (statTotal > 0) { await fetchAsync('allocate_stats', { charName: localChar.profile.name, stats: pendingStats }); }
-              
-              for (const [sId, levels] of Object.entries(pendingSkills)) {
-                  if (levels > 0) { await fetchAsync('upgrade_skill', { charName: localChar.profile.name, skillId: sId, levels: levels }); }
-              }
-              
+              for (const [sId, levels] of Object.entries(pendingSkills)) { if (levels > 0) { await fetchAsync('upgrade_skill', { charName: localChar.profile.name, skillId: sId, levels: levels }); } }
               for (let task of actionQueue) { await fetchAsync(task.action, task.payload); }
-              
               if(tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
               fetchCharacterData(); 
           } catch(e) { tg.showAlert("Sync Error: " + e.message); fetchCharacterData(); }
@@ -516,41 +474,21 @@
       function renderCharacterSheetLocal() {
         const char = localChar.profile; const stats = localChar.stats; const eqB = localChar.equipBonuses;
         
-        document.getElementById('hero-name').innerText = `Lv.${char.level} ${char.className}`; 
-        document.getElementById('gold-display').innerText = `🪙 ${char.gold}`;
-        document.getElementById('stat-hp').innerText = `${stats.hp}/${stats.maxHp + eqB.hp}`;
-        document.getElementById('stat-mp-display').innerText = `🔹 MANA RESERVES: ${stats.mp}/${stats.maxMp}`;
+        document.getElementById('hero-name').innerText = `Lv.${char.level} ${char.className}`; document.getElementById('gold-display').innerText = `🪙 ${char.gold}`;
+        document.getElementById('stat-hp').innerText = `${stats.hp}/${stats.maxHp + eqB.hp}`; document.getElementById('stat-mp-display').innerText = `🔹 MANA RESERVES: ${stats.mp}/${stats.maxMp}`;
         
         document.getElementById('stat-str').innerText = stats.str; document.getElementById('bonus-str').innerText = eqB.str > 0 ? `+${eqB.str}` : (eqB.str < 0 ? eqB.str : "");
         document.getElementById('stat-dex').innerText = stats.dex; document.getElementById('bonus-dex').innerText = eqB.dex > 0 ? `+${eqB.dex}` : (eqB.dex < 0 ? eqB.dex : "");
         document.getElementById('stat-int').innerText = stats.int; document.getElementById('bonus-int').innerText = eqB.int > 0 ? `+${eqB.int}` : (eqB.int < 0 ? eqB.int : "");
 
         const hasPoints = localChar.profile.statPoints > 0;
-        document.getElementById('stat-points-banner').style.display = hasPoints ? "block" : "none";
-        document.getElementById('avail-points').innerText = localChar.profile.statPoints;
+        document.getElementById('stat-points-banner').style.display = hasPoints ? "block" : "none"; document.getElementById('avail-points').innerText = localChar.profile.statPoints;
         document.querySelectorAll('.stat-controls').forEach(btn => btn.style.display = (hasPoints || pendingStats.hp > 0 || pendingStats.str > 0 || pendingStats.dex > 0 || pendingStats.int > 0) ? "flex" : "none");
-        
         ['hp', 'str', 'dex', 'int'].forEach(s => { let el = document.getElementById(`pend-${s}`); if(pendingStats[s] > 0) { el.innerText = `+${s==='hp'?pendingStats[s]*5:pendingStats[s]}`; el.style.display = "block"; } else el.style.display = "none"; });
 
         const slots = ["Amulet", "Head", "Cape", "Weapon", "Upper", "Shield", "Ring1", "Lower", "Ring2", "Boots"];
-        slots.forEach(slot => { 
-            const el = document.getElementById(`eq-${slot}`); 
-            if (el) { 
-                el.src = ""; 
-                el.style.display = "none"; 
-                el.parentElement.classList.remove('filled'); 
-                el.parentElement.onclick = null; 
-            } 
-        }); 
-        for (const [slot, item] of Object.entries(localChar.equipped)) {
-          const el = document.getElementById(`eq-${slot}`);
-          if (el) { 
-              el.src = item.img || ""; 
-              el.style.display = "block"; 
-              el.parentElement.classList.add('filled'); 
-              el.parentElement.onclick = () => openItemModal({ itemId: item.id, def: item }, true, slot); 
-          }
-        }
+        slots.forEach(slot => { const el = document.getElementById(`eq-${slot}`); if (el) { el.src = ""; el.style.display = "none"; el.parentElement.classList.remove('filled'); el.parentElement.onclick = null; } }); 
+        for (const [slot, item] of Object.entries(localChar.equipped)) { const el = document.getElementById(`eq-${slot}`); if (el) { el.src = item.img || ""; el.style.display = "block"; el.parentElement.classList.add('filled'); el.parentElement.onclick = () => openItemModal({ itemId: item.id, def: item }, true, slot); } }
 
         const grid = document.getElementById('inventory-grid'); grid.innerHTML = '';
         localChar.inventory.forEach(item => {
@@ -562,40 +500,23 @@
       }
 
       function renderSkillsTabLocal() {
-          const hasSp = localChar.profile.skillPoints > 0;
-          document.getElementById('skill-points-banner').style.display = hasSp ? "block" : "none";
-          document.getElementById('avail-skill-points').innerText = localChar.profile.skillPoints;
-          
+          const hasSp = localChar.profile.skillPoints > 0; document.getElementById('skill-points-banner').style.display = hasSp ? "block" : "none"; document.getElementById('avail-skill-points').innerText = localChar.profile.skillPoints;
           const list = document.getElementById('skills-list'); list.innerHTML = "";
-          
           let myClassSkills = globalSkills.filter(s => s.class === localChar.profile.className);
           myClassSkills.forEach(sDef => {
-              let isLocked = localChar.profile.level < sDef.unlock;
-              let currentLv = localChar.skillLevels[sDef.id] || 0;
-              let pLv = pendingSkills[sDef.id] || 0;
-              let desc = effectDescriptions[sDef.type] || "A mysterious magical effect.";
+              let isLocked = localChar.profile.level < sDef.unlock; let currentLv = localChar.skillLevels[sDef.id] || 0; let pLv = pendingSkills[sDef.id] || 0;
+              let desc = getSkillEffectText(sDef.type, currentLv);
               
               let controlHtml = "";
-              if (isLocked) {
-                  controlHtml = `<div class="lock-text">🔒 Unlocks at Lv. ${sDef.unlock}</div>`;
-              } else {
+              if (isLocked) { controlHtml = `<div class="lock-text">🔒 Unlocks at Lv. ${sDef.unlock}</div>`; } 
+              else {
                   let plusBtn = (hasSp && currentLv < 5) ? `<button class="stat-btn btn-plus" onclick="modifySkillLocally('${sDef.id}', 1)">+</button>` : `<div style="width:28px;"></div>`;
                   let minusBtn = (pLv > 0) ? `<button class="stat-btn btn-minus" onclick="modifySkillLocally('${sDef.id}', -1)">-</button>` : `<div style="width:28px;"></div>`;
                   controlHtml = `<div style="display:flex; align-items:center; gap:12px;">${minusBtn}<span class="skill-level-text">Mastery ${currentLv} / 5</span>${plusBtn}</div>`;
               }
-
-              list.innerHTML += `
-              <div class="skill-card ${isLocked ? 'locked' : ''}">
-                  <div class="skill-header">
-                      <div class="skill-title">✨ ${sDef.name}</div>
-                      <div class="skill-cost">${sDef.cost} MP</div>
-                  </div>
-                  <div class="skill-desc">${desc}</div>
-                  <div class="skill-controls">${controlHtml}</div>
-              </div>`;
+              list.innerHTML += `<div class="skill-card ${isLocked ? 'locked' : ''}"><div class="skill-header"><div class="skill-title">✨ ${sDef.name}</div><div class="skill-cost">${sDef.cost} MP</div></div><div class="skill-desc">${desc}</div><div class="skill-controls">${controlHtml}</div></div>`;
           });
       }
-
       fetchCharacterData();
     });
   </script>

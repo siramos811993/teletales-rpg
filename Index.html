@@ -37,7 +37,6 @@
     .play-btn { background: #10b981; }
     .del-btn { background: #ef4444; }
 
-    /* Minimalist Equipment Grid */
     .equipment-container { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; justify-items: center; align-items: center; background: #ffffff; padding: 20px; border-radius: 16px; margin-bottom: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
     .eq-slot { width: 72px; height: 72px; border: 1px dashed #cbd5e1; border-radius: 12px; background: #f8fafc; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; cursor: pointer; transition: all 0.2s; }
     .eq-slot.filled { border-style: solid; border-color: #3b82f6; background: #eff6ff; }
@@ -49,7 +48,6 @@
     .slot-ring1 { grid-column: 1; grid-row: 3; } .slot-lower { grid-column: 2; grid-row: 3; } .slot-ring2 { grid-column: 3; grid-row: 3; }
     .slot-boots { grid-column: 2; grid-row: 4; }
 
-    /* Modern Stats Grid */
     .stats-container { background: #ffffff; padding: 16px; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); margin-bottom: 24px; }
     .stat-points-banner { background: #fffbeb; color: #d97706; text-align: center; padding: 10px; border-radius: 8px; font-weight: 600; margin-bottom: 16px; font-size: 13px; display: none; border: 1px solid #fde68a; }
     .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
@@ -62,13 +60,11 @@
     .stat-btn { width: 24px; height: 24px; border-radius: 6px; border: none; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer; }
     .btn-plus { background: #3b82f6; color: white; } .btn-minus { background: #e2e8f0; color: #64748b; }
 
-    /* Inventory */
     .inventory-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 12px; }
     .inventory-slot { aspect-ratio: 1; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; display: flex; align-items: center; justify-content: center; position: relative; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
     .inventory-slot img { width: 70%; height: 70%; object-fit: contain; }
     .qty-badge { position: absolute; bottom: -4px; right: -4px; background: #3b82f6; color: #fff; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 6px; border: 2px solid #ffffff; }
     
-    /* Skills */
     .skill-card { background: #ffffff; border-radius: 16px; padding: 16px; margin-bottom: 12px; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
     .skill-card.locked { opacity: 0.6; filter: grayscale(1); }
     .skill-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
@@ -85,11 +81,9 @@
     .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: #94a3b8; font-size: 12px; font-weight: 500; cursor: pointer; transition: color 0.2s; }
     .nav-item.active { color: #3b82f6; }
 
-    /* Floating Action Bar */
     #apply-bar { display: none; position: fixed; bottom: 85px; left: 20px; right: 20px; background: #10b981; color: white; padding: 14px; border-radius: 12px; text-align: center; font-weight: bold; font-size: 16px; cursor: pointer; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4); z-index: 60; transition: transform 0.2s; }
     #apply-bar:active { transform: scale(0.98); }
 
-    /* Item Details Modal */
     .modal-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); display:none; justify-content:center; align-items:center; z-index:100; }
     .modal-content { background:#ffffff; padding:24px; border-radius:20px; width:85%; max-width:320px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; }
     .modal-title { font-size:20px; font-weight:800; color:#1e293b; margin-bottom:6px; }
@@ -135,7 +129,6 @@
     </div>
   </div>
 
-  <!-- Main Gear Sheet -->
   <div id="sheet-screen" class="screen">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
         <h1 id="hero-name" style="font-size: 20px; font-weight: 800; color: #0f172a;">-</h1>
@@ -170,7 +163,6 @@
     <div class="inventory-grid" id="inventory-grid"></div>
   </div>
 
-  <!-- Skills Sheet -->
   <div id="skills-screen" class="screen">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
         <h1 style="font-size: 20px; font-weight: 800; color: #0f172a;">Combat Skills</h1>
@@ -187,7 +179,6 @@
     <div class="nav-item" onclick="handleRosterClick()"><div class="nav-icon" style="font-size: 18px;">👥</div><span>Roster</span></div>
   </div>
 
-  <!-- Item Modal -->
   <div id="item-modal" class="modal-overlay">
     <div class="modal-content">
        <div class="modal-title" id="modal-item-name">Item Name</div>
@@ -209,15 +200,14 @@
       const GAS_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycby_adXdcF6rtxVdLZ3pesHHDGQPmDI6viSuyCqezp1b87KEH5OkeZHTBM-jCEsJ0ryWgA/exec";
       
       let allCharacters = []; 
-      let activeCharRaw = null; // Truth from server
-      let localChar = null;     // Local optimistic state
+      let activeCharRaw = null; 
+      let localChar = null;     
       let globalSkills = []; 
       window.partyMembers = [];
       
-      // OPTIMISTIC UI QUEUES
       let pendingStats = { hp: 0, str: 0, dex: 0, int: 0 };
-      let pendingSkills = {}; // { skillId: levelsToAdd }
-      let actionQueue = []; // [{action: 'equip_item', payload: {...}}]
+      let pendingSkills = {}; 
+      let actionQueue = []; 
 
       window.onerror = function(message, source, lineno) { debugLog.style.display = "block"; debugLog.innerText += `\nCRASH: ${message} (Line ${lineno})`; return true; };
 
@@ -233,7 +223,6 @@
           "REVIVE": "Revives a fallen party member."
       };
 
-      // --- NAVIGATION ---
       window.switchScreen = function(screenId) {
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active-screen'));
         document.getElementById(screenId).classList.add('active-screen');
@@ -253,7 +242,6 @@
           switchScreen('selection-screen');
       }
 
-      // --- DATA FETCHING ---
       function fetchCharacterData() {
         switchScreen('loading-screen');
         document.getElementById('loading-text').innerText = "Syncing Realm Data...";
@@ -306,9 +294,8 @@
 
       window.confirmDelete = function(charName) { tg.showConfirm(`Permanently delete ${charName}?`, function(confirmed) { if (confirmed) { switchScreen('loading-screen'); fetch(GAS_WEBHOOK_URL, { method: 'POST', redirect: 'follow', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ initData: tg.initData, action: 'delete_character', charName: charName }) }).then(()=>fetchCharacterData()); } }); }
 
-      // --- OPTIMISTIC UI STATE MANAGEMENT ---
       function resetLocalState() {
-          localChar = JSON.parse(JSON.stringify(activeCharRaw)); // Deep clone
+          localChar = JSON.parse(JSON.stringify(activeCharRaw));
           pendingStats = { hp: 0, str: 0, dex: 0, int: 0 };
           pendingSkills = {};
           actionQueue = [];
@@ -338,7 +325,6 @@
           updateApplyBanner();
       }
 
-      // --- LOCAL DATA MUTATORS ---
       window.modifyStatLocally = function(stat, amount) {
           if (amount > 0 && localChar.profile.statPoints <= 0) return;
           if (amount < 0 && pendingStats[stat] <= 0) return;
@@ -386,7 +372,6 @@
           if(existing) existing.quantity++; else localChar.inventory.push({itemId: itemId, quantity: 1, def: itemDef});
       }
 
-      // Modal Handlers (Optimistic)
       let selectedItemForModal = null; let isSelectedItemEquipped = false;
       window.openItemModal = function(item, isEquipped, slotName = null) {
           if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
@@ -425,22 +410,28 @@
               if (def && def.type === 'Shield' && localChar.equipped['Weapon'] && localChar.equipped['Weapon'].type === 'Weapon2H') return tg.showAlert("Unequip 2H Weapon first.");
               localRemoveInv(selectedItemForModal.itemId);
               if (localChar.equipped[tSlot]) localAddInv(localChar.equipped[tSlot].id, localChar.equipped[tSlot]);
-              localChar.equipped[tSlot] = def; recomputeBonuses();
+              
+              localChar.equipped[tSlot] = Object.assign({}, def, { id: selectedItemForModal.itemId }); 
+              recomputeEquipBonuses(); 
               actionQueue.push({ action: 'equip_item', payload: { charName: localChar.profile.name, itemId: selectedItemForModal.itemId, targetSlot: tSlot } });
           }
           renderLocalUI();
       };
+      
       document.getElementById('btn-modal-unequip').onclick = () => { 
           closeModal(); let slot = selectedItemForModal.slot; let def = localChar.equipped[slot];
-          delete localChar.equipped[slot]; localAddInv(def.id, def); recomputeBonuses();
+          delete localChar.equipped[slot]; localAddInv(def.id, def); 
+          recomputeEquipBonuses(); 
           actionQueue.push({ action: 'unequip_item', payload: { charName: localChar.profile.name, slot: slot } });
           renderLocalUI();
       };
+      
       document.getElementById('btn-modal-discard').onclick = () => { 
           closeModal(); localRemoveInv(selectedItemForModal.itemId);
           actionQueue.push({ action: 'discard_item', payload: { charName: localChar.profile.name, itemId: selectedItemForModal.itemId } });
           renderLocalUI();
       };
+      
       document.getElementById('btn-modal-trade').onclick = () => { 
           closeModal(); let sel = document.getElementById('modal-trade-select'); let tId = sel.value; let tName = sel.options[sel.selectedIndex].text;
           localRemoveInv(selectedItemForModal.itemId);
@@ -448,7 +439,6 @@
           renderLocalUI();
       };
 
-      // --- BATCH SYNC TO SERVER ---
       window.applyOptimisticChanges = async function() {
           switchScreen('loading-screen');
           document.getElementById('loading-text').innerText = "Forging Updates...";
@@ -463,7 +453,7 @@
               for (let task of actionQueue) { await fetchAsync(task.action, task.payload); }
               
               if(tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
-              fetchCharacterData(); // Reload truth
+              fetchCharacterData(); 
           } catch(e) { tg.showAlert("Sync Error: " + e.message); fetchCharacterData(); }
       }
 
@@ -473,7 +463,6 @@
           return await res.json();
       }
 
-      // --- RENDERING LOCAL UI ---
       function renderCharacterSheetLocal() {
         const char = localChar.profile; const stats = localChar.stats; const eqB = localChar.equipBonuses;
         

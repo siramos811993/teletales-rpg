@@ -32,7 +32,6 @@
     .spinner { border: 3px solid rgba(255, 255, 255, 0.1); width: 44px; height: 44px; border-radius: 50%; border-left-color: var(--accent-primary); animation: spin 1s cubic-bezier(0.4, 0, 0.2, 1) infinite; margin: 0 auto; }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-    /* Cards & Containers */
     .form-box, .char-card, .equipment-container, .stats-container, .skill-card { 
       background: var(--bg-surface); 
       border-radius: 20px; 
@@ -48,12 +47,10 @@
     .input-group input, .input-group select { padding: 14px; border-radius: 12px; border: 1px solid var(--bg-surface-elevated); background: rgba(0,0,0,0.2); color: var(--text-primary); font-size: 16px; outline: none; transition: all 0.3s; }
     .input-group input:focus, .input-group select:focus { border-color: var(--accent-primary); box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2); }
     
-    /* Buttons */
     .primary-btn { width: 100%; padding: 16px; background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary)); color: #fff; border: none; border-radius: 14px; font-size: 16px; font-weight: 700; cursor: pointer; margin-top: 8px; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4); }
     .primary-btn:active { transform: scale(0.98); box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3); }
     .secondary-btn { background: var(--bg-surface-elevated); box-shadow: none; color: var(--text-primary); margin-top: 16px; }
     
-    /* Character List */
     .char-card { padding: 18px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; transition: transform 0.2s; }
     .char-card:active { transform: scale(0.98); }
     .char-card-info { flex: 1; }
@@ -65,12 +62,10 @@
     .del-btn { background: var(--bg-surface-elevated); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.2); }
     .action-icon:active { opacity: 0.8; }
 
-    /* Header Elements */
     .hero-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
     .hero-title { font-size: 22px; font-weight: 800; color: var(--text-primary); line-height: 1.2; }
     .gold-badge { color: #fbbf24; font-weight: 700; background: rgba(245, 158, 11, 0.1); padding: 6px 12px; border-radius: 20px; font-size: 14px; border: 1px solid rgba(245, 158, 11, 0.2); backdrop-filter: blur(4px); }
 
-    /* Stats Grid */
     .stats-container { padding: 20px; margin-bottom: 24px; }
     .stat-points-banner { background: rgba(245, 158, 11, 0.1); color: #fbbf24; text-align: center; padding: 12px; border-radius: 12px; font-weight: 600; margin-bottom: 18px; font-size: 14px; display: none; border: 1px solid rgba(245, 158, 11, 0.2); }
     .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
@@ -85,11 +80,11 @@
     .btn-minus { background: var(--bg-surface-elevated); color: var(--text-secondary); }
     .mp-display { text-align: center; margin-top: 16px; font-size: 14px; font-weight: 700; color: #60a5fa; background: rgba(59, 130, 246, 0.1); padding: 8px; border-radius: 10px; border: 1px solid rgba(59, 130, 246, 0.2); }
 
-    /* Equipment Grid */
-    .equipment-container { padding: 24px; }
+    /* FIXED EQUIPMENT GRID */
+    .equipment-container { padding: 24px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; justify-items: center; align-items: center; }
     .eq-slot { width: 76px; height: 76px; border: 1px dashed var(--bg-surface-elevated); border-radius: 16px; background: rgba(0,0,0,0.15); display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
     .eq-slot.filled { border-style: solid; border-color: rgba(99, 102, 241, 0.4); background: rgba(99, 102, 241, 0.05); box-shadow: inset 0 0 20px rgba(99, 102, 241, 0.1); }
-    .eq-slot img { width: 70%; height: 70%; object-fit: contain; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.4)); }
+    .eq-slot img { width: 70%; height: 70%; object-fit: contain; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.4)); display: none; } /* Hidden by default to prevent broken image icons */
     .eq-label { position: absolute; bottom: -10px; background: var(--bg-surface-elevated); font-size: 10px; padding: 3px 8px; border-radius: 8px; border: 1px solid var(--border-color); color: var(--text-primary); font-weight: 700; z-index: 2; box-shadow: 0 4px 6px rgba(0,0,0,0.2); letter-spacing: 0.3px; }
     
     .slot-amulet { grid-column: 1; grid-row: 1; } .slot-head { grid-column: 2; grid-row: 1; } .slot-cape { grid-column: 3; grid-row: 1; }
@@ -97,7 +92,6 @@
     .slot-ring1 { grid-column: 1; grid-row: 3; } .slot-lower { grid-column: 2; grid-row: 3; } .slot-ring2 { grid-column: 3; grid-row: 3; }
     .slot-boots { grid-column: 2; grid-row: 4; }
 
-    /* Inventory */
     .section-header { font-size: 18px; color: var(--text-primary); font-weight: 800; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
     .inventory-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); gap: 14px; }
     .inventory-slot { aspect-ratio: 1; background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); border-radius: 16px; display: flex; align-items: center; justify-content: center; position: relative; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.1); transition: transform 0.2s; }
@@ -105,7 +99,6 @@
     .inventory-slot img { width: 70%; height: 70%; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3)); }
     .qty-badge { position: absolute; bottom: -6px; right: -6px; background: var(--accent-primary); color: #fff; font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 8px; border: 2px solid var(--bg-surface); box-shadow: 0 2px 6px rgba(0,0,0,0.3); }
     
-    /* Skills */
     .skill-card { padding: 20px; margin-bottom: 16px; display: flex; flex-direction: column; gap: 12px; }
     .skill-card.locked { opacity: 0.5; filter: grayscale(1); }
     .skill-header { display: flex; justify-content: space-between; align-items: center; }
@@ -116,23 +109,19 @@
     .skill-level-text { font-size: 14px; font-weight: 800; color: var(--text-primary); }
     .lock-text { font-size: 13px; font-weight: 700; color: var(--danger); display: flex; align-items: center; gap: 6px; }
 
-    /* The Fix for the Apply Bar overlap */
-    #sheet-screen, #skills-screen { 
-      padding-top: calc(var(--tg-safe-area-inset-top, 0px) + 20px); 
-      padding-bottom: calc(var(--tg-safe-area-inset-bottom, 0px) + 160px); 
-    }
+    #sheet-screen, #skills-screen { padding-top: calc(var(--tg-safe-area-inset-top, 0px) + 20px); padding-bottom: calc(var(--tg-safe-area-inset-bottom, 0px) + 180px); }
     
-    /* Glassmorphism Bottom Nav */
     .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(30, 41, 59, 0.85); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); display: none; justify-content: space-around; padding-bottom: calc(var(--tg-safe-area-inset-bottom, 0px) + 20px); padding-top: 16px; border-top: 1px solid var(--border-color); z-index: 50; box-shadow: 0 -10px 30px rgba(0,0,0,0.3); }
     .nav-item { display: flex; flex-direction: column; align-items: center; gap: 6px; color: var(--text-secondary); font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.3s; opacity: 0.7; }
     .nav-item.active { color: var(--accent-primary); opacity: 1; transform: translateY(-2px); }
     .nav-icon { font-size: 22px; margin-bottom: 2px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2)); }
 
-    /* Floating Action Bar */
-    #apply-bar { display: none; position: fixed; bottom: 100px; left: 24px; right: 24px; background: linear-gradient(135deg, var(--success), #059669); color: white; padding: 16px; border-radius: 16px; text-align: center; font-weight: 800; font-size: 16px; cursor: pointer; box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3); z-index: 60; transition: transform 0.2s; border: 1px solid rgba(255,255,255,0.1); letter-spacing: 0.5px;}
-    #apply-bar:active { transform: scale(0.96); }
+    /* NEW FLEX ACTION BAR */
+    #action-bar-container { display: none; position: fixed; bottom: 100px; left: 24px; right: 24px; gap: 12px; z-index: 60; }
+    #btn-reset { flex: 1; background: var(--bg-surface-elevated); color: var(--text-primary); padding: 16px; border-radius: 16px; text-align: center; font-weight: 800; font-size: 15px; cursor: pointer; border: 1px solid var(--border-color); box-shadow: 0 10px 25px rgba(0,0,0,0.3); transition: transform 0.2s; }
+    #btn-apply { flex: 2; background: linear-gradient(135deg, var(--success), #059669); color: white; padding: 16px; border-radius: 16px; text-align: center; font-weight: 800; font-size: 15px; cursor: pointer; box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3); transition: transform 0.2s; border: 1px solid rgba(255,255,255,0.1); letter-spacing: 0.5px; }
+    #btn-reset:active, #btn-apply:active { transform: scale(0.96); }
 
-    /* Modal Styling */
     .modal-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(15, 23, 42, 0.8); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); display:none; justify-content:center; align-items:center; z-index:100; opacity: 0; animation: fadeIn 0.2s forwards; }
     @keyframes fadeIn { to { opacity: 1; } }
     .modal-content { background: var(--bg-surface); padding: 28px; border-radius: 24px; width: 90%; max-width: 340px; box-shadow: 0 20px 40px rgba(0,0,0,0.4); text-align: center; border: 1px solid var(--border-color); transform: scale(0.95); animation: popIn 0.2s forwards cubic-bezier(0.175, 0.885, 0.32, 1.275); }
@@ -227,7 +216,11 @@
     <div id="skills-list"></div>
   </div>
 
-  <div id="apply-bar" onclick="applyOptimisticChanges()">💾 Apply Changes (<span id="queue-count">0</span>)</div>
+  <!-- Dual Action Buttons -->
+  <div id="action-bar-container">
+    <div id="btn-reset" onclick="resetLocalState()">🔄 Reset</div>
+    <div id="btn-apply" onclick="applyOptimisticChanges()">💾 Apply (<span id="queue-count">0</span>)</div>
+  </div>
 
   <div id="bottom-nav" class="bottom-nav">
     <div class="nav-item active" id="nav-gear" onclick="switchTab('sheet-screen')"><div class="nav-icon">🎒</div><span>Gear</span></div>
@@ -253,7 +246,7 @@
       const debugLog = document.getElementById('debug-log');
       const tg = window.Telegram.WebApp; tg.expand(); tg.ready();
       
-      const GAS_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbwswD62jtfSIc9AHKULMs_d2GlbNqPErKQSqw8nVncQOmFZExYWtacMbPx9nB_dBYKqag/exec"; // Ensure your correct webhook URL is here!
+      const GAS_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbwswD62jtfSIc9AHKULMs_d2GlbNqPErKQSqw8nVncQOmFZExYWtacMbPx9nB_dBYKqag/exec"; 
       
       let allCharacters = []; 
       let activeCharRaw = null; 
@@ -318,7 +311,7 @@
               if (activeCharRaw) {
                 activeCharRaw = allCharacters.find(c => c.profile.name === activeCharRaw.profile.name);
                 if (activeCharRaw) {
-                   resetLocalState();
+                   window.resetLocalState();
                    switchTab('sheet-screen'); 
                 }
               } else switchScreen('selection-screen'); 
@@ -344,13 +337,13 @@
       window.playCharacter = function(index) {
         if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
         activeCharRaw = allCharacters[index];
-        resetLocalState();
+        window.resetLocalState();
         switchTab('sheet-screen');
       }
 
       window.confirmDelete = function(charName) { tg.showConfirm(`Permanently sever ${charName} from the realm?`, function(confirmed) { if (confirmed) { switchScreen('loading-screen'); fetch(GAS_WEBHOOK_URL, { method: 'POST', redirect: 'follow', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ initData: tg.initData, action: 'delete_character', charName: charName }) }).then(()=>fetchCharacterData()); } }); }
 
-      function resetLocalState() {
+      window.resetLocalState = function() {
           localChar = JSON.parse(JSON.stringify(activeCharRaw));
           pendingStats = { hp: 0, str: 0, dex: 0, int: 0 };
           pendingSkills = {};
@@ -366,9 +359,9 @@
 
       function updateApplyBanner() {
           let total = getTotalPendingTasks();
-          const bar = document.getElementById('apply-bar');
+          const bar = document.getElementById('action-bar-container');
           if (total > 0) {
-              bar.style.display = 'block';
+              bar.style.display = 'flex';
               document.getElementById('queue-count').innerText = total;
           } else {
               bar.style.display = 'none';
@@ -496,6 +489,7 @@
       };
 
       window.applyOptimisticChanges = async function() {
+          document.getElementById('action-bar-container').style.display = 'none';
           switchScreen('loading-screen');
           document.getElementById('loading-text').innerText = "Committing Changes to Realm...";
           try {
@@ -539,10 +533,23 @@
         ['hp', 'str', 'dex', 'int'].forEach(s => { let el = document.getElementById(`pend-${s}`); if(pendingStats[s] > 0) { el.innerText = `+${s==='hp'?pendingStats[s]*5:pendingStats[s]}`; el.style.display = "block"; } else el.style.display = "none"; });
 
         const slots = ["Amulet", "Head", "Cape", "Weapon", "Upper", "Shield", "Ring1", "Lower", "Ring2", "Boots"];
-        slots.forEach(slot => { const el = document.getElementById(`eq-${slot}`); if (el) { el.src = ""; el.parentElement.classList.remove('filled'); el.parentElement.onclick = null; } }); 
+        slots.forEach(slot => { 
+            const el = document.getElementById(`eq-${slot}`); 
+            if (el) { 
+                el.src = ""; 
+                el.style.display = "none"; 
+                el.parentElement.classList.remove('filled'); 
+                el.parentElement.onclick = null; 
+            } 
+        }); 
         for (const [slot, item] of Object.entries(localChar.equipped)) {
           const el = document.getElementById(`eq-${slot}`);
-          if (el) { el.src = item.img || ""; el.parentElement.classList.add('filled'); el.parentElement.onclick = () => openItemModal({ itemId: item.id, def: item }, true, slot); }
+          if (el) { 
+              el.src = item.img || ""; 
+              el.style.display = "block"; 
+              el.parentElement.classList.add('filled'); 
+              el.parentElement.onclick = () => openItemModal({ itemId: item.id, def: item }, true, slot); 
+          }
         }
 
         const grid = document.getElementById('inventory-grid'); grid.innerHTML = '';

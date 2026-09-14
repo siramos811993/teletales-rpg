@@ -12,15 +12,17 @@
     .active-screen { display: flex; }
     
     #loading-screen { justify-content: center; align-items: center; text-align: center; }
-    #loading-text { color: #64748b; font-weight: 500; font-size: 18px; }
+    #loading-text { color: #64748b; font-weight: 500; font-size: 18px; margin-top: 10px; }
     #debug-log { margin-top: 20px; font-size: 11px; color: #d32f2f; background: #ffebee; padding: 10px; border-radius: 8px; font-family: monospace; word-wrap: break-word; text-align: left; display: none; }
     
+    .spinner { border: 4px solid rgba(0, 0, 0, 0.1); width: 40px; height: 40px; border-radius: 50%; border-left-color: #3b82f6; animation: spin 1s linear infinite; margin: 0 auto; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
     .form-box { background: #ffffff; padding: 24px; border-radius: 16px; box-shadow: 0 4px 16px rgba(0,0,0,0.05); }
     .form-title { font-size: 22px; margin-bottom: 20px; text-align: center; font-weight: 700; color: #1e293b; }
     .input-group { margin-bottom: 16px; display: flex; flex-direction: column; }
     .input-group label { font-size: 13px; margin-bottom: 6px; color: #64748b; font-weight: 500; }
     .input-group input, .input-group select { padding: 12px; border-radius: 10px; border: 1px solid #cbd5e1; background: #f8fafc; color: #334155; font-size: 16px; outline: none; transition: border 0.2s; }
-    .input-group input:focus, .input-group select:focus { border-color: #3b82f6; }
     
     .primary-btn { width: 100%; padding: 14px; background: #3b82f6; color: #fff; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 8px; transition: background 0.2s; }
     .primary-btn:active { background: #2563eb; }
@@ -42,33 +44,23 @@
     .eq-slot img { width: 70%; height: 70%; object-fit: contain; }
     .eq-label { position: absolute; bottom: -8px; background: #ffffff; font-size: 10px; padding: 2px 6px; border-radius: 6px; border: 1px solid #e2e8f0; color: #64748b; font-weight: 600; z-index: 2; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
     
-    .slot-amulet { grid-column: 1; grid-row: 1; }
-    .slot-head { grid-column: 2; grid-row: 1; }
-    .slot-cape { grid-column: 3; grid-row: 1; }
-    .slot-weapon { grid-column: 1; grid-row: 2; }
-    .slot-upper { grid-column: 2; grid-row: 2; }
-    .slot-shield { grid-column: 3; grid-row: 2; }
-    .slot-ring1 { grid-column: 1; grid-row: 3; }
-    .slot-lower { grid-column: 2; grid-row: 3; }
-    .slot-ring2 { grid-column: 3; grid-row: 3; }
+    .slot-amulet { grid-column: 1; grid-row: 1; } .slot-head { grid-column: 2; grid-row: 1; } .slot-cape { grid-column: 3; grid-row: 1; }
+    .slot-weapon { grid-column: 1; grid-row: 2; } .slot-upper { grid-column: 2; grid-row: 2; } .slot-shield { grid-column: 3; grid-row: 2; }
+    .slot-ring1 { grid-column: 1; grid-row: 3; } .slot-lower { grid-column: 2; grid-row: 3; } .slot-ring2 { grid-column: 3; grid-row: 3; }
     .slot-boots { grid-column: 2; grid-row: 4; }
 
-    /* Modern Stats Grid with Batching */
+    /* Modern Stats Grid */
     .stats-container { background: #ffffff; padding: 16px; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); margin-bottom: 24px; }
     .stat-points-banner { background: #fffbeb; color: #d97706; text-align: center; padding: 10px; border-radius: 8px; font-weight: 600; margin-bottom: 16px; font-size: 13px; display: none; border: 1px solid #fde68a; }
     .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
-    .stat-box { display: flex; flex-direction: column; align-items: center; padding: 12px 0; background: #f8fafc; border-radius: 12px; position: relative; }
+    .stat-box { display: flex; flex-direction: column; align-items: center; padding: 12px 0; background: #f8fafc; border-radius: 12px; position: relative; border: 1px solid #f1f5f9; }
     .stat-value { font-size: 18px; font-weight: 700; color: #0f172a; }
     .stat-pending { color: #10b981; font-size: 12px; font-weight: bold; position: absolute; top: 4px; right: 4px; display: none;}
     .stat-bonus { font-size: 11px; color: #3b82f6; font-weight: 600; min-height: 14px; margin-top: 2px;}
     .stat-label { font-size: 11px; color: #64748b; font-weight: 600; text-transform: uppercase; margin-top: 4px; }
-    
     .stat-controls { display: flex; gap: 8px; margin-top: 8px; display: none; }
     .stat-btn { width: 24px; height: 24px; border-radius: 6px; border: none; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer; }
-    .btn-plus { background: #3b82f6; color: white; }
-    .btn-minus { background: #e2e8f0; color: #64748b; }
-    
-    #btn-confirm-stats { background: #10b981; margin-top: 16px; display: none; }
+    .btn-plus { background: #3b82f6; color: white; } .btn-minus { background: #e2e8f0; color: #64748b; }
 
     /* Inventory */
     .inventory-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 12px; }
@@ -76,10 +68,26 @@
     .inventory-slot img { width: 70%; height: 70%; object-fit: contain; }
     .qty-badge { position: absolute; bottom: -4px; right: -4px; background: #3b82f6; color: #fff; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 6px; border: 2px solid #ffffff; }
     
-    #sheet-screen { padding-top: calc(var(--tg-safe-area-inset-top, 0px) + 16px); padding-bottom: calc(var(--tg-safe-area-inset-bottom, 0px) + 80px); }
+    /* Skills */
+    .skill-card { background: #ffffff; border-radius: 16px; padding: 16px; margin-bottom: 12px; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+    .skill-card.locked { opacity: 0.6; filter: grayscale(1); }
+    .skill-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .skill-title { font-weight: bold; font-size: 16px; color: #0f172a; }
+    .skill-cost { font-size: 12px; font-weight: 600; color: #3b82f6; background: #eff6ff; padding: 2px 8px; border-radius: 10px; }
+    .skill-desc { font-size: 13px; color: #64748b; margin-bottom: 12px; line-height: 1.4; }
+    .skill-controls { display: flex; align-items: center; justify-content: space-between; background: #f8fafc; padding: 8px 12px; border-radius: 10px; }
+    .skill-level-text { font-size: 13px; font-weight: bold; color: #0f172a; }
+    .lock-text { font-size: 12px; font-weight: bold; color: #ef4444; }
+
+    #sheet-screen, #skills-screen { padding-top: calc(var(--tg-safe-area-inset-top, 0px) + 16px); padding-bottom: calc(var(--tg-safe-area-inset-bottom, 0px) + 100px); }
+    
     .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: #ffffff; display: none; justify-content: space-around; padding-bottom: 20px; padding-top: 12px; border-top: 1px solid #e2e8f0; box-shadow: 0 -4px 12px rgba(0,0,0,0.03); z-index: 50; }
-    .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: #94a3b8; font-size: 12px; font-weight: 500; cursor: pointer; }
+    .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: #94a3b8; font-size: 12px; font-weight: 500; cursor: pointer; transition: color 0.2s; }
     .nav-item.active { color: #3b82f6; }
+
+    /* Floating Action Bar */
+    #apply-bar { display: none; position: fixed; bottom: 85px; left: 20px; right: 20px; background: #10b981; color: white; padding: 14px; border-radius: 12px; text-align: center; font-weight: bold; font-size: 16px; cursor: pointer; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4); z-index: 60; transition: transform 0.2s; }
+    #apply-bar:active { transform: scale(0.98); }
 
     /* Item Details Modal */
     .modal-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); display:none; justify-content:center; align-items:center; z-index:100; }
@@ -88,17 +96,14 @@
     .modal-stats { font-size:14px; color:#475569; margin-bottom:20px; line-height:1.6; background: #f8fafc; padding: 16px; border-radius: 12px; border: 1px solid #f1f5f9; text-align: left; }
     .modal-btn { width:100%; padding:14px; margin-bottom:10px; border-radius:12px; font-weight:700; font-size: 15px; cursor:pointer; border:none; transition: opacity 0.2s; }
     .modal-btn:active { opacity: 0.8; }
-    .btn-equip { background:#10b981; color:#fff; }
-    .btn-unequip { background:#f59e0b; color:#fff; }
-    .btn-discard { background:#ef4444; color:#fff; }
-    .btn-trade { background:#3b82f6; color:#fff; }
-    .btn-close { background:#e2e8f0; color:#475569; margin-bottom:0; }
+    .btn-equip { background:#10b981; color:#fff; } .btn-unequip { background:#f59e0b; color:#fff; } .btn-discard { background:#ef4444; color:#fff; } .btn-trade { background:#3b82f6; color:#fff; } .btn-close { background:#e2e8f0; color:#475569; margin-bottom:0; }
     .trade-dropdown { padding: 12px; border-radius: 10px; border: 1px solid #cbd5e1; background: #f8fafc; color: #1e293b; font-weight: 500; width: 100%; margin-bottom: 10px; outline: none; }
   </style>
 </head>
 <body>
 
   <div id="loading-screen" class="screen active-screen">
+    <div class="spinner"></div>
     <h2 id="loading-text">Syncing Realm Data...</h2>
     <div id="debug-log"></div>
   </div>
@@ -120,9 +125,9 @@
       <div class="input-group">
         <label>Class Lineage</label>
         <select id="input-class">
-          <option value="Warrior">Warrior (High HP & Strength)</option>
-          <option value="Rogue">Rogue (High Dexterity)</option>
-          <option value="Mage">Mage (High Intelligence)</option>
+          <option value="Warrior">Warrior (High HP & STR)</option>
+          <option value="Rogue">Rogue (High DEX & Evasion)</option>
+          <option value="Mage">Mage (High INT & Magic)</option>
         </select>
       </div>
       <button class="primary-btn" onclick="submitCharacter()">Create Hero</button>
@@ -130,6 +135,7 @@
     </div>
   </div>
 
+  <!-- Main Gear Sheet -->
   <div id="sheet-screen" class="screen">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
         <h1 id="hero-name" style="font-size: 20px; font-weight: 800; color: #0f172a;">-</h1>
@@ -138,53 +144,25 @@
     
     <div class="stats-container">
         <div id="stat-points-banner" class="stat-points-banner">You have <span id="avail-points">0</span> Attribute Points!</div>
-        
         <div class="stats-grid">
-          <div class="stat-box">
-            <div class="stat-value" id="stat-hp">-</div>
-            <div class="stat-pending" id="pend-hp"></div>
-            <div class="stat-bonus" id="bonus-hp"></div>
-            <div class="stat-label">HP</div>
-            <div class="stat-controls"><button class="stat-btn btn-minus" onclick="modifyStat('hp', -1)">-</button><button class="stat-btn btn-plus" onclick="modifyStat('hp', 1)">+</button></div>
-          </div>
-          <div class="stat-box">
-            <div class="stat-value" id="stat-str">-</div>
-            <div class="stat-pending" id="pend-str"></div>
-            <div class="stat-bonus" id="bonus-str"></div>
-            <div class="stat-label">STR</div>
-            <div class="stat-controls"><button class="stat-btn btn-minus" onclick="modifyStat('str', -1)">-</button><button class="stat-btn btn-plus" onclick="modifyStat('str', 1)">+</button></div>
-          </div>
-          <div class="stat-box">
-            <div class="stat-value" id="stat-dex">-</div>
-            <div class="stat-pending" id="pend-dex"></div>
-            <div class="stat-bonus" id="bonus-dex"></div>
-            <div class="stat-label">DEX</div>
-            <div class="stat-controls"><button class="stat-btn btn-minus" onclick="modifyStat('dex', -1)">-</button><button class="stat-btn btn-plus" onclick="modifyStat('dex', 1)">+</button></div>
-          </div>
-          <div class="stat-box">
-            <div class="stat-value" id="stat-int">-</div>
-            <div class="stat-pending" id="pend-int"></div>
-            <div class="stat-bonus" id="bonus-int"></div>
-            <div class="stat-label">INT</div>
-            <div class="stat-controls"><button class="stat-btn btn-minus" onclick="modifyStat('int', -1)">-</button><button class="stat-btn btn-plus" onclick="modifyStat('int', 1)">+</button></div>
-          </div>
+          <div class="stat-box"><div class="stat-value" id="stat-hp">-</div><div class="stat-pending" id="pend-hp"></div><div class="stat-bonus" id="bonus-hp"></div><div class="stat-label">HP</div><div class="stat-controls"><button class="stat-btn btn-minus" onclick="modifyStatLocally('hp', -1)">-</button><button class="stat-btn btn-plus" onclick="modifyStatLocally('hp', 1)">+</button></div></div>
+          <div class="stat-box"><div class="stat-value" id="stat-str">-</div><div class="stat-pending" id="pend-str"></div><div class="stat-bonus" id="bonus-str"></div><div class="stat-label">STR</div><div class="stat-controls"><button class="stat-btn btn-minus" onclick="modifyStatLocally('str', -1)">-</button><button class="stat-btn btn-plus" onclick="modifyStatLocally('str', 1)">+</button></div></div>
+          <div class="stat-box"><div class="stat-value" id="stat-dex">-</div><div class="stat-pending" id="pend-dex"></div><div class="stat-bonus" id="bonus-dex"></div><div class="stat-label">DEX</div><div class="stat-controls"><button class="stat-btn btn-minus" onclick="modifyStatLocally('dex', -1)">-</button><button class="stat-btn btn-plus" onclick="modifyStatLocally('dex', 1)">+</button></div></div>
+          <div class="stat-box"><div class="stat-value" id="stat-int">-</div><div class="stat-pending" id="pend-int"></div><div class="stat-bonus" id="bonus-int"></div><div class="stat-label">INT</div><div class="stat-controls"><button class="stat-btn btn-minus" onclick="modifyStatLocally('int', -1)">-</button><button class="stat-btn btn-plus" onclick="modifyStatLocally('int', 1)">+</button></div></div>
         </div>
-        <button id="btn-confirm-stats" class="primary-btn" onclick="confirmStats()">Confirm Allocations</button>
+        <div style="text-align: center; margin-top: 12px; font-size: 13px; font-weight: bold; color: #3b82f6;" id="stat-mp-display">🔹 MP: 0/0</div>
     </div>
 
     <div class="equipment-container">
       <div class="eq-slot slot-amulet"><div class="eq-label">Amulet</div><img id="eq-Amulet" src=""></div>
       <div class="eq-slot slot-head"><div class="eq-label">Head</div><img id="eq-Head" src=""></div>
       <div class="eq-slot slot-cape"><div class="eq-label">Cape</div><img id="eq-Cape" src=""></div>
-      
       <div class="eq-slot slot-weapon"><div class="eq-label">Weapon</div><img id="eq-Weapon" src=""></div>
       <div class="eq-slot slot-upper"><div class="eq-label">Chest</div><img id="eq-Upper" src=""></div>
       <div class="eq-slot slot-shield"><div class="eq-label">Shield</div><img id="eq-Shield" src=""></div>
-      
       <div class="eq-slot slot-ring1"><div class="eq-label">Ring 1</div><img id="eq-Ring1" src=""></div>
       <div class="eq-slot slot-lower"><div class="eq-label">Legs</div><img id="eq-Lower" src=""></div>
       <div class="eq-slot slot-ring2"><div class="eq-label">Ring 2</div><img id="eq-Ring2" src=""></div>
-      
       <div class="eq-slot slot-boots"><div class="eq-label">Feet</div><img id="eq-Boots" src=""></div>
     </div>
 
@@ -192,9 +170,21 @@
     <div class="inventory-grid" id="inventory-grid"></div>
   </div>
 
+  <!-- Skills Sheet -->
+  <div id="skills-screen" class="screen">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h1 style="font-size: 20px; font-weight: 800; color: #0f172a;">Combat Skills</h1>
+    </div>
+    <div id="skill-points-banner" class="stat-points-banner" style="display: none;">You have <span id="avail-skill-points">0</span> Skill Points!</div>
+    <div id="skills-list"></div>
+  </div>
+
+  <div id="apply-bar" onclick="applyOptimisticChanges()">💾 Apply Changes (<span id="queue-count">0</span>)</div>
+
   <div id="bottom-nav" class="bottom-nav">
-    <div class="nav-item active"><div class="nav-icon" style="font-size: 18px;">🎒</div><span>Gear</span></div>
-    <div class="nav-item" onclick="switchScreen('selection-screen')"><div class="nav-icon" style="font-size: 18px;">👥</div><span>Roster</span></div>
+    <div class="nav-item active" id="nav-gear" onclick="switchTab('sheet-screen')"><div class="nav-icon" style="font-size: 18px;">🎒</div><span>Gear</span></div>
+    <div class="nav-item" id="nav-skills" onclick="switchTab('skills-screen')"><div class="nav-icon" style="font-size: 18px;">✨</div><span>Skills</span></div>
+    <div class="nav-item" onclick="handleRosterClick()"><div class="nav-icon" style="font-size: 18px;">👥</div><span>Roster</span></div>
   </div>
 
   <!-- Item Modal -->
@@ -204,10 +194,8 @@
        <div class="modal-stats" id="modal-item-stats">Stats here</div>
        <button class="modal-btn btn-equip" id="btn-modal-equip" style="display:none;">Equip</button>
        <button class="modal-btn btn-unequip" id="btn-modal-unequip" style="display:none;">Unequip</button>
-       
        <select class="trade-dropdown" id="modal-trade-select" style="display:none;"></select>
        <button class="modal-btn btn-trade" id="btn-modal-trade" style="display:none;">Trade to Player</button>
-       
        <button class="modal-btn btn-discard" id="btn-modal-discard" style="display:none;">Discard</button>
        <button class="modal-btn btn-close" onclick="closeModal()">Close</button>
     </div>
@@ -219,26 +207,56 @@
       const tg = window.Telegram.WebApp; tg.expand(); tg.ready();
       
       const GAS_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycby_adXdcF6rtxVdLZ3pesHHDGQPmDI6viSuyCqezp1b87KEH5OkeZHTBM-jCEsJ0ryWgA/exec";
-      let allCharacters = []; let currentActiveChar = null; window.partyMembers = [];
       
-      // Batch Stat Logic Variables
-      let availablePoints = 0;
+      let allCharacters = []; 
+      let activeCharRaw = null; // Truth from server
+      let localChar = null;     // Local optimistic state
+      let globalSkills = []; 
+      window.partyMembers = [];
+      
+      // OPTIMISTIC UI QUEUES
       let pendingStats = { hp: 0, str: 0, dex: 0, int: 0 };
+      let pendingSkills = {}; // { skillId: levelsToAdd }
+      let actionQueue = []; // [{action: 'equip_item', payload: {...}}]
 
       window.onerror = function(message, source, lineno) { debugLog.style.display = "block"; debugLog.innerText += `\nCRASH: ${message} (Line ${lineno})`; return true; };
 
+      const effectDescriptions = {
+          "AGGRO": "Forces enemies to target you. Enhances defense.",
+          "BUFF_ATK": "Boosts party attack power.",
+          "PARTY_SHIELD": "Reduces incoming damage for the party.",
+          "FLEE_FORCE": "Guarantees escape from non-boss battles.",
+          "DEBUFF_AC": "Reduces enemy Armor Class.",
+          "DOT_POISON": "Poisons enemy, dealing damage over time.",
+          "HEAL_SINGLE": "Restores HP to a single ally.",
+          "HEAL_PARTY": "Restores HP to the entire party.",
+          "REVIVE": "Revives a fallen party member."
+      };
+
+      // --- NAVIGATION ---
       window.switchScreen = function(screenId) {
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active-screen'));
         document.getElementById(screenId).classList.add('active-screen');
-        document.getElementById('bottom-nav').style.display = (screenId === 'sheet-screen') ? 'flex' : 'none';
+        document.getElementById('bottom-nav').style.display = (screenId === 'sheet-screen' || screenId === 'skills-screen') ? 'flex' : 'none';
       }
 
-      window.openCreation = function() {
-        document.getElementById('btn-cancel-create').style.display = allCharacters.length > 0 ? "block" : "none"; switchScreen('creation-screen');
+      window.switchTab = function(screenId) {
+        switchScreen(screenId);
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        if (screenId === 'sheet-screen') document.getElementById('nav-gear').classList.add('active');
+        if (screenId === 'skills-screen') document.getElementById('nav-skills').classList.add('active');
+        renderLocalUI();
       }
 
+      window.handleRosterClick = function() {
+          if (getTotalPendingTasks() > 0) return tg.showAlert("Please Apply Changes before switching characters!");
+          switchScreen('selection-screen');
+      }
+
+      // --- DATA FETCHING ---
       function fetchCharacterData() {
         switchScreen('loading-screen');
+        document.getElementById('loading-text').innerText = "Syncing Realm Data...";
         fetch(GAS_WEBHOOK_URL, { method: 'POST', redirect: 'follow', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ initData: tg.initData, action: 'get_characters' }) })
         .then(res => res.text()).then(text => {
           const payload = JSON.parse(text);
@@ -246,20 +264,29 @@
           if (payload.success) {
             allCharacters = payload.data.characters || [];
             window.partyMembers = payload.data.partyMembers || [];
+            globalSkills = payload.data.allSkills || [];
             
-            if (payload.data.activeCharName && !currentActiveChar) currentActiveChar = allCharacters.find(c => c.profile.name === payload.data.activeCharName);
+            if (payload.data.activeCharName && !activeCharRaw) activeCharRaw = allCharacters.find(c => c.profile.name === payload.data.activeCharName);
             
             if (allCharacters.length === 0) openCreation();
             else {
               renderSelectionScreen();
-              if (currentActiveChar) {
-                currentActiveChar = allCharacters.find(c => c.profile.name === currentActiveChar.profile.name);
-                if (currentActiveChar) { renderCharacterSheet(currentActiveChar); switchScreen('sheet-screen'); }
+              if (activeCharRaw) {
+                activeCharRaw = allCharacters.find(c => c.profile.name === activeCharRaw.profile.name);
+                if (activeCharRaw) {
+                   resetLocalState();
+                   switchTab('sheet-screen'); 
+                }
               } else switchScreen('selection-screen'); 
             }
           }
         }).catch(err => { debugLog.style.display="block"; debugLog.innerText = `Fetch failed: ${err.message}`; });
       }
+
+      window.openCreation = function() { document.getElementById('btn-cancel-create').style.display = allCharacters.length > 0 ? "block" : "none"; switchScreen('creation-screen'); }
+      window.submitCharacter = function() { const name = document.getElementById('input-name').value; const charClass = document.getElementById('input-class').value; if (!name.trim()) return tg.showAlert("Please enter a name."); 
+        switchScreen('loading-screen'); fetch(GAS_WEBHOOK_URL, { method: 'POST', redirect: 'follow', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ initData: tg.initData, action: 'create_character', name: name, charClass: charClass }) }).then(res => res.json()).then(p => { if (p.success) fetchCharacterData(); else { tg.showAlert(p.message); fetchCharacterData(); } });
+      };
 
       function renderSelectionScreen() {
         const list = document.getElementById('character-list'); list.innerHTML = "";
@@ -272,61 +299,98 @@
 
       window.playCharacter = function(index) {
         if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
-        currentActiveChar = allCharacters[index];
-        renderCharacterSheet(currentActiveChar); switchScreen('sheet-screen');
+        activeCharRaw = allCharacters[index];
+        resetLocalState();
+        switchTab('sheet-screen');
       }
 
-      window.confirmDelete = function(charName) { tg.showConfirm(`Permanently delete ${charName}?`, function(confirmed) { if (confirmed) postAction('delete_character', { charName: charName }); }); }
-      window.submitCharacter = function() {
-        const name = document.getElementById('input-name').value; const charClass = document.getElementById('input-class').value;
-        if (!name.trim()) return tg.showAlert("Please enter a name."); postAction('create_character', { name: name, charClass: charClass });
-      };
+      window.confirmDelete = function(charName) { tg.showConfirm(`Permanently delete ${charName}?`, function(confirmed) { if (confirmed) { switchScreen('loading-screen'); fetch(GAS_WEBHOOK_URL, { method: 'POST', redirect: 'follow', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ initData: tg.initData, action: 'delete_character', charName: charName }) }).then(()=>fetchCharacterData()); } }); }
 
-      function postAction(action, dataPayload) {
-        if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
-        switchScreen('loading-screen');
-        const body = Object.assign({ initData: tg.initData, action: action }, dataPayload);
-        fetch(GAS_WEBHOOK_URL, { method: 'POST', redirect: 'follow', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body) })
-        .then(res => res.json()).then(p => { if (p.success) fetchCharacterData(); else { tg.showAlert(p.message); fetchCharacterData(); } });
+      // --- OPTIMISTIC UI STATE MANAGEMENT ---
+      function resetLocalState() {
+          localChar = JSON.parse(JSON.stringify(activeCharRaw)); // Deep clone
+          pendingStats = { hp: 0, str: 0, dex: 0, int: 0 };
+          pendingSkills = {};
+          actionQueue = [];
+          renderLocalUI();
       }
 
-      // --- BATCH STAT LOGIC ---
-      window.modifyStat = function(stat, amount) {
-          if (amount > 0 && availablePoints <= 0) return;
+      function getTotalPendingTasks() {
+          let statCount = pendingStats.hp + pendingStats.str + pendingStats.dex + pendingStats.int;
+          let skillCount = Object.values(pendingSkills).reduce((a,b)=>a+b, 0);
+          return statCount + skillCount + actionQueue.length;
+      }
+
+      function updateApplyBanner() {
+          let total = getTotalPendingTasks();
+          const bar = document.getElementById('apply-bar');
+          if (total > 0) {
+              bar.style.display = 'block';
+              document.getElementById('queue-count').innerText = total;
+          } else {
+              bar.style.display = 'none';
+          }
+      }
+
+      function renderLocalUI() {
+          renderCharacterSheetLocal();
+          renderSkillsTabLocal();
+          updateApplyBanner();
+      }
+
+      // --- LOCAL DATA MUTATORS ---
+      window.modifyStatLocally = function(stat, amount) {
+          if (amount > 0 && localChar.profile.statPoints <= 0) return;
           if (amount < 0 && pendingStats[stat] <= 0) return;
           
           if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
-          availablePoints -= amount;
+          localChar.profile.statPoints -= amount;
           pendingStats[stat] += amount;
           
-          document.getElementById('avail-points').innerText = availablePoints;
-          
-          ['hp', 'str', 'dex', 'int'].forEach(s => {
-              let pendEl = document.getElementById(`pend-${s}`);
-              if (pendingStats[s] > 0) {
-                  let val = (s==='hp') ? pendingStats[s]*5 : pendingStats[s];
-                  pendEl.innerText = `+${val}`; pendEl.style.display = "block";
-              } else { pendEl.style.display = "none"; }
-          });
-          
-          let totalPending = pendingStats.hp + pendingStats.str + pendingStats.dex + pendingStats.int;
-          document.getElementById('btn-confirm-stats').style.display = totalPending > 0 ? "block" : "none";
+          if (stat === 'hp') {
+              localChar.stats.hp += (amount * 5); localChar.stats.maxHp += (amount * 5);
+          } else {
+              localChar.stats[stat] += amount;
+          }
+          renderLocalUI();
       }
 
-      window.confirmStats = function() {
-          let totalPending = pendingStats.hp + pendingStats.str + pendingStats.dex + pendingStats.int;
-          if (totalPending <= 0) return;
-          tg.showConfirm(`Confirm allocation of ${totalPending} stat points?`, function(c) {
-             if (c) postAction('allocate_stats', { charName: currentActiveChar.profile.name, stats: pendingStats }); 
-          });
+      window.modifySkillLocally = function(skillId, amount) {
+          if (amount > 0 && localChar.profile.skillPoints <= 0) return;
+          let currentLv = localChar.skillLevels[skillId] || 0;
+          if (amount > 0 && currentLv >= 5) return tg.showAlert("Max level is 5.");
+          if (amount < 0 && (!pendingSkills[skillId] || pendingSkills[skillId] <= 0)) return;
+
+          if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+          localChar.profile.skillPoints -= amount;
+          pendingSkills[skillId] = (pendingSkills[skillId] || 0) + amount;
+          localChar.skillLevels[skillId] = currentLv + amount;
+          renderLocalUI();
       }
 
-      // --- ITEM MODAL LOGIC ---
+      function recomputeEquipBonuses() {
+          let b = {hp:0, str:0, dex:0, int:0};
+          for (let slot in localChar.equipped) {
+              let itm = localChar.equipped[slot];
+              b.hp += parseInt(itm.hp||0); b.str += parseInt(itm.str||0); b.dex += parseInt(itm.dex||0); b.int += parseInt(itm.int||0);
+          }
+          localChar.equipBonuses = b;
+      }
+
+      function localRemoveInv(itemId) {
+          let idx = localChar.inventory.findIndex(i => i.itemId === itemId);
+          if(idx !== -1) { if(localChar.inventory[idx].quantity > 1) localChar.inventory[idx].quantity--; else localChar.inventory.splice(idx, 1); }
+      }
+      function localAddInv(itemId, itemDef) {
+          let existing = localChar.inventory.find(i => i.itemId === itemId);
+          if(existing) existing.quantity++; else localChar.inventory.push({itemId: itemId, quantity: 1, def: itemDef});
+      }
+
+      // Modal Handlers (Optimistic)
       let selectedItemForModal = null; let isSelectedItemEquipped = false;
       window.openItemModal = function(item, isEquipped, slotName = null) {
           if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
           selectedItemForModal = { ...item, slot: slotName }; isSelectedItemEquipped = isEquipped;
-          
           let cleanName = item.def ? item.def.name : item.itemId.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
           document.getElementById('modal-item-name').innerText = cleanName;
           
@@ -338,71 +402,147 @@
               if (parseInt(item.def.int) !== 0) statsText += `🧠 INT: <b>${item.def.int > 0 ? '+'+item.def.int : item.def.int}</b>`;
           }
           document.getElementById('modal-item-stats').innerHTML = statsText;
-          
-          document.getElementById('btn-modal-equip').style.display = (!isEquipped) ? "block" : "none";
-          document.getElementById('btn-modal-unequip').style.display = (isEquipped) ? "block" : "none";
-          document.getElementById('btn-modal-discard').style.display = (!isEquipped) ? "block" : "none";
-          
-          if (!isEquipped && item.def && item.def.type === 'Consumable') document.getElementById('btn-modal-equip').innerText = "Use Item";
-          else document.getElementById('btn-modal-equip').innerText = "Equip Item";
+          document.getElementById('btn-modal-equip').style.display = (!isEquipped) ? "block" : "none"; document.getElementById('btn-modal-unequip').style.display = (isEquipped) ? "block" : "none"; document.getElementById('btn-modal-discard').style.display = (!isEquipped) ? "block" : "none";
+          if (!isEquipped && item.def && item.def.type === 'Consumable') document.getElementById('btn-modal-equip').innerText = "Use Item"; else document.getElementById('btn-modal-equip').innerText = "Equip Item";
 
           const tSelect = document.getElementById('modal-trade-select'); const tBtn = document.getElementById('btn-modal-trade');
-          if (!isEquipped && window.partyMembers.length > 1) {
-              tSelect.style.display = "block"; tBtn.style.display = "block"; tSelect.innerHTML = "";
-              window.partyMembers.forEach(m => { if (m.name !== currentActiveChar.profile.name) { tSelect.innerHTML += `<option value="${m.id}">${m.name}</option>`; } });
-          } else { tSelect.style.display = "none"; tBtn.style.display = "none"; }
-          
+          if (!isEquipped && window.partyMembers.length > 1) { tSelect.style.display = "block"; tBtn.style.display = "block"; tSelect.innerHTML = ""; window.partyMembers.forEach(m => { if (m.name !== localChar.profile.name) { tSelect.innerHTML += `<option value="${m.id}">${m.name}</option>`; } }); } else { tSelect.style.display = "none"; tBtn.style.display = "none"; }
           document.getElementById('item-modal').style.display = "flex";
       }
-      
       window.closeModal = function() { document.getElementById('item-modal').style.display = "none"; }
-      
-      document.getElementById('btn-modal-equip').onclick = () => { closeModal(); let actionName = (selectedItemForModal.def && selectedItemForModal.def.type === 'Consumable') ? 'use_item' : 'equip_item'; let tSlot = selectedItemForModal.def ? selectedItemForModal.def.type : null; if (tSlot === 'Weapon1H' || tSlot === 'Weapon2H') tSlot = 'Weapon'; if (tSlot === 'Ring') tSlot = currentActiveChar.equipped['Ring1'] ? 'Ring2' : 'Ring1'; postAction(actionName, { charName: currentActiveChar.profile.name, itemId: selectedItemForModal.itemId, targetSlot: tSlot }); };
-      document.getElementById('btn-modal-unequip').onclick = () => { closeModal(); postAction('unequip_item', { charName: currentActiveChar.profile.name, slot: selectedItemForModal.slot }); };
-      document.getElementById('btn-modal-discard').onclick = () => { closeModal(); postAction('discard_item', { charName: currentActiveChar.profile.name, itemId: selectedItemForModal.itemId }); };
-      document.getElementById('btn-modal-trade').onclick = () => { closeModal(); let sel = document.getElementById('modal-trade-select'); let tId = sel.value; let tName = sel.options[sel.selectedIndex].text; postAction('trade_item', { senderChar: currentActiveChar.profile.name, targetId: tId, targetChar: tName, itemId: selectedItemForModal.itemId }); };
 
-      // --- CHARACTER RENDER ---
-      window.renderCharacterSheet = function(data) {
-        const char = data.profile; const stats = data.stats; const eqB = data.equipBonuses;
+      document.getElementById('btn-modal-equip').onclick = () => { 
+          closeModal(); 
+          let def = selectedItemForModal.def; let tSlot = def ? def.type : null;
+          if (tSlot === 'Weapon1H' || tSlot === 'Weapon2H') tSlot = 'Weapon'; if (tSlot === 'Ring') tSlot = localChar.equipped['Ring1'] ? 'Ring2' : 'Ring1';
+          
+          if (def && def.type === 'Consumable') {
+              localRemoveInv(selectedItemForModal.itemId);
+              let heal = parseInt(def.hp || 20); localChar.stats.hp = Math.min(localChar.stats.maxHp, localChar.stats.hp + heal);
+              actionQueue.push({ action: 'use_item', payload: { charName: localChar.profile.name, itemId: selectedItemForModal.itemId } });
+          } else {
+              if (def && def.type === 'Weapon2H' && localChar.equipped['Shield']) return tg.showAlert("Unequip Shield first.");
+              if (def && def.type === 'Shield' && localChar.equipped['Weapon'] && localChar.equipped['Weapon'].type === 'Weapon2H') return tg.showAlert("Unequip 2H Weapon first.");
+              localRemoveInv(selectedItemForModal.itemId);
+              if (localChar.equipped[tSlot]) localAddInv(localChar.equipped[tSlot].id, localChar.equipped[tSlot]);
+              localChar.equipped[tSlot] = def; recomputeBonuses();
+              actionQueue.push({ action: 'equip_item', payload: { charName: localChar.profile.name, itemId: selectedItemForModal.itemId, targetSlot: tSlot } });
+          }
+          renderLocalUI();
+      };
+      document.getElementById('btn-modal-unequip').onclick = () => { 
+          closeModal(); let slot = selectedItemForModal.slot; let def = localChar.equipped[slot];
+          delete localChar.equipped[slot]; localAddInv(def.id, def); recomputeBonuses();
+          actionQueue.push({ action: 'unequip_item', payload: { charName: localChar.profile.name, slot: slot } });
+          renderLocalUI();
+      };
+      document.getElementById('btn-modal-discard').onclick = () => { 
+          closeModal(); localRemoveInv(selectedItemForModal.itemId);
+          actionQueue.push({ action: 'discard_item', payload: { charName: localChar.profile.name, itemId: selectedItemForModal.itemId } });
+          renderLocalUI();
+      };
+      document.getElementById('btn-modal-trade').onclick = () => { 
+          closeModal(); let sel = document.getElementById('modal-trade-select'); let tId = sel.value; let tName = sel.options[sel.selectedIndex].text;
+          localRemoveInv(selectedItemForModal.itemId);
+          actionQueue.push({ action: 'trade_item', payload: { senderChar: localChar.profile.name, targetId: tId, targetChar: tName, itemId: selectedItemForModal.itemId } });
+          renderLocalUI();
+      };
+
+      // --- BATCH SYNC TO SERVER ---
+      window.applyOptimisticChanges = async function() {
+          switchScreen('loading-screen');
+          document.getElementById('loading-text').innerText = "Forging Updates...";
+          try {
+              let statTotal = pendingStats.hp + pendingStats.str + pendingStats.dex + pendingStats.int;
+              if (statTotal > 0) { await fetchAsync('allocate_stats', { charName: localChar.profile.name, stats: pendingStats }); }
+              
+              for (const [sId, levels] of Object.entries(pendingSkills)) {
+                  if (levels > 0) { await fetchAsync('upgrade_skill', { charName: localChar.profile.name, skillId: sId, levels: levels }); }
+              }
+              
+              for (let task of actionQueue) { await fetchAsync(task.action, task.payload); }
+              
+              if(tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+              fetchCharacterData(); // Reload truth
+          } catch(e) { tg.showAlert("Sync Error: " + e.message); fetchCharacterData(); }
+      }
+
+      async function fetchAsync(action, dataPayload) {
+          const body = Object.assign({ initData: tg.initData, action: action }, dataPayload);
+          const res = await fetch(GAS_WEBHOOK_URL, { method: 'POST', redirect: 'follow', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body) });
+          return await res.json();
+      }
+
+      // --- RENDERING LOCAL UI ---
+      function renderCharacterSheetLocal() {
+        const char = localChar.profile; const stats = localChar.stats; const eqB = localChar.equipBonuses;
         
-        // Reset local batch logic
-        availablePoints = char.statPoints || 0;
-        pendingStats = { hp: 0, str: 0, dex: 0, int: 0 };
-        document.getElementById('btn-confirm-stats').style.display = "none";
-        ['hp', 'str', 'dex', 'int'].forEach(s => document.getElementById(`pend-${s}`).style.display = "none");
-
         document.getElementById('hero-name').innerText = `Lv.${char.level} ${char.className} — ${char.name}`; document.getElementById('gold-display').innerText = `🪙 ${char.gold}`;
         document.getElementById('stat-hp').innerText = `${stats.hp}/${stats.maxHp + eqB.hp}`;
+        document.getElementById('stat-mp-display').innerText = `🔹 MP: ${stats.mp}/${stats.maxMp}`;
+        
         document.getElementById('stat-str').innerText = stats.str; document.getElementById('bonus-str').innerText = eqB.str > 0 ? `+${eqB.str}` : (eqB.str < 0 ? eqB.str : "");
         document.getElementById('stat-dex').innerText = stats.dex; document.getElementById('bonus-dex').innerText = eqB.dex > 0 ? `+${eqB.dex}` : (eqB.dex < 0 ? eqB.dex : "");
         document.getElementById('stat-int').innerText = stats.int; document.getElementById('bonus-int').innerText = eqB.int > 0 ? `+${eqB.int}` : (eqB.int < 0 ? eqB.int : "");
 
-        const hasPoints = availablePoints > 0;
+        const hasPoints = localChar.profile.statPoints > 0;
         document.getElementById('stat-points-banner').style.display = hasPoints ? "block" : "none";
-        document.getElementById('avail-points').innerText = availablePoints;
-        document.querySelectorAll('.stat-controls').forEach(btn => btn.style.display = hasPoints ? "flex" : "none");
+        document.getElementById('avail-points').innerText = localChar.profile.statPoints;
+        document.querySelectorAll('.stat-controls').forEach(btn => btn.style.display = (hasPoints || pendingStats.hp > 0 || pendingStats.str > 0 || pendingStats.dex > 0 || pendingStats.int > 0) ? "flex" : "none");
+        
+        ['hp', 'str', 'dex', 'int'].forEach(s => { let el = document.getElementById(`pend-${s}`); if(pendingStats[s] > 0) { el.innerText = `+${s==='hp'?pendingStats[s]*5:pendingStats[s]}`; el.style.display = "block"; } else el.style.display = "none"; });
 
         const slots = ["Amulet", "Head", "Cape", "Weapon", "Upper", "Shield", "Ring1", "Lower", "Ring2", "Boots"];
         slots.forEach(slot => { const el = document.getElementById(`eq-${slot}`); if (el) { el.src = ""; el.parentElement.classList.remove('filled'); el.parentElement.onclick = null; } }); 
-        
-        for (const [slot, item] of Object.entries(data.equipped)) {
+        for (const [slot, item] of Object.entries(localChar.equipped)) {
           const el = document.getElementById(`eq-${slot}`);
-          if (el) { 
-             el.src = item.img || ""; el.parentElement.classList.add('filled'); 
-             el.parentElement.onclick = () => openItemModal({ itemId: item.id, def: item }, true, slot);
-          }
+          if (el) { el.src = item.img || ""; el.parentElement.classList.add('filled'); el.parentElement.onclick = () => openItemModal({ itemId: item.id, def: item }, true, slot); }
         }
 
         const grid = document.getElementById('inventory-grid'); grid.innerHTML = '';
-        data.inventory.forEach(item => {
+        localChar.inventory.forEach(item => {
           const slotDiv = document.createElement('div'); slotDiv.className = 'inventory-slot';
           let imgHtml = item.def && item.def.img ? `<img src="${item.def.img}">` : `<div style="font-size: 24px;">📦</div>`;
           slotDiv.innerHTML = `${imgHtml}<div class="qty-badge">x${item.quantity}</div>`;
-          slotDiv.onclick = () => openItemModal(item, false);
-          grid.appendChild(slotDiv);
+          slotDiv.onclick = () => openItemModal(item, false); grid.appendChild(slotDiv);
         });
       }
+
+      function renderSkillsTabLocal() {
+          const hasSp = localChar.profile.skillPoints > 0;
+          document.getElementById('skill-points-banner').style.display = hasSp ? "block" : "none";
+          document.getElementById('avail-skill-points').innerText = localChar.profile.skillPoints;
+          
+          const list = document.getElementById('skills-list'); list.innerHTML = "";
+          
+          let myClassSkills = globalSkills.filter(s => s.class === localChar.profile.className);
+          myClassSkills.forEach(sDef => {
+              let isLocked = localChar.profile.level < sDef.unlock;
+              let currentLv = localChar.skillLevels[sDef.id] || 0;
+              let pLv = pendingSkills[sDef.id] || 0;
+              let desc = effectDescriptions[sDef.type] || "Unique magical effect.";
+              
+              let controlHtml = "";
+              if (isLocked) {
+                  controlHtml = `<div class="lock-text">🔒 Unlocks at Lv. ${sDef.unlock}</div>`;
+              } else {
+                  let plusBtn = (hasSp && currentLv < 5) ? `<button class="stat-btn btn-plus" onclick="modifySkillLocally('${sDef.id}', 1)">+</button>` : `<div style="width:24px;"></div>`;
+                  let minusBtn = (pLv > 0) ? `<button class="stat-btn btn-minus" onclick="modifySkillLocally('${sDef.id}', -1)">-</button>` : `<div style="width:24px;"></div>`;
+                  controlHtml = `<div style="display:flex; align-items:center; gap:12px;">${minusBtn}<span class="skill-level-text">Lv ${currentLv} / 5</span>${plusBtn}</div>`;
+              }
+
+              list.innerHTML += `
+              <div class="skill-card ${isLocked ? 'locked' : ''}">
+                  <div class="skill-header">
+                      <div class="skill-title">${sDef.name}</div>
+                      <div class="skill-cost">${sDef.cost} MP</div>
+                  </div>
+                  <div class="skill-desc">${desc}</div>
+                  <div class="skill-controls">${controlHtml}</div>
+              </div>`;
+          });
+      }
+
       fetchCharacterData();
     });
   </script>

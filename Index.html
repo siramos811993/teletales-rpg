@@ -77,14 +77,22 @@
 
     <div id="loading">📡 Syncing with the Realm...</div>
 
-    <div id="combat-ui" style="display: none;">
-        <div class="status-header" id="status-header">
-            <!-- Populated by JS -->
-        </div>
+<div id="combat-ui" style="display: none;">
+        <div class="status-header" id="status-header"></div>
         
-        <h2>⚔️ Choose Action</h2>
-        <div class="action-list" id="action-list">
-            <!-- Populated by JS -->
+        <!-- MAIN SKILL MENU -->
+        <div id="skill-menu">
+            <h2>⚔️ Choose Action</h2>
+            <div class="action-list" id="action-list"></div>
+        </div>
+
+        <!-- TARGET SELECTION MENU (Hidden by default) -->
+        <div id="target-menu" style="display: none;">
+            <h2>🎯 Select Target</h2>
+            <div class="action-list" id="target-list"></div>
+            <button class="action-btn" onclick="backToSkills()" style="text-align: center; margin-top: 12px; background: #444;">
+                🔙 Back to Skills
+            </button>
         </div>
     </div>
 
@@ -92,48 +100,39 @@
 
     <script>
         const tg = window.Telegram.WebApp;
-        tg.expand(); // Forces the MiniApp to open to full/half height smoothly
+        tg.expand();
         
-        // --- REPLACE THIS WITH YOUR NEW GAS WEBHOOK URL ---
         const GAS_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbxr9JHs-_hq2rBr85EoOj-6urlj6FONsLAKsBou3DY8WTblcXWIVloTbfc-AiHLn1hbNA/exec"; 
+        let globalMonsters = []; // Stores the active monsters
 
-        document.addEventListener("DOMContentLoaded", () => {
-            fetchCombatState();
-        });
+        document.addEventListener("DOMContentLoaded", fetchCombatState);
 
         function fetchCombatState() {
-            // For testing in a normal browser, fallback to a dummy ID
             let userId = tg.initDataUnsafe?.user?.id || "123456789"; 
             
             fetch(GAS_WEBHOOK_URL, {
                 method: 'POST',
-                body: JSON.stringify({
-                    action: "get_combat_ui",
-                    initData: tg.initData,
-                    userId: userId
-                })
+                body: JSON.stringify({ action: "get_combat_ui", initData: tg.initData, userId: userId })
             })
             .then(res => res.json())
             .then(data => {
                 if (data.success) {
                     document.getElementById('loading').style.display = 'none';
                     document.getElementById('combat-ui').style.display = 'block';
+                    globalMonsters = data.monsters; 
+                    
                     renderHeader(data.character);
                     renderActions(data.skills, data.character);
                 } else {
                     document.getElementById('loading').innerText = "⚠️ Not currently in combat.";
                 }
-            })
-            .catch(err => {
-                document.getElementById('loading').innerText = "Fetch failed. Please check connection.";
-            });
+            }).catch(() => { document.getElementById('loading').innerText = "Fetch failed."; });
         }
 
         function renderHeader(char) {
             const hpPct = Math.max(0, Math.min(100, (char.hp / char.maxHp) * 100));
             const mpPct = Math.max(0, Math.min(100, (char.mp / char.maxMp) * 100));
-            
-            const html = `
+            document.getElementById('status-header').innerHTML = `
                 <div class="status-name">${char.name} (Lv.${char.level} ${char.class})</div>
                 <div class="bar-container"><div class="hp-fill" style="width: ${hpPct}%;"></div></div>
                 <div class="stat-labels"><span>❤️ HP</span><span>${char.hp} / ${char.maxHp}</span></div>
@@ -141,53 +140,71 @@
                 <div class="bar-container"><div class="mp-fill" style="width: ${mpPct}%;"></div></div>
                 <div class="stat-labels"><span>🔹 MP</span><span>${char.mp} / ${char.maxMp}</span></div>
             `;
-            document.getElementById('status-header').innerHTML = html;
         }
 
         function renderActions(skills, char) {
             const list = document.getElementById('action-list');
-            list.innerHTML = ""; // Clear existing
+            list.innerHTML = ""; 
 
-            // Always add a Basic Attack first
+            // Basic Attack (Always requires a target)
             const atkBtn = document.createElement('div');
             atkBtn.className = 'action-btn';
-            atkBtn.innerHTML = `
-                <div class="action-title"><span>🗡️ Basic Attack</span></div>
-                <div class="action-desc">Deal physical damage to an enemy. Generates no threat.</div>
-            `;
-            atkBtn.onclick = () => submitAction("basic_attack");
+            atkBtn.innerHTML = `<div class="action-title"><span>🗡️ Basic Attack</span></div><div class="action-desc">Physical damage based on stats.</div>`;
+            atkBtn.onclick = () => openTargetMenu("basic_attack");
             list.appendChild(atkBtn);
 
-            // Render Class Skills
+            // Dynamic Class Skills
             skills.forEach(skill => {
                 const btn = document.createElement('div');
                 btn.className = 'action-btn';
-                
-                // Dim the button if not enough MP
-                if (char.mp < skill.mpCost) {
-                    btn.style.opacity = "0.5";
-                    btn.style.pointerEvents = "none";
-                }
+                if (char.mp < skill.mpCost) { btn.style.opacity = "0.5"; btn.style.pointerEvents = "none"; }
 
-                btn.innerHTML = `
-                    <div class="action-title"><span>✨ ${skill.name}</span> <span class="action-cost">${skill.mpCost} MP</span></div>
-                    <div class="action-desc">${skill.description}</div>
-                `;
-                btn.onclick = () => submitAction(skill.id);
+                btn.innerHTML = `<div class="action-title"><span>✨ ${skill.name}</span> <span class="action-cost">${skill.mpCost} MP</span></div><div class="action-desc">${skill.description}</div>`;
+                
+                btn.onclick = () => {
+                    if (skill.targetType === "SINGLE_ENEMY") {
+                        openTargetMenu(skill.id);
+                    } else {
+                        // AoE, Self, or Party buffs do not require enemy targeting
+                        submitAction(skill.id, null);
+                    }
+                };
                 list.appendChild(btn);
             });
-            
-            // Flee / Items can be added here
         }
 
-        function submitAction(skillId) {
-            let userId = tg.initDataUnsafe?.user?.id || "123456789";
+        // --- TARGETING LOGIC ---
+        function openTargetMenu(skillId) {
+            document.getElementById('skill-menu').style.display = 'none';
+            document.getElementById('target-menu').style.display = 'block';
             
-            // Show toast notification immediately for good UX
+            const tList = document.getElementById('target-list');
+            tList.innerHTML = "";
+
+            globalMonsters.forEach(monster => {
+                const btn = document.createElement('div');
+                btn.className = 'action-btn';
+                const hpPct = Math.max(0, Math.min(100, (monster.hp / monster.maxHp) * 100));
+                
+                btn.innerHTML = `
+                    <div class="action-title"><span>👹 ${monster.name}</span></div>
+                    <div class="bar-container" style="margin-top: 6px;"><div class="hp-fill" style="width: ${hpPct}%;"></div></div>
+                    <div class="stat-labels"><span>HP: ${monster.hp} / ${monster.maxHp}</span></div>
+                `;
+                
+                btn.onclick = () => submitAction(skillId, monster.id);
+                tList.appendChild(btn);
+            });
+        }
+
+        function backToSkills() {
+            document.getElementById('target-menu').style.display = 'none';
+            document.getElementById('skill-menu').style.display = 'block';
+        }
+
+        function submitAction(skillId, targetId) {
             const toast = document.getElementById("toast");
             toast.className = "show";
-            
-            // Tell the Telegram bot to vibrate the phone for haptic feedback!
             tg.HapticFeedback.impactOccurred('medium');
 
             fetch(GAS_WEBHOOK_URL, {
@@ -195,14 +212,11 @@
                 body: JSON.stringify({
                     action: "submit_combat_action",
                     initData: tg.initData,
-                    userId: userId,
-                    skillId: skillId
+                    userId: tg.initDataUnsafe?.user?.id || "123456789",
+                    skillId: skillId,
+                    targetId: targetId // Pass the specific enemy to the backend!
                 })
-            })
-            .then(() => {
-                // Instantly close the MiniApp and drop the player back into the chat
-                setTimeout(() => tg.close(), 800); 
-            });
+            }).then(() => setTimeout(() => tg.close(), 800));
         }
     </script>
 </body>

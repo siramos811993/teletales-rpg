@@ -1,555 +1,209 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  
-  <style>
-    :root {
-      --bg-base: #0f172a;
-      --bg-surface: #1e293b;
-      --bg-surface-elevated: #334155;
-      --text-primary: #f8fafc;
-      --text-secondary: #94a3b8;
-      --accent-primary: #6366f1;
-      --accent-secondary: #8b5cf6;
-      --success: #10b981;
-      --warning: #f59e0b;
-      --danger: #ef4444;
-      --border-color: rgba(255, 255, 255, 0.08);
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TeleTales Gamepad</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        :root {
+            --bg-color: #1a1a24;
+            --surface-color: #2a2a35;
+            --accent-color: #e2b714;
+            --text-main: #f5f5f5;
+            --text-muted: #a0a0a0;
+            --hp-color: #ff4757;
+            --mp-color: #1e90ff;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 16px;
+            user-select: none;
+        }
+        h2 { margin-top: 0; font-size: 18px; border-bottom: 1px solid #333; padding-bottom: 8px; }
+        
+        /* Loading Screen */
+        #loading { text-align: center; margin-top: 50px; color: var(--text-muted); }
+        
+        /* Status Header */
+        .status-header {
+            background: var(--surface-color);
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        .status-name { font-weight: bold; font-size: 16px; margin-bottom: 8px; }
+        .bar-container { background: #111; border-radius: 4px; height: 8px; margin-bottom: 8px; overflow: hidden; }
+        .hp-fill { background: var(--hp-color); height: 100%; transition: width 0.3s; }
+        .mp-fill { background: var(--mp-color); height: 100%; transition: width 0.3s; }
+        .stat-labels { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted); }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
-    body { background-color: var(--bg-base); color: var(--text-primary); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
-    .screen { display: none; flex: 1; overflow-y: auto; flex-direction: column; padding: 24px 20px; }
-    .active-screen { display: flex; }
-    
-    #loading-screen { justify-content: center; align-items: center; text-align: center; }
-    #loading-text { color: var(--text-secondary); font-weight: 500; font-size: 16px; margin-top: 16px; letter-spacing: 0.5px; }
-    #debug-log { margin-top: 20px; font-size: 11px; color: #fca5a5; background: rgba(239, 68, 68, 0.1); padding: 12px; border-radius: 8px; font-family: monospace; word-wrap: break-word; text-align: left; display: none; border: 1px solid rgba(239, 68, 68, 0.2); }
-    
-    .spinner { border: 3px solid rgba(255, 255, 255, 0.1); width: 44px; height: 44px; border-radius: 50%; border-left-color: var(--accent-primary); animation: spin 1s cubic-bezier(0.4, 0, 0.2, 1) infinite; margin: 0 auto; }
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-    .form-box, .char-card, .equipment-container, .stats-container, .skill-card { 
-      background: var(--bg-surface); 
-      border-radius: 20px; 
-      border: 1px solid var(--border-color); 
-      box-shadow: 0 10px 30px rgba(0,0,0,0.2); 
-    }
-    
-    .form-box { padding: 28px; }
-    .form-title { font-size: 24px; margin-bottom: 24px; text-align: center; font-weight: 800; background: linear-gradient(to right, #fff, #94a3b8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-    
-    .input-group { margin-bottom: 20px; display: flex; flex-direction: column; }
-    .input-group label { font-size: 13px; margin-bottom: 8px; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
-    .input-group input, .input-group select { padding: 14px; border-radius: 12px; border: 1px solid var(--bg-surface-elevated); background: rgba(0,0,0,0.2); color: var(--text-primary); font-size: 16px; outline: none; transition: all 0.3s; }
-    .input-group input:focus, .input-group select:focus { border-color: var(--accent-primary); box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2); }
-    
-    .primary-btn { width: 100%; padding: 16px; background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary)); color: #fff; border: none; border-radius: 14px; font-size: 16px; font-weight: 700; cursor: pointer; margin-top: 8px; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4); }
-    .primary-btn:active { transform: scale(0.98); box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3); }
-    .secondary-btn { background: var(--bg-surface-elevated); box-shadow: none; color: var(--text-primary); margin-top: 16px; }
-    
-    .char-card { padding: 18px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; transition: transform 0.2s; }
-    .char-card:active { transform: scale(0.98); }
-    .char-card-info { flex: 1; }
-    .char-card-name { font-size: 18px; font-weight: 700; margin-bottom: 6px; color: var(--text-primary); }
-    .char-card-sub { font-size: 13px; color: var(--text-secondary); font-weight: 500; }
-    .char-card-actions { display: flex; gap: 10px; }
-    .action-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 18px; cursor: pointer; color: #fff; transition: opacity 0.2s; }
-    .play-btn { background: linear-gradient(135deg, var(--success), #059669); box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3); }
-    .del-btn { background: var(--bg-surface-elevated); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.2); }
-    .action-icon:active { opacity: 0.8; }
-
-    .hero-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-    .hero-title { font-size: 22px; font-weight: 800; color: var(--text-primary); line-height: 1.2; }
-    .gold-badge { color: #fbbf24; font-weight: 700; background: rgba(245, 158, 11, 0.1); padding: 6px 12px; border-radius: 20px; font-size: 14px; border: 1px solid rgba(245, 158, 11, 0.2); backdrop-filter: blur(4px); }
-
-    .stats-container { padding: 20px; margin-bottom: 24px; }
-    .stat-points-banner { background: rgba(245, 158, 11, 0.1); color: #fbbf24; text-align: center; padding: 12px; border-radius: 12px; font-weight: 600; margin-bottom: 18px; font-size: 14px; display: none; border: 1px solid rgba(245, 158, 11, 0.2); }
-    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
-    .stat-box { display: flex; flex-direction: column; align-items: center; padding: 14px 0; background: rgba(0,0,0,0.2); border-radius: 14px; position: relative; border: 1px solid var(--border-color); }
-    .stat-value { font-size: 20px; font-weight: 800; color: var(--text-primary); }
-    .stat-pending { color: var(--success); font-size: 12px; font-weight: 800; position: absolute; top: 6px; right: 6px; display: none;}
-    .stat-bonus { font-size: 12px; color: #60a5fa; font-weight: 700; min-height: 14px; margin-top: 2px;}
-    .stat-label { font-size: 11px; color: var(--text-secondary); font-weight: 700; text-transform: uppercase; margin-top: 6px; letter-spacing: 0.5px; }
-    .stat-controls { display: flex; gap: 8px; margin-top: 10px; display: none; }
-    .stat-btn { width: 28px; height: 28px; border-radius: 8px; border: none; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer; font-size: 16px; }
-    .btn-plus { background: var(--accent-primary); color: white; box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4); } 
-    .btn-minus { background: var(--bg-surface-elevated); color: var(--text-secondary); }
-    .mp-display { text-align: center; margin-top: 16px; font-size: 14px; font-weight: 700; color: #60a5fa; background: rgba(59, 130, 246, 0.1); padding: 8px; border-radius: 10px; border: 1px solid rgba(59, 130, 246, 0.2); }
-
-    .equipment-container { padding: 24px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; justify-items: center; align-items: center; }
-    .eq-slot { width: 76px; height: 76px; border: 1px dashed var(--bg-surface-elevated); border-radius: 16px; background: rgba(0,0,0,0.15); display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-    .eq-slot.filled { border-style: solid; border-color: rgba(99, 102, 241, 0.4); background: rgba(99, 102, 241, 0.05); box-shadow: inset 0 0 20px rgba(99, 102, 241, 0.1); }
-    .eq-slot img { width: 70%; height: 70%; object-fit: contain; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.4)); display: none; }
-    .eq-label { position: absolute; bottom: -10px; background: var(--bg-surface-elevated); font-size: 10px; padding: 3px 8px; border-radius: 8px; border: 1px solid var(--border-color); color: var(--text-primary); font-weight: 700; z-index: 2; box-shadow: 0 4px 6px rgba(0,0,0,0.2); letter-spacing: 0.3px; }
-    
-    .slot-amulet { grid-column: 1; grid-row: 1; } .slot-head { grid-column: 2; grid-row: 1; } .slot-cape { grid-column: 3; grid-row: 1; }
-    .slot-weapon { grid-column: 1; grid-row: 2; } .slot-upper { grid-column: 2; grid-row: 2; } .slot-shield { grid-column: 3; grid-row: 2; }
-    .slot-ring1 { grid-column: 1; grid-row: 3; } .slot-lower { grid-column: 2; grid-row: 3; } .slot-ring2 { grid-column: 3; grid-row: 3; }
-    .slot-boots { grid-column: 2; grid-row: 4; }
-
-    .section-header { font-size: 18px; color: var(--text-primary); font-weight: 800; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
-    .inventory-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); gap: 14px; }
-    .inventory-slot { aspect-ratio: 1; background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); border-radius: 16px; display: flex; align-items: center; justify-content: center; position: relative; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.1); transition: transform 0.2s; }
-    .inventory-slot:active { transform: scale(0.95); }
-    .inventory-slot img { width: 70%; height: 70%; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3)); }
-    .qty-badge { position: absolute; bottom: -6px; right: -6px; background: var(--accent-primary); color: #fff; font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 8px; border: 2px solid var(--bg-surface); box-shadow: 0 2px 6px rgba(0,0,0,0.3); }
-    
-    .skill-card { padding: 20px; margin-bottom: 16px; display: flex; flex-direction: column; gap: 12px; }
-    .skill-card.locked { opacity: 0.5; filter: grayscale(1); }
-    .skill-header { display: flex; justify-content: space-between; align-items: center; }
-    .skill-title { font-weight: 800; font-size: 18px; color: var(--text-primary); display: flex; align-items: center; gap: 8px;}
-    .skill-cost { font-size: 12px; font-weight: 700; color: #60a5fa; background: rgba(59, 130, 246, 0.1); padding: 4px 10px; border-radius: 12px; border: 1px solid rgba(59, 130, 246, 0.2); }
-    .skill-desc { font-size: 14px; color: var(--text-secondary); line-height: 1.5; }
-    .skill-controls { display: flex; align-items: center; justify-content: space-between; background: rgba(0,0,0,0.2); padding: 12px 16px; border-radius: 12px; border: 1px solid var(--border-color); }
-    .skill-level-text { font-size: 14px; font-weight: 800; color: var(--text-primary); }
-    .lock-text { font-size: 13px; font-weight: 700; color: var(--danger); display: flex; align-items: center; gap: 6px; }
-
-    #sheet-screen, #skills-screen { padding-top: calc(var(--tg-safe-area-inset-top, 0px) + 20px); padding-bottom: calc(var(--tg-safe-area-inset-bottom, 0px) + 180px); }
-    
-    .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(30, 41, 59, 0.85); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); display: none; justify-content: space-around; padding-bottom: calc(var(--tg-safe-area-inset-bottom, 0px) + 20px); padding-top: 16px; border-top: 1px solid var(--border-color); z-index: 50; box-shadow: 0 -10px 30px rgba(0,0,0,0.3); }
-    .nav-item { display: flex; flex-direction: column; align-items: center; gap: 6px; color: var(--text-secondary); font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.3s; opacity: 0.7; }
-    .nav-item.active { color: var(--accent-primary); opacity: 1; transform: translateY(-2px); }
-    .nav-icon { font-size: 22px; margin-bottom: 2px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2)); }
-
-    #action-bar-container { display: none; position: fixed; bottom: 100px; left: 24px; right: 24px; gap: 12px; z-index: 60; }
-    #btn-reset { flex: 1; background: var(--bg-surface-elevated); color: var(--text-primary); padding: 16px; border-radius: 16px; text-align: center; font-weight: 800; font-size: 15px; cursor: pointer; border: 1px solid var(--border-color); box-shadow: 0 10px 25px rgba(0,0,0,0.3); transition: transform 0.2s; }
-    #btn-apply { flex: 2; background: linear-gradient(135deg, var(--success), #059669); color: white; padding: 16px; border-radius: 16px; text-align: center; font-weight: 800; font-size: 15px; cursor: pointer; box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3); transition: transform 0.2s; border: 1px solid rgba(255,255,255,0.1); letter-spacing: 0.5px; }
-    #btn-reset:active, #btn-apply:active { transform: scale(0.96); }
-
-    .modal-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(15, 23, 42, 0.8); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); display:none; justify-content:center; align-items:center; z-index:100; opacity: 0; animation: fadeIn 0.2s forwards; }
-    @keyframes fadeIn { to { opacity: 1; } }
-    .modal-content { background: var(--bg-surface); padding: 28px; border-radius: 24px; width: 90%; max-width: 340px; box-shadow: 0 20px 40px rgba(0,0,0,0.4); text-align: center; border: 1px solid var(--border-color); transform: scale(0.95); animation: popIn 0.2s forwards cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-    @keyframes popIn { to { transform: scale(1); } }
-    
-    .modal-title { font-size: 22px; font-weight: 800; color: var(--text-primary); margin-bottom: 16px; }
-    .modal-stats { font-size: 15px; color: #cbd5e1; margin-bottom: 24px; line-height: 1.8; background: rgba(0,0,0,0.2); padding: 20px; border-radius: 16px; border: 1px solid var(--border-color); text-align: left; }
-    .modal-btn { width: 100%; padding: 16px; margin-bottom: 12px; border-radius: 14px; font-weight: 800; font-size: 16px; cursor: pointer; border: none; transition: transform 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
-    .modal-btn:active { transform: scale(0.97); }
-    .btn-equip { background: linear-gradient(135deg, var(--success), #059669); color: #fff; } 
-    .btn-unequip { background: linear-gradient(135deg, var(--warning), #d97706); color: #fff; } 
-    .btn-discard { background: var(--bg-surface-elevated); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.2); box-shadow: none; } 
-    .btn-trade { background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary)); color: #fff; } 
-    .btn-close { background: transparent; color: var(--text-secondary); margin-bottom: 0; box-shadow: none; padding: 10px; font-size: 15px;}
-    .trade-dropdown { padding: 14px; border-radius: 12px; border: 1px solid var(--border-color); background: rgba(0,0,0,0.2); color: var(--text-primary); font-weight: 600; width: 100%; margin-bottom: 16px; outline: none; appearance: none; }
-  </style>
+        /* Action Buttons */
+        .action-list { display: flex; flex-direction: column; gap: 12px; }
+        .action-btn {
+            background: var(--surface-color);
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 12px;
+            text-align: left;
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            transition: transform 0.1s, border-color 0.1s;
+        }
+        .action-btn:active { transform: scale(0.98); border-color: var(--accent-color); }
+        .action-title { font-weight: bold; font-size: 15px; display: flex; justify-content: space-between; }
+        .action-cost { color: var(--mp-color); font-size: 13px; }
+        .action-desc { font-size: 12px; color: var(--text-muted); line-height: 1.4; }
+        
+        /* Toast Notification */
+        #toast {
+            visibility: hidden; min-width: 250px; background-color: #333; color: #fff;
+            text-align: center; border-radius: 4px; padding: 12px;
+            position: fixed; z-index: 1; left: 50%; bottom: 30px;
+            transform: translateX(-50%); font-size: 14px;
+        }
+        #toast.show { visibility: visible; animation: fadein 0.3s, fadeout 0.3s 2.7s; }
+        @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
+        @keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
+    </style>
 </head>
 <body>
 
-  <div id="loading-screen" class="screen active-screen">
-    <div class="spinner"></div>
-    <h2 id="loading-text">Syncing Realm Data...</h2>
-    <div id="debug-log"></div>
-  </div>
+    <div id="loading">📡 Syncing with the Realm...</div>
 
-  <div id="selection-screen" class="screen">
-    <h2 class="form-title" style="text-align: left; margin-bottom: 8px;">Your Heroes</h2>
-    <p style="color: var(--text-secondary); font-size: 15px; margin-bottom: 28px; line-height: 1.4;">Select a character or construct a new legend.</p>
-    <div id="character-list"></div>
-    <button id="btn-create-slot" class="primary-btn secondary-btn" onclick="openCreation()">+ Forge New Legend</button>
-  </div>
-
-  <div id="creation-screen" class="screen">
-    <div class="form-box">
-      <h2 class="form-title">Forge Your Legend</h2>
-      <div class="input-group">
-        <label>Character Name</label>
-        <input type="text" id="input-name" placeholder="Enter name..." maxlength="20">
-      </div>
-      <div class="input-group">
-        <label>Class Lineage</label>
-        <select id="input-class">
-          <option value="Warrior">Warrior (High HP & STR)</option>
-          <option value="Rogue">Rogue (High DEX & Evasion)</option>
-          <option value="Mage">Mage (High INT & Magic)</option>
-        </select>
-      </div>
-      <button class="primary-btn" onclick="submitCharacter()">Manifest Hero</button>
-      <button class="primary-btn secondary-btn" id="btn-cancel-create" onclick="switchScreen('selection-screen')" style="display:none;">Cancel</button>
-    </div>
-  </div>
-
-  <div id="sheet-screen" class="screen">
-    <div class="hero-header-row">
-        <h1 id="hero-name" class="hero-title">-</h1>
-        <span id="gold-display" class="gold-badge">🪙 0</span>
-    </div>
-    
-    <div class="stats-container">
-        <div id="stat-points-banner" class="stat-points-banner">You have <span id="avail-points">0</span> Attribute Points!</div>
-        <div class="stats-grid">
-          <div class="stat-box"><div class="stat-value" id="stat-hp">-</div><div class="stat-pending" id="pend-hp"></div><div class="stat-bonus" id="bonus-hp"></div><div class="stat-label">HP</div><div class="stat-controls"><button class="stat-btn btn-minus" onclick="modifyStatLocally('hp', -1)">-</button><button class="stat-btn btn-plus" onclick="modifyStatLocally('hp', 1)">+</button></div></div>
-          <div class="stat-box"><div class="stat-value" id="stat-str">-</div><div class="stat-pending" id="pend-str"></div><div class="stat-bonus" id="bonus-str"></div><div class="stat-label">STR</div><div class="stat-controls"><button class="stat-btn btn-minus" onclick="modifyStatLocally('str', -1)">-</button><button class="stat-btn btn-plus" onclick="modifyStatLocally('str', 1)">+</button></div></div>
-          <div class="stat-box"><div class="stat-value" id="stat-dex">-</div><div class="stat-pending" id="pend-dex"></div><div class="stat-bonus" id="bonus-dex"></div><div class="stat-label">DEX</div><div class="stat-controls"><button class="stat-btn btn-minus" onclick="modifyStatLocally('dex', -1)">-</button><button class="stat-btn btn-plus" onclick="modifyStatLocally('dex', 1)">+</button></div></div>
-          <div class="stat-box"><div class="stat-value" id="stat-int">-</div><div class="stat-pending" id="pend-int"></div><div class="stat-bonus" id="bonus-int"></div><div class="stat-label">INT</div><div class="stat-controls"><button class="stat-btn btn-minus" onclick="modifyStatLocally('int', -1)">-</button><button class="stat-btn btn-plus" onclick="modifyStatLocally('int', 1)">+</button></div></div>
+    <div id="combat-ui" style="display: none;">
+        <div class="status-header" id="status-header">
+            <!-- Populated by JS -->
         </div>
-        <div class="mp-display" id="stat-mp-display">🔹 MP: 0/0</div>
+        
+        <h2>⚔️ Choose Action</h2>
+        <div class="action-list" id="action-list">
+            <!-- Populated by JS -->
+        </div>
     </div>
 
-    <div class="equipment-container">
-      <div class="eq-slot slot-amulet"><div class="eq-label">Amulet</div><img id="eq-Amulet" src=""></div>
-      <div class="eq-slot slot-head"><div class="eq-label">Head</div><img id="eq-Head" src=""></div>
-      <div class="eq-slot slot-cape"><div class="eq-label">Cape</div><img id="eq-Cape" src=""></div>
-      <div class="eq-slot slot-weapon"><div class="eq-label">Weapon</div><img id="eq-Weapon" src=""></div>
-      <div class="eq-slot slot-upper"><div class="eq-label">Chest</div><img id="eq-Upper" src=""></div>
-      <div class="eq-slot slot-shield"><div class="eq-label">Shield</div><img id="eq-Shield" src=""></div>
-      <div class="eq-slot slot-ring1"><div class="eq-label">Ring 1</div><img id="eq-Ring1" src=""></div>
-      <div class="eq-slot slot-lower"><div class="eq-label">Legs</div><img id="eq-Lower" src=""></div>
-      <div class="eq-slot slot-ring2"><div class="eq-label">Ring 2</div><img id="eq-Ring2" src=""></div>
-      <div class="eq-slot slot-boots"><div class="eq-label">Feet</div><img id="eq-Boots" src=""></div>
-    </div>
+    <div id="toast">Action Locked In!</div>
 
-    <h3 class="section-header">📦 Backpack</h3>
-    <div class="inventory-grid" id="inventory-grid"></div>
-  </div>
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand(); // Forces the MiniApp to open to full/half height smoothly
+        
+        // --- REPLACE THIS WITH YOUR NEW GAS WEBHOOK URL ---
+        const GAS_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbxr9JHs-_hq2rBr85EoOj-6urlj6FONsLAKsBou3DY8WTblcXWIVloTbfc-AiHLn1hbNA/exec"; 
 
-  <div id="skills-screen" class="screen">
-    <div class="hero-header-row">
-        <h1 class="hero-title">Combat Skills</h1>
-    </div>
-    <div id="skill-points-banner" class="stat-points-banner" style="display: none;">You have <span id="avail-skill-points">0</span> Skill Points!</div>
-    <div id="skills-list"></div>
-  </div>
-
-  <div id="action-bar-container">
-    <div id="btn-reset" onclick="resetLocalState()">🔄 Reset</div>
-    <div id="btn-apply" onclick="applyOptimisticChanges()">💾 Apply (<span id="queue-count">0</span>)</div>
-  </div>
-
-  <div id="bottom-nav" class="bottom-nav">
-    <div class="nav-item active" id="nav-gear" onclick="switchTab('sheet-screen')"><div class="nav-icon">🎒</div><span>Gear</span></div>
-    <div class="nav-item" id="nav-skills" onclick="switchTab('skills-screen')"><div class="nav-icon">✨</div><span>Skills</span></div>
-    <div class="nav-item" onclick="handleRosterClick()"><div class="nav-icon">👥</div><span>Roster</span></div>
-  </div>
-
-  <div id="item-modal" class="modal-overlay">
-    <div class="modal-content">
-       <div class="modal-title" id="modal-item-name">Item Name</div>
-       <div class="modal-stats" id="modal-item-stats">Stats here</div>
-       <button class="modal-btn btn-equip" id="btn-modal-equip" style="display:none;">Equip</button>
-       <button class="modal-btn btn-unequip" id="btn-modal-unequip" style="display:none;">Unequip</button>
-       <select class="trade-dropdown" id="modal-trade-select" style="display:none;"></select>
-       <button class="modal-btn btn-trade" id="btn-modal-trade" style="display:none;">Trade to Player</button>
-       <button class="modal-btn btn-discard" id="btn-modal-discard" style="display:none;">Discard</button>
-       <button class="modal-btn btn-close" onclick="closeModal()">Close</button>
-    </div>
-  </div>
-
-  <script>
-    window.addEventListener('DOMContentLoaded', (event) => {
-      const debugLog = document.getElementById('debug-log');
-      const tg = window.Telegram.WebApp; tg.expand(); tg.ready();
-      
-      const GAS_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbxr9JHs-_hq2rBr85EoOj-6urlj6FONsLAKsBou3DY8WTblcXWIVloTbfc-AiHLn1hbNA/exec"; 
-      
-      let allCharacters = []; 
-      let activeCharRaw = null; 
-      let localChar = null;     
-      let globalSkills = []; 
-      window.partyMembers = [];
-      
-      let pendingStats = { hp: 0, str: 0, dex: 0, int: 0 };
-      let pendingSkills = {}; 
-      let actionQueue = []; 
-
-      window.onerror = function(message, source, lineno) { debugLog.style.display = "block"; debugLog.innerText += `\nCRASH: ${message} (Line ${lineno})`; return true; };
-
-      const effectDescriptions = {
-          "AGGRO": "Forces enemies to target you. Enhances defense significantly while bracing.",
-          "BUFF_ATK": "Roars to boost the entire party's attack power for the encounter.",
-          "PARTY_SHIELD": "Forms a magical barrier, reducing incoming damage for the party.",
-          "FLEE_FORCE": "Throws a diversion, guaranteeing an escape from non-boss battles.",
-          "DEBUFF_AC": "Exploits a weak point, permanently reducing the enemy's Armor Class.",
-          "DOT_POISON": "Coats weapons in venom, dealing true damage over time if successful.",
-          "HEAL_SINGLE": "Channels magic to restore a large amount of HP to a single ally.",
-          "HEAL_PARTY": "Releases a wave of restoration, healing the entire party.",
-          "REVIVE": "Defies the void, reviving a fallen party member with a fraction of their health."
-      };
-
-      function getSkillEffectText(type, currentLv) {
-          if (currentLv === 0) {
-              if (type === "AGGRO") return "<b>Next Level:</b> -55% damage taken while defending.";
-              if (type === "BUFF_ATK") return "<b>Next Level:</b> Party ATK +1.";
-              if (type === "PARTY_SHIELD") return "<b>Next Level:</b> Party takes -10% damage.";
-              if (type === "FLEE_FORCE") return "<b>Next Level:</b> Guarantees flee. Cost -1 MP.";
-              if (type === "DEBUFF_AC") return "<b>Next Level:</b> Enemy AC -1.";
-              if (type === "DOT_POISON") return "<b>Next Level:</b> 60% chance to poison enemy.";
-              if (type === "HEAL_SINGLE") return "<b>Next Level:</b> Heals ally for 1d8 + INT + 1d4+1.";
-              if (type === "HEAL_PARTY") return "<b>Next Level:</b> Heals party for 1d4 + INT + 1d4+1.";
-              if (type === "REVIVE") return "<b>Next Level:</b> Revives fallen ally at 20% HP.";
-          } else {
-              let nxt = currentLv < 5 ? `<br><span style="color:#60a5fa; font-size:13px; font-weight: 600; display: block; margin-top: 4px;">Next Lv: ` : "";
-              if (type === "AGGRO") {
-                  let curDmg = 50 + (currentLv * 5); let nDmg = 50 + ((currentLv+1)*5);
-                  return `<b>Current Effect:</b> -${curDmg}% damage taken while defending.` + (currentLv < 5 ? nxt + `-${nDmg}% damage</span>` : "");
-              }
-              if (type === "BUFF_ATK") { return `<b>Current Effect:</b> Party ATK +${currentLv}.` + (currentLv < 5 ? nxt + `Party ATK +${currentLv+1}</span>` : ""); }
-              if (type === "PARTY_SHIELD") { return `<b>Current Effect:</b> Party takes -${10*currentLv}% damage.` + (currentLv < 5 ? nxt + `-${10*(currentLv+1)}% damage</span>` : ""); }
-              if (type === "FLEE_FORCE") { return `<b>Current Effect:</b> Guarantees flee. Cost -${currentLv} MP.` + (currentLv < 5 ? nxt + `Cost -${currentLv+1} MP</span>` : ""); }
-              if (type === "DEBUFF_AC") { return `<b>Current Effect:</b> Enemy AC -${currentLv}.` + (currentLv < 5 ? nxt + `Enemy AC -${currentLv+1}</span>` : ""); }
-              if (type === "DOT_POISON") { return `<b>Current Effect:</b> ${50 + (10*currentLv)}% chance to poison enemy.` + (currentLv < 5 ? nxt + `${50 + (10*(currentLv+1))}% chance</span>` : ""); }
-              if (type === "HEAL_SINGLE") { return `<b>Current Effect:</b> Heals ally for 1d8 + INT + ${currentLv}d4+${currentLv}.` + (currentLv < 5 ? nxt + `1d8 + INT + ${currentLv+1}d4+${currentLv+1}</span>` : ""); }
-              if (type === "HEAL_PARTY") { return `<b>Current Effect:</b> Heals party for 1d4 + INT + ${currentLv}d4+${currentLv}.` + (currentLv < 5 ? nxt + `1d4 + INT + ${currentLv+1}d4+${currentLv+1}</span>` : ""); }
-              if (type === "REVIVE") { return `<b>Current Effect:</b> Revives ally at ${10 + (10*currentLv)}% HP.` + (currentLv < 5 ? nxt + `${10 + (10*(currentLv+1))}% HP</span>` : ""); }
-          }
-          return "";
-      }
-
-      window.switchScreen = function(screenId) {
-        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active-screen'));
-        document.getElementById(screenId).classList.add('active-screen');
-        document.getElementById('bottom-nav').style.display = (screenId === 'sheet-screen' || screenId === 'skills-screen') ? 'flex' : 'none';
-      }
-
-      window.switchTab = function(screenId) {
-        switchScreen(screenId);
-        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-        if (screenId === 'sheet-screen') document.getElementById('nav-gear').classList.add('active');
-        if (screenId === 'skills-screen') document.getElementById('nav-skills').classList.add('active');
-        renderLocalUI();
-      }
-
-      window.handleRosterClick = function() {
-          if (getTotalPendingTasks() > 0) return tg.showAlert("Please Apply or Reset your changes before switching characters.");
-          switchScreen('selection-screen');
-      }
-
-      function fetchCharacterData() {
-        switchScreen('loading-screen');
-        document.getElementById('loading-text').innerText = "Syncing Realm Data...";
-        fetch(GAS_WEBHOOK_URL, { method: 'POST', redirect: 'follow', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ initData: tg.initData, action: 'get_characters' }) })
-        .then(res => res.text()).then(text => {
-          const payload = JSON.parse(text);
-          if (payload.isCrash) { debugLog.style.display="block"; debugLog.innerText = `SERVER CRASH: ${payload.error}`; return; }
-          if (payload.success) {
-            allCharacters = payload.data.characters || []; window.partyMembers = payload.data.partyMembers || []; globalSkills = payload.data.allSkills || [];
-            if (payload.data.activeCharName && !activeCharRaw) activeCharRaw = allCharacters.find(c => c.profile.name === payload.data.activeCharName);
-            if (allCharacters.length === 0) openCreation();
-            else {
-              renderSelectionScreen();
-              if (activeCharRaw) {
-                activeCharRaw = allCharacters.find(c => c.profile.name === activeCharRaw.profile.name);
-                if (activeCharRaw) { window.resetLocalState(); switchTab('sheet-screen'); }
-              } else switchScreen('selection-screen'); 
-            }
-          }
-        }).catch(err => { debugLog.style.display="block"; debugLog.innerText = `Fetch failed: ${err.message}`; });
-      }
-
-      window.openCreation = function() { document.getElementById('btn-cancel-create').style.display = allCharacters.length > 0 ? "block" : "none"; switchScreen('creation-screen'); }
-      window.submitCharacter = function() { const name = document.getElementById('input-name').value; const charClass = document.getElementById('input-class').value; if (!name.trim()) return tg.showAlert("Please enter a name."); 
-        switchScreen('loading-screen'); fetch(GAS_WEBHOOK_URL, { method: 'POST', redirect: 'follow', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ initData: tg.initData, action: 'create_character', name: name, charClass: charClass }) }).then(res => res.json()).then(p => { if (p.success) fetchCharacterData(); else { tg.showAlert(p.message); fetchCharacterData(); } });
-      };
-
-      function renderSelectionScreen() {
-        const list = document.getElementById('character-list'); list.innerHTML = "";
-        allCharacters.forEach((charData, index) => {
-          const char = charData.profile;
-          list.innerHTML += `<div class="char-card"><div class="char-card-info"><div class="char-card-name">${char.name}</div><div class="char-card-sub">Lv.${char.level} ${char.className} • ${char.gold} Gold</div></div><div class="char-card-actions"><div class="action-icon play-btn" onclick="playCharacter(${index})">▶️</div><div class="action-icon del-btn" onclick="confirmDelete('${char.name}')">🗑️</div></div></div>`;
+        document.addEventListener("DOMContentLoaded", () => {
+            fetchCombatState();
         });
-        document.getElementById('btn-create-slot').style.display = allCharacters.length >= 2 ? "none" : "block";
-      }
 
-      window.playCharacter = function(index) {
-        if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
-        activeCharRaw = allCharacters[index]; window.resetLocalState(); switchTab('sheet-screen');
-      }
-
-      window.confirmDelete = function(charName) { tg.showConfirm(`Permanently sever ${charName} from the realm?`, function(confirmed) { if (confirmed) { switchScreen('loading-screen'); fetch(GAS_WEBHOOK_URL, { method: 'POST', redirect: 'follow', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ initData: tg.initData, action: 'delete_character', charName: charName }) }).then(()=>fetchCharacterData()); } }); }
-
-      window.resetLocalState = function() {
-          localChar = JSON.parse(JSON.stringify(activeCharRaw));
-          pendingStats = { hp: 0, str: 0, dex: 0, int: 0 }; pendingSkills = {}; actionQueue = []; renderLocalUI();
-      }
-
-      function getTotalPendingTasks() {
-          let statCount = pendingStats.hp + pendingStats.str + pendingStats.dex + pendingStats.int; let skillCount = Object.values(pendingSkills).reduce((a,b)=>a+b, 0); return statCount + skillCount + actionQueue.length;
-      }
-
-      function updateApplyBanner() {
-          let total = getTotalPendingTasks();
-          const bar = document.getElementById('action-bar-container');
-          if (total > 0) { bar.style.display = 'flex'; document.getElementById('queue-count').innerText = total; } else { bar.style.display = 'none'; }
-      }
-
-      function renderLocalUI() { renderCharacterSheetLocal(); renderSkillsTabLocal(); updateApplyBanner(); }
-
-      window.modifyStatLocally = function(stat, amount) {
-          if (amount > 0 && localChar.profile.statPoints <= 0) return;
-          if (amount < 0 && pendingStats[stat] <= 0) return;
-          if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
-          localChar.profile.statPoints -= amount; pendingStats[stat] += amount;
-          if (stat === 'hp') { localChar.stats.hp += (amount * 5); localChar.stats.maxHp += (amount * 5); } else { localChar.stats[stat] += amount; }
-          renderLocalUI();
-      }
-
-      window.modifySkillLocally = function(skillId, amount) {
-          if (amount > 0 && localChar.profile.skillPoints <= 0) return; let currentLv = localChar.skillLevels[skillId] || 0;
-          if (amount > 0 && currentLv >= 5) return tg.showAlert("Maximum mastery achieved.");
-          if (amount < 0 && (!pendingSkills[skillId] || pendingSkills[skillId] <= 0)) return;
-          if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
-          localChar.profile.skillPoints -= amount; pendingSkills[skillId] = (pendingSkills[skillId] || 0) + amount; localChar.skillLevels[skillId] = currentLv + amount; renderLocalUI();
-      }
-
-      function recomputeEquipBonuses() {
-          let b = {hp:0, str:0, dex:0, int:0};
-          for (let slot in localChar.equipped) { let itm = localChar.equipped[slot]; b.hp += parseInt(itm.hp||0); b.str += parseInt(itm.str||0); b.dex += parseInt(itm.dex||0); b.int += parseInt(itm.int||0); }
-          localChar.equipBonuses = b;
-      }
-
-      function localRemoveInv(itemId) { let idx = localChar.inventory.findIndex(i => i.itemId === itemId); if(idx !== -1) { if(localChar.inventory[idx].quantity > 1) localChar.inventory[idx].quantity--; else localChar.inventory.splice(idx, 1); } }
-      function localAddInv(itemId, itemDef) { let existing = localChar.inventory.find(i => i.itemId === itemId); if(existing) existing.quantity++; else localChar.inventory.push({itemId: itemId, quantity: 1, def: itemDef}); }
-
-      let selectedItemForModal = null; let isSelectedItemEquipped = false;
-      window.openItemModal = function(item, isEquipped, slotName = null) {
-          if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
-          selectedItemForModal = { ...item, slot: slotName }; isSelectedItemEquipped = isEquipped;
-          let cleanName = item.def ? item.def.name : item.itemId.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()); document.getElementById('modal-item-name').innerText = cleanName;
-          let statsText = `<b>Classification:</b> ${item.def ? item.def.type : 'Unknown Object'}<br><br>`;
-          if (item.def) {
-              if (parseInt(item.def.hp) !== 0) statsText += `❤️ Vitality: <b style="color:#60a5fa">${item.def.hp > 0 ? '+'+item.def.hp : item.def.hp}</b><br>`;
-              if (parseInt(item.def.str) !== 0) statsText += `💪 Strength: <b style="color:#60a5fa">${item.def.str > 0 ? '+'+item.def.str : item.def.str}</b><br>`;
-              if (parseInt(item.def.dex) !== 0) statsText += `🎯 Dexterity: <b style="color:#60a5fa">${item.def.dex > 0 ? '+'+item.def.dex : item.def.dex}</b><br>`;
-              if (parseInt(item.def.int) !== 0) statsText += `🧠 Intellect: <b style="color:#60a5fa">${item.def.int > 0 ? '+'+item.def.int : item.def.int}</b>`;
-          }
-          document.getElementById('modal-item-stats').innerHTML = statsText;
-          document.getElementById('btn-modal-equip').style.display = (!isEquipped) ? "block" : "none"; document.getElementById('btn-modal-unequip').style.display = (isEquipped) ? "block" : "none"; document.getElementById('btn-modal-discard').style.display = (!isEquipped) ? "block" : "none";
-          if (!isEquipped && item.def && item.def.type === 'Consumable') document.getElementById('btn-modal-equip').innerText = "Consume"; else document.getElementById('btn-modal-equip').innerText = "Equip";
-
-          const tSelect = document.getElementById('modal-trade-select'); const tBtn = document.getElementById('btn-modal-trade');
-          if (!isEquipped && window.partyMembers.length > 1) { tSelect.style.display = "block"; tBtn.style.display = "block"; tSelect.innerHTML = ""; window.partyMembers.forEach(m => { if (m.name !== localChar.profile.name) { tSelect.innerHTML += `<option value="${m.id}">${m.name}</option>`; } }); } else { tSelect.style.display = "none"; tBtn.style.display = "none"; }
-          document.getElementById('item-modal').style.display = "flex";
-      }
-      window.closeModal = function() { document.getElementById('item-modal').style.display = "none"; }
-
-      document.getElementById('btn-modal-equip').onclick = () => { 
-          closeModal(); 
-          let def = selectedItemForModal.def; let tSlot = def ? def.type : null;
-          if (tSlot === 'Weapon1H' || tSlot === 'Weapon2H') tSlot = 'Weapon'; if (tSlot === 'Ring') tSlot = localChar.equipped['Ring1'] ? 'Ring2' : 'Ring1';
-          
-          if (def && def.type === 'Consumable') {
-              localRemoveInv(selectedItemForModal.itemId);
-              let heal = parseInt(def.hp || 20); 
-              let effMaxHp = localChar.stats.maxHp + localChar.equipBonuses.hp;
-              localChar.stats.hp = Math.min(effMaxHp, localChar.stats.hp + heal);
-              actionQueue.push({ action: 'use_item', payload: { charName: localChar.profile.name, itemId: selectedItemForModal.itemId } });
-          } else {
-              if (def && def.type === 'Weapon2H' && localChar.equipped['Shield']) return tg.showAlert("You must unequip your Shield to wield a 2H Weapon.");
-              if (def && def.type === 'Shield' && localChar.equipped['Weapon'] && localChar.equipped['Weapon'].type === 'Weapon2H') return tg.showAlert("You must unequip your 2H Weapon to equip a Shield.");
-              localRemoveInv(selectedItemForModal.itemId);
-              if (localChar.equipped[tSlot]) localAddInv(localChar.equipped[tSlot].id, localChar.equipped[tSlot]);
-              
-              localChar.equipped[tSlot] = Object.assign({}, def, { id: selectedItemForModal.itemId }); 
-              recomputeEquipBonuses(); 
-              actionQueue.push({ action: 'equip_item', payload: { charName: localChar.profile.name, itemId: selectedItemForModal.itemId, targetSlot: tSlot } });
-          }
-          renderLocalUI();
-      };
-      
-      document.getElementById('btn-modal-unequip').onclick = () => { 
-          closeModal(); let slot = selectedItemForModal.slot; let def = localChar.equipped[slot];
-          delete localChar.equipped[slot]; localAddInv(def.id, def); 
-          recomputeEquipBonuses(); 
-          let effMaxHp = localChar.stats.maxHp + localChar.equipBonuses.hp;
-          if (localChar.stats.hp > effMaxHp) localChar.stats.hp = effMaxHp;
-          actionQueue.push({ action: 'unequip_item', payload: { charName: localChar.profile.name, slot: slot } });
-          renderLocalUI();
-      };
-      
-      document.getElementById('btn-modal-discard').onclick = () => { closeModal(); localRemoveInv(selectedItemForModal.itemId); actionQueue.push({ action: 'discard_item', payload: { charName: localChar.profile.name, itemId: selectedItemForModal.itemId } }); renderLocalUI(); };
-      
-      document.getElementById('btn-modal-trade').onclick = () => { closeModal(); let sel = document.getElementById('modal-trade-select'); let tId = sel.value; let tName = sel.options[sel.selectedIndex].text; localRemoveInv(selectedItemForModal.itemId); actionQueue.push({ action: 'trade_item', payload: { senderChar: localChar.profile.name, targetId: tId, targetChar: tName, itemId: selectedItemForModal.itemId } }); renderLocalUI(); };
-
-      window.applyOptimisticChanges = async function() {
-          document.getElementById('action-bar-container').style.display = 'none';
-          switchScreen('loading-screen');
-          document.getElementById('loading-text').innerText = "Committing Changes to Realm...";
-          try {
-              let statTotal = pendingStats.hp + pendingStats.str + pendingStats.dex + pendingStats.int;
-              if (statTotal > 0) { await fetchAsync('allocate_stats', { charName: localChar.profile.name, stats: pendingStats }); }
-              for (const [sId, levels] of Object.entries(pendingSkills)) { if (levels > 0) { await fetchAsync('upgrade_skill', { charName: localChar.profile.name, skillId: sId, levels: levels }); } }
-              for (let task of actionQueue) { await fetchAsync(task.action, task.payload); }
-              if(tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
-              fetchCharacterData(); 
-          } catch(e) { tg.showAlert("Sync Error: " + e.message); fetchCharacterData(); }
-      }
-
-      async function fetchAsync(action, dataPayload) {
-          const body = Object.assign({ initData: tg.initData, action: action }, dataPayload);
-          const res = await fetch(GAS_WEBHOOK_URL, { method: 'POST', redirect: 'follow', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body) });
-          return await res.json();
-      }
-
-      function renderCharacterSheetLocal() {
-        const char = localChar.profile; const stats = localChar.stats; const eqB = localChar.equipBonuses;
-        
-        document.getElementById('hero-name').innerText = `Lv.${char.level} ${char.className}`; document.getElementById('gold-display').innerText = `🪙 ${char.gold}`;
-        document.getElementById('stat-hp').innerText = `${stats.hp}/${stats.maxHp + eqB.hp}`; document.getElementById('stat-mp-display').innerText = `🔹 MANA RESERVES: ${stats.mp}/${stats.maxMp}`;
-        
-        document.getElementById('stat-str').innerText = stats.str; document.getElementById('bonus-str').innerText = eqB.str > 0 ? `+${eqB.str}` : (eqB.str < 0 ? eqB.str : "");
-        document.getElementById('stat-dex').innerText = stats.dex; document.getElementById('bonus-dex').innerText = eqB.dex > 0 ? `+${eqB.dex}` : (eqB.dex < 0 ? eqB.dex : "");
-        document.getElementById('stat-int').innerText = stats.int; document.getElementById('bonus-int').innerText = eqB.int > 0 ? `+${eqB.int}` : (eqB.int < 0 ? eqB.int : "");
-
-        const hasPoints = localChar.profile.statPoints > 0;
-        document.getElementById('stat-points-banner').style.display = hasPoints ? "block" : "none"; document.getElementById('avail-points').innerText = localChar.profile.statPoints;
-        document.querySelectorAll('.stat-controls').forEach(btn => btn.style.display = (hasPoints || pendingStats.hp > 0 || pendingStats.str > 0 || pendingStats.dex > 0 || pendingStats.int > 0) ? "flex" : "none");
-        ['hp', 'str', 'dex', 'int'].forEach(s => { let el = document.getElementById(`pend-${s}`); if(pendingStats[s] > 0) { el.innerText = `+${s==='hp'?pendingStats[s]*5:pendingStats[s]}`; el.style.display = "block"; } else el.style.display = "none"; });
-
-        const slots = ["Amulet", "Head", "Cape", "Weapon", "Upper", "Shield", "Ring1", "Lower", "Ring2", "Boots"];
-        slots.forEach(slot => { 
-            const el = document.getElementById(`eq-${slot}`); 
-            if (el) { 
-                el.src = ""; 
-                el.style.display = "none"; 
-                el.parentElement.classList.remove('filled'); 
-                el.parentElement.onclick = null; 
-            } 
-        }); 
-        for (const [slot, item] of Object.entries(localChar.equipped)) {
-          const el = document.getElementById(`eq-${slot}`);
-          if (el) { 
-              el.src = item.img || ""; 
-              el.style.display = "block"; 
-              el.parentElement.classList.add('filled'); 
-              el.parentElement.onclick = () => openItemModal({ itemId: item.id, def: item }, true, slot); 
-          }
+        function fetchCombatState() {
+            // For testing in a normal browser, fallback to a dummy ID
+            let userId = tg.initDataUnsafe?.user?.id || "123456789"; 
+            
+            fetch(GAS_WEBHOOK_URL, {
+                method: 'POST',
+                body: JSON.stringify({
+                    action: "get_combat_ui",
+                    initData: tg.initData,
+                    userId: userId
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('combat-ui').style.display = 'block';
+                    renderHeader(data.character);
+                    renderActions(data.skills, data.character);
+                } else {
+                    document.getElementById('loading').innerText = "⚠️ Not currently in combat.";
+                }
+            })
+            .catch(err => {
+                document.getElementById('loading').innerText = "Fetch failed. Please check connection.";
+            });
         }
 
-        const grid = document.getElementById('inventory-grid'); grid.innerHTML = '';
-        localChar.inventory.forEach(item => {
-          const slotDiv = document.createElement('div'); slotDiv.className = 'inventory-slot';
-          let imgHtml = item.def && item.def.img ? `<img src="${item.def.img}">` : `<div style="font-size: 24px; opacity: 0.8">📦</div>`;
-          slotDiv.innerHTML = `${imgHtml}<div class="qty-badge">x${item.quantity}</div>`;
-          slotDiv.onclick = () => openItemModal(item, false); grid.appendChild(slotDiv);
-        });
-      }
+        function renderHeader(char) {
+            const hpPct = Math.max(0, Math.min(100, (char.hp / char.maxHp) * 100));
+            const mpPct = Math.max(0, Math.min(100, (char.mp / char.maxMp) * 100));
+            
+            const html = `
+                <div class="status-name">${char.name} (Lv.${char.level} ${char.class})</div>
+                <div class="bar-container"><div class="hp-fill" style="width: ${hpPct}%;"></div></div>
+                <div class="stat-labels"><span>❤️ HP</span><span>${char.hp} / ${char.maxHp}</span></div>
+                <div style="height:8px;"></div>
+                <div class="bar-container"><div class="mp-fill" style="width: ${mpPct}%;"></div></div>
+                <div class="stat-labels"><span>🔹 MP</span><span>${char.mp} / ${char.maxMp}</span></div>
+            `;
+            document.getElementById('status-header').innerHTML = html;
+        }
 
-      function renderSkillsTabLocal() {
-          const hasSp = localChar.profile.skillPoints > 0; document.getElementById('skill-points-banner').style.display = hasSp ? "block" : "none"; document.getElementById('avail-skill-points').innerText = localChar.profile.skillPoints;
-          const list = document.getElementById('skills-list'); list.innerHTML = "";
-          let myClassSkills = globalSkills.filter(s => s.class === localChar.profile.className);
-          myClassSkills.forEach(sDef => {
-              let isLocked = localChar.profile.level < sDef.unlock; let currentLv = localChar.skillLevels[sDef.id] || 0; let pLv = pendingSkills[sDef.id] || 0;
-              
-              let baseDesc = effectDescriptions[sDef.type] || "A mysterious magical effect.";
-              let mathDesc = getSkillEffectText(sDef.type, currentLv);
-              let fullDesc = `<div style="font-style: italic; color: #94a3b8; margin-bottom: 8px;">"${baseDesc}"</div><div>${mathDesc}</div>`;
-              
-              let controlHtml = "";
-              if (isLocked) { controlHtml = `<div class="lock-text">🔒 Unlocks at Lv. ${sDef.unlock}</div>`; } 
-              else {
-                  let plusBtn = (hasSp && currentLv < 5) ? `<button class="stat-btn btn-plus" onclick="modifySkillLocally('${sDef.id}', 1)">+</button>` : `<div style="width:28px;"></div>`;
-                  let minusBtn = (pLv > 0) ? `<button class="stat-btn btn-minus" onclick="modifySkillLocally('${sDef.id}', -1)">-</button>` : `<div style="width:28px;"></div>`;
-                  controlHtml = `<div style="display:flex; align-items:center; gap:12px;">${minusBtn}<span class="skill-level-text">Mastery ${currentLv} / 5</span>${plusBtn}</div>`;
-              }
-              list.innerHTML += `<div class="skill-card ${isLocked ? 'locked' : ''}"><div class="skill-header"><div class="skill-title">✨ ${sDef.name}</div><div class="skill-cost">${sDef.cost} MP</div></div><div class="skill-desc">${fullDesc}</div><div class="skill-controls">${controlHtml}</div></div>`;
-          });
-      }
-      fetchCharacterData();
-    });
-  </script>
+        function renderActions(skills, char) {
+            const list = document.getElementById('action-list');
+            list.innerHTML = ""; // Clear existing
+
+            // Always add a Basic Attack first
+            const atkBtn = document.createElement('div');
+            atkBtn.className = 'action-btn';
+            atkBtn.innerHTML = `
+                <div class="action-title"><span>🗡️ Basic Attack</span></div>
+                <div class="action-desc">Deal physical damage to an enemy. Generates no threat.</div>
+            `;
+            atkBtn.onclick = () => submitAction("basic_attack");
+            list.appendChild(atkBtn);
+
+            // Render Class Skills
+            skills.forEach(skill => {
+                const btn = document.createElement('div');
+                btn.className = 'action-btn';
+                
+                // Dim the button if not enough MP
+                if (char.mp < skill.mpCost) {
+                    btn.style.opacity = "0.5";
+                    btn.style.pointerEvents = "none";
+                }
+
+                btn.innerHTML = `
+                    <div class="action-title"><span>✨ ${skill.name}</span> <span class="action-cost">${skill.mpCost} MP</span></div>
+                    <div class="action-desc">${skill.description}</div>
+                `;
+                btn.onclick = () => submitAction(skill.id);
+                list.appendChild(btn);
+            });
+            
+            // Flee / Items can be added here
+        }
+
+        function submitAction(skillId) {
+            let userId = tg.initDataUnsafe?.user?.id || "123456789";
+            
+            // Show toast notification immediately for good UX
+            const toast = document.getElementById("toast");
+            toast.className = "show";
+            
+            // Tell the Telegram bot to vibrate the phone for haptic feedback!
+            tg.HapticFeedback.impactOccurred('medium');
+
+            fetch(GAS_WEBHOOK_URL, {
+                method: 'POST',
+                body: JSON.stringify({
+                    action: "submit_combat_action",
+                    initData: tg.initData,
+                    userId: userId,
+                    skillId: skillId
+                })
+            })
+            .then(() => {
+                // Instantly close the MiniApp and drop the player back into the chat
+                setTimeout(() => tg.close(), 800); 
+            });
+        }
+    </script>
 </body>
 </html>

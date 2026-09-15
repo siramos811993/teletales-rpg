@@ -243,7 +243,7 @@
       const debugLog = document.getElementById('debug-log');
       const tg = window.Telegram.WebApp; tg.expand(); tg.ready();
       
-      const GAS_WEBHOOK_URL = "YOUR_NEW_WEBHOOK_URL_HERE"; // Paste your new Google Webhook here
+      const GAS_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbwswD62jtfSIc9AHKULMs_d2GlbNqPErKQSqw8nVncQOmFZExYWtacMbPx9nB_dBYKqag/exec"; 
       
       let allCharacters = []; 
       let activeCharRaw = null; 
@@ -499,8 +499,24 @@
         ['hp', 'str', 'dex', 'int'].forEach(s => { let el = document.getElementById(`pend-${s}`); if(pendingStats[s] > 0) { el.innerText = `+${s==='hp'?pendingStats[s]*5:pendingStats[s]}`; el.style.display = "block"; } else el.style.display = "none"; });
 
         const slots = ["Amulet", "Head", "Cape", "Weapon", "Upper", "Shield", "Ring1", "Lower", "Ring2", "Boots"];
-        slots.forEach(slot => { const el = document.getElementById(`eq-${slot}`); if (el) { el.src = ""; el.style.display = "none"; el.parentElement.classList.remove('filled'); el.parentElement.onclick = null; } }); 
-        for (const [slot, item] of Object.entries(localChar.equipped)) { const el = document.getElementById(`eq-${slot}`); if (el) { el.src = item.img || ""; el.style.display = "block"; el.parentElement.classList.add('filled'); el.parentElement.onclick = () => openItemModal({ itemId: item.id, def: item }, true, slot); } }
+        slots.forEach(slot => { 
+            const el = document.getElementById(`eq-${slot}`); 
+            if (el) { 
+                el.src = ""; 
+                el.style.display = "none"; 
+                el.parentElement.classList.remove('filled'); 
+                el.parentElement.onclick = null; 
+            } 
+        }); 
+        for (const [slot, item] of Object.entries(localChar.equipped)) {
+          const el = document.getElementById(`eq-${slot}`);
+          if (el) { 
+              el.src = item.img || ""; 
+              el.style.display = "block"; 
+              el.parentElement.classList.add('filled'); 
+              el.parentElement.onclick = () => openItemModal({ itemId: item.id, def: item }, true, slot); 
+          }
+        }
 
         const grid = document.getElementById('inventory-grid'); grid.innerHTML = '';
         localChar.inventory.forEach(item => {

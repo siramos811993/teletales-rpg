@@ -237,17 +237,21 @@
             document.getElementById('target-menu').style.display = 'none';
             document.getElementById('skill-menu').style.display = 'block';
         }
-
+        
         function submitAction(skillId, targetId) {
             tg.HapticFeedback.impactOccurred('medium');
             const toast = document.getElementById("toast");
             toast.innerText = "Action Locked In!";
             toast.className = "show";
 
+            // Fire the request to Google Apps Script, but DO NOT wait for it to finish!
             fetch(GAS_WEBHOOK_URL, {
                 method: 'POST',
                 body: JSON.stringify({ action: "submit_combat_action", userId: userId, skillId: skillId, targetId: targetId })
-            }).then(() => setTimeout(() => tg.close(), 800));
+            });
+
+            // Close the MiniApp immediately so the player can watch the fight in the chat
+            setTimeout(() => tg.close(), 200); 
         }
     </script>
 </body>

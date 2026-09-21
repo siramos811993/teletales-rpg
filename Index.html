@@ -170,6 +170,7 @@
     </div>
 
     <script>
+        // GLOBAL ERROR LOGGER
         window.onerror = function(msg, url, line) {
             document.getElementById('loading').innerHTML = `<span style="color:var(--danger-color); font-weight:bold;">⚠️ Javascript Crash</span><br><br>${msg}<br>Line: ${line}`;
             document.getElementById('loading').style.display = 'block';
@@ -185,10 +186,9 @@
         let userId = tg.initDataUnsafe?.user?.id || "123456789";
         const startParam = tg.initDataUnsafe?.start_param || "";
 
-        // BATCH STATE MANAGEMENT
-        let sData = null; // Original Server Data
-        let localItemDB = {}; // Master reference for all items user owns
-        let dState = { stats: {str:0, dex:0, int:0}, skills: [], equipment: {} }; // Draft Data
+        let sData = null; 
+        let localItemDB = {}; 
+        let dState = { stats: {str:0, dex:0, int:0}, skills: [], equipment: {} }; 
 
         document.addEventListener("DOMContentLoaded", () => {
             fetch(GAS_WEBHOOK_URL, {
@@ -198,7 +198,7 @@
             .then(res => res.text()) 
             .then(text => {
                 try { return JSON.parse(text); } 
-                catch(e) { throw new Error("Backend crashed and returned HTML."); }
+                catch(e) { throw new Error("Backend crashed and returned HTML: " + text.substring(0, 100)); }
             })
             .then(response => {
                 document.getElementById('loading').style.display = 'none';
@@ -223,14 +223,16 @@
                     document.getElementById('hub-ui').style.display = 'block';
                     sData = response.data;
                     
-                    // Build local item dictionary
                     for(let slot in sData.equipped) { if (sData.equipped[slot]) localItemDB[sData.equipped[slot].id] = sData.equipped[slot]; }
                     sData.backpack.forEach(item => localItemDB[item.id] = item);
                     
                     updateHubUI();
                 }
             })
-            .catch((err) => { document.getElementById('loading').innerHTML = `<span style="color:var(--danger-color); font-weight:bold;">⚠️ Fetch Error</span><br><br>${err.message}`; });
+            .catch((err) => { 
+                document.getElementById('loading').style.display = 'block';
+                document.getElementById('loading').innerHTML = `<span style="color:var(--danger-color); font-weight:bold;">⚠️ Fetch Error</span><br><br>${err.message}`; 
+            });
         });
 
         // =====================================
@@ -253,7 +255,6 @@
         }
 
         function updateHubUI() {
-            // Render Header
             let c = sData.character;
             let xpNeeded = c.level * 100;
             let xpPct = Math.max(0, Math.min(100, (c.xp / xpNeeded) * 100));
@@ -263,19 +264,17 @@
             document.getElementById('hub-xp-fill').style.width = `${xpPct}%`;
             document.getElementById('hub-xp-text').innerText = `${c.xp} / ${xpNeeded}`;
 
-            // Render Stats
             let effStatPoints = c.statPoints - (dState.stats.str + dState.stats.dex + dState.stats.int);
             document.getElementById('stat-pts-tracker').innerText = `Unallocated Stat Points: ${effStatPoints}`;
             
             ['str', 'dex', 'int'].forEach(stat => {
-                let base = parseInt(sData.stats[stat]);
+                let base = sData.stats[stat] !== undefined ? parseInt(sData.stats[stat]) : 0;
                 let added = dState.stats[stat];
                 document.getElementById(`stat-val-${stat}`).innerText = base + added;
                 document.getElementById(`btn-minus-${stat}`).style.visibility = added > 0 ? "visible" : "hidden";
                 document.getElementById(`btn-plus-${stat}`).style.visibility = effStatPoints > 0 ? "visible" : "hidden";
             });
 
-            // Render Skills
             let effSkillPoints = c.skillPoints - dState.skills.length;
             document.getElementById('skill-pts-tracker').innerText = `Available Skill Points: ${effSkillPoints}`;
             const sList = document.getElementById('hub-skill-list');
@@ -304,7 +303,6 @@
                 sList.appendChild(btn);
             });
 
-            // Render Inventory
             const grid = document.getElementById('hub-eq-grid');
             const slots = ["Head", "Amulet", "Upper_Body", "Weapon", "Lower_Body", "Shield", "Hands", "Ring", "Foot"];
             grid.innerHTML = "";
@@ -349,7 +347,6 @@
                 invList.appendChild(div);
             });
 
-            // Save Bar Visibility
             let changed = hasChanges();
             document.getElementById('save-bar').style.display = changed ? "flex" : "none";
             document.body.style.paddingBottom = changed ? "80px" : "16px";
@@ -374,7 +371,9 @@
 
             fetch(GAS_WEBHOOK_URL, {
                 method: 'POST', body: JSON.stringify({ action: "save_character_batch", userId: userId, updates: dState })
-            }).then(() => location.reload()).catch(() => tg.showAlert("Failed to save."));
+            }).then(() => location.reload()).catch((e) => {
+                document.getElementById('loading').innerHTML = `<span style="color:var(--danger-color); font-weight:bold;">⚠️ Save Failed</span><br><br>${e.message}`;
+            });
         }
 
         // =====================================
@@ -421,7 +420,23 @@
             const name = document.getElementById('char-name').value.trim();
             if (!name || !selectedClass) return tg.showAlert("Please enter a name and select a class.");
             tg.HapticFeedback.impactOccurred('heavy');
-            fetch(GAS_WEBHOOK_URL, { method: 'POST', body: JSON.stringify({ action: "create_character", userId: userId, name: name, charClass: selectedClass }) }).then(() => tg.close());
+            
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('creation-ui').style.display = 'none';
+
+            fetch(GAS_WEBHOOK_URL, { method: 'POST', body: JSON.stringify({ action: "create_character", userId: userId, name: name, charClass: selectedClass }) })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) { tg.close(); } 
+                else { 
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('creation-ui').style.display = 'block';
+                    tg.showAlert(data.message); 
+                }
+            })
+            .catch(e => {
+                document.getElementById('loading').innerHTML = `<span style="color:var(--danger-color); font-weight:bold;">⚠️ Creation Failed</span><br><br>${e.message}`;
+            });
         }
 
         // =====================================

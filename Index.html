@@ -4,6 +4,436 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>TeleTales RPG</title>
+    <script src="https://t.me/teletales_bot/teletales"></script>
+    <style>
+        :root {
+            --bg-color: #1a1a24; --surface-color: #2a2a35; --accent-color: #e2b714;
+            --text-main: #f5f5f5; --text-muted: #a0a0a0;
+            --hp-color: #ff4757; --mp-color: #1e90ff; --danger-color: #ff4757;
+        }
+        body { font-family: -apple-system, sans-serif; background-color: var(--bg-color); color: var(--text-main); margin: 0; padding: 16px; user-select: none; }
+        h2 { margin-top: 0; font-size: 16px; border-bottom: 1px solid #333; padding-bottom: 8px; color: var(--accent-color); }
+        
+        #loading { text-align: center; margin-top: 50px; color: var(--text-muted); font-family: monospace; }
+        
+        /* Combat & Generic UI Styles */
+        .status-header { background: var(--surface-color); padding: 12px; border-radius: 8px; margin-bottom: 16px; }
+        .bar-container { background: #111; border-radius: 4px; height: 8px; margin-bottom: 8px; overflow: hidden; }
+        .hp-fill { background: var(--hp-color); height: 100%; transition: width 0.3s; }
+        .mp-fill { background: var(--mp-color); height: 100%; transition: width 0.3s; }
+        .stat-labels { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted); }
+        
+        .action-list { display: flex; flex-direction: column; gap: 10px; }
+        .action-btn { background: var(--surface-color); border: 1px solid #333; border-radius: 8px; padding: 12px; text-align: left; color: var(--text-main); cursor: pointer; transition: border-color 0.2s; }
+        .action-btn:active { border-color: var(--accent-color); }
+        .action-title { font-weight: bold; font-size: 15px; display: flex; justify-content: space-between; margin-bottom:4px; }
+        .action-desc { font-size: 12px; color: var(--text-muted); line-height: 1.4; }
+
+        /* Inventory UI Styles */
+        .eq-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 24px; }
+        .eq-slot { 
+            background: var(--surface-color); border: 1px dashed #555; border-radius: 8px; 
+            padding: 10px 5px; text-align: center; display: flex; flex-direction: column; 
+            align-items: center; justify-content: center; min-height: 60px;
+        }
+        .eq-slot.filled { border-style: solid; border-color: #444; background: #2f2f3d; }
+        .slot-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px; }
+        .item-name { font-size: 11px; font-weight: bold; color: var(--accent-color); }
+
+        .inv-item { background: var(--surface-color); border-radius: 8px; padding: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #333;}
+        .inv-details { display: flex; flex-direction: column; }
+        .inv-stats { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+        
+        .btn-primary { background: var(--accent-color); color: #000; border: none; border-radius: 4px; padding: 6px 12px; font-weight: bold; font-size: 12px; cursor: pointer; }
+        .btn-danger { background: var(--danger-color); color: #fff; border: none; border-radius: 4px; padding: 6px 12px; font-weight: bold; font-size: 12px; cursor: pointer; }
+        .btn-disabled { background: #444; color: #888; border: none; border-radius: 4px; padding: 6px 12px; font-weight: bold; font-size: 12px; pointer-events: none; }
+
+        #toast { visibility: hidden; min-width: 250px; background-color: #333; color: #fff; text-align: center; border-radius: 4px; padding: 12px; position: fixed; z-index: 1; left: 50%; bottom: 30px; transform: translateX(-50%); font-size: 14px; }
+        #toast.show { visibility: visible; animation: fadein 0.3s, fadeout 0.3s 2.7s; }
+        @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
+        @keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
+    </style>
+</head>
+<body>
+
+    <div id="loading">📡 Syncing with the Realm...</div>
+
+    <!-- COMBAT VIEW -->
+    <div id="combat-ui" style="display: none;">
+        <div class="status-header" id="status-header"></div>
+        <div id="skill-menu">
+            <h2>⚔️ Choose Action</h2>
+            <div class="action-list" id="action-list"></div>
+        </div>
+        <div id="target-menu" style="display: none;">
+            <h2>🎯 Select Target</h2>
+            <div class="action-list" id="target-list"></div>
+            <button class="action-btn" onclick="backToSkills()" style="text-align: center; margin-top: 12px; background: #444;">🔙 Back to Skills</button>
+        </div>
+    </div>
+
+    <!-- INVENTORY VIEW -->
+    <div id="inventory-ui" style="display: none;">
+        <h2>🛡️ Equipped Gear</h2>
+        <div class="eq-grid" id="eq-grid"></div>
+
+        <h2>🎒 Backpack</h2>
+        <div id="inv-list"></div>
+    </div>
+
+    <!-- ROSTER / BARRACKS VIEW -->
+    <div id="roster-ui" style="display: none;">
+        <h2>👥 The Barracks</h2>
+        <div style="margin-bottom: 20px; color: var(--text-muted); font-size: 14px;">Select your active character to deploy into the realm. Note: All characters share the same backpack inventory!</div>
+        <div class="action-list" id="roster-list"></div>
+        <button class="btn-primary" style="width: 100%; margin-top: 20px; padding: 14px; font-size: 16px;" onclick="showCreation()">➕ Create New Character</button>
+    </div>
+
+    <!-- CHARACTER CREATION VIEW -->
+    <div id="creation-ui" style="display: none;">
+        <h2>🧙‍♂️ Forge Your Legend</h2>
+        <div style="margin-bottom: 20px; color: var(--text-muted); font-size: 14px;">Welcome to the realm. Choose your path wisely.</div>
+        
+        <input type="text" id="char-name" placeholder="Enter Character Name..." style="width: 100%; padding: 12px; background: #111; border: 1px solid #444; color: #fff; border-radius: 8px; margin-bottom: 16px; box-sizing: border-box; font-size: 16px;">
+        
+        <div class="action-list">
+            <div class="action-btn" onclick="selectClass('Warrior')" id="class-Warrior">🛡️ <b>Warrior</b> <br><span style="font-size:12px;color:#aaa">High HP & Strength. Masters of taunting and absorbing damage.</span></div>
+            <div class="action-btn" onclick="selectClass('Mage')" id="class-Mage">✨ <b>Mage</b> <br><span style="font-size:12px;color:#aaa">High MP & Intelligence. Devastating Area of Effect spells.</span></div>
+            <div class="action-btn" onclick="selectClass('Rogue')" id="class-Rogue">🗡️ <b>Rogue</b> <br><span style="font-size:12px;color:#aaa">High Dexterity & Critical Chance. Lethal single-target damage.</span></div>
+            <div class="action-btn" onclick="selectClass('Cleric')" id="class-Cleric">🔆 <b>Cleric</b> <br><span style="font-size:12px;color:#aaa">Balanced stats. Essential party healing and protective buffs.</span></div>
+        </div>
+        
+        <button class="btn-primary" style="width: 100%; margin-top: 20px; padding: 14px; font-size: 16px;" onclick="submitCharacter()">Begin Adventure</button>
+    </div>
+
+    <!-- SKILL TREE VIEW -->
+    <div id="skills-ui" style="display: none;">
+        <h2>📖 Skill Tree</h2>
+        <div id="sp-tracker" style="margin-bottom: 16px; color: var(--accent-color); font-weight: bold;"></div>
+        <div class="action-list" id="skill-tree-list"></div>
+    </div>
+
+    <div id="toast">Action Locked In!</div>
+
+    <script>
+        // GLOBAL ERROR LOGGER: Catch any syntax errors and print them to the screen
+        window.onerror = function(msg, url, line) {
+            document.getElementById('loading').innerHTML = `<span style="color:var(--danger-color); font-weight:bold;">⚠️ Javascript Crash</span><br><br>${msg}<br>Line: ${line}`;
+            document.getElementById('loading').style.display = 'block';
+            return false;
+        };
+
+        const tg = window.Telegram.WebApp;
+        tg.expand(); 
+        
+        // ⚠️ CRITICAL: KEEP THE QUOTES AROUND YOUR DEPLOYMENT URL! 
+        const GAS_WEBHOOK_URL = "YOUR_GOOGLE_APPS_SCRIPT_EXEC_URL"; 
+        
+        let globalMonsters = []; 
+        let userId = tg.initDataUnsafe?.user?.id || "123456789";
+        const startParam = tg.initDataUnsafe?.start_param || "";
+
+        document.addEventListener("DOMContentLoaded", () => {
+            fetch(GAS_WEBHOOK_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action: "get_app_state", initData: tg.initData, userId: userId, startParam: startParam })
+            })
+            .then(res => res.text()) // Read as text first to catch 500 HTML errors
+            .then(text => {
+                try { return JSON.parse(text); } 
+                catch(e) { throw new Error("Backend crashed and returned HTML: " + text.substring(0, 80) + "..."); }
+            })
+            .then(response => {
+                document.getElementById('loading').style.display = 'none';
+                
+                // Print explicit Backend Errors to the screen
+                if (response.mode === "error") {
+                    document.getElementById('loading').style.display = 'block';
+                    document.getElementById('loading').innerHTML = `<span style="color:var(--danger-color); font-weight:bold;">⚠️ Backend Error</span><br><br>${response.message}`;
+                    return;
+                }
+                
+                if (response.mode === "roster") {
+                    document.getElementById('roster-ui').style.display = 'block';
+                    renderRoster(response.data.roster);
+                } else if (response.mode === "creation") {
+                    document.getElementById('creation-ui').style.display = 'block';
+                } else if (response.mode === "combat") {
+                    document.getElementById('combat-ui').style.display = 'block';
+                    globalMonsters = response.data.monsters;
+                    renderCombatHeader(response.data.character);
+                    renderActions(response.data.skills, response.data.character);
+                } else if (response.mode === "inventory") {
+                    document.getElementById('inventory-ui').style.display = 'block';
+                    renderInventory(response.data.equipped, response.data.backpack);
+                } else if (response.mode === "skills") {
+                    document.getElementById('skills-ui').style.display = 'block';
+                    renderSkillTree(response.data.character, response.data.tree);
+                }
+            })
+            .catch((err) => { 
+                document.getElementById('loading').innerHTML = `<span style="color:var(--danger-color); font-weight:bold;">⚠️ Fetch Error</span><br><br>${err.message}`; 
+            });
+        });
+
+        // =====================================
+        // ROSTER (BARRACKS) LOGIC
+        // =====================================
+        function renderRoster(roster) {
+            const list = document.getElementById('roster-list');
+            list.innerHTML = "";
+            
+            if (roster.length === 0) {
+                list.innerHTML = `<div style="text-align:center; color:#888; font-size:12px;">You have no characters. Forge one below!</div>`;
+                return;
+            }
+
+            roster.forEach(char => {
+                const div = document.createElement('div');
+                div.className = 'inv-item';
+                if (char.isActive) div.style.borderColor = 'var(--accent-color)';
+
+                let buttonsHTML = "";
+                if (char.isActive) {
+                    buttonsHTML = `<button class="btn-disabled">Currently Active</button>`;
+                } else {
+                    buttonsHTML = `
+                        <button class="btn-primary" onclick="switchChar('${char.id}')">Select</button>
+                        <button class="btn-danger" style="margin-left: 5px;" onclick="deleteChar('${char.id}', '${char.name}')">Delete</button>
+                    `;
+                }
+
+                div.innerHTML = `
+                    <div class="inv-details">
+                        <div class="action-title" style="margin:0; font-size:14px; color:${char.isActive ? 'var(--accent-color)' : '#fff'};">${char.name} ${char.isActive ? '👑' : ''}</div>
+                        <div class="inv-stats">Lv.${char.level} ${char.className} • ${char.state.replace('_', ' ')}</div>
+                    </div>
+                    <div style="display:flex;">${buttonsHTML}</div>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        function showCreation() {
+            document.getElementById('roster-ui').style.display = 'none';
+            document.getElementById('creation-ui').style.display = 'block';
+        }
+
+        function switchChar(charId) {
+            tg.HapticFeedback.impactOccurred('medium');
+            showToast("Switching characters...");
+            fetch(GAS_WEBHOOK_URL, {
+                method: 'POST', body: JSON.stringify({ action: "switch_character", userId: userId, charId: charId })
+            }).then(() => location.reload());
+        }
+
+        function deleteChar(charId, charName) {
+            if (!confirm(`Are you absolutely sure you want to delete ${charName}? This cannot be undone.`)) return;
+            tg.HapticFeedback.impactOccurred('heavy');
+            showToast("Deleting...");
+            fetch(GAS_WEBHOOK_URL, {
+                method: 'POST', body: JSON.stringify({ action: "delete_character", userId: userId, charId: charId })
+            }).then(() => location.reload());
+        }
+
+        // =====================================
+        // CHARACTER CREATION
+        // =====================================
+        let selectedClass = "";
+        function selectClass(cls) {
+            selectedClass = cls;
+            document.querySelectorAll('#creation-ui .action-btn').forEach(btn => btn.style.borderColor = '#333');
+            document.getElementById(`class-${cls}`).style.borderColor = 'var(--accent-color)';
+        }
+
+        function submitCharacter() {
+            const name = document.getElementById('char-name').value.trim();
+            if (!name || !selectedClass) return tg.showAlert("Please enter a name and select a class.");
+            
+            tg.HapticFeedback.impactOccurred('heavy');
+            fetch(GAS_WEBHOOK_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action: "create_character", userId: userId, name: name, charClass: selectedClass })
+            }).then(() => tg.close());
+        }
+
+        // =====================================
+        // SKILL TREE LOGIC
+        // =====================================
+        function renderSkillTree(char, tree) {
+            document.getElementById('sp-tracker').innerText = `Available Skill Points: ${char.skillPoints}`;
+            const list = document.getElementById('skill-tree-list');
+            list.innerHTML = "";
+            
+            tree.forEach(skill => {
+                const isUnlocked = char.unlocked[skill.id];
+                const meetsLevel = char.level >= skill.minLevel;
+                const meetsPrereq = !skill.prereq || char.unlocked[skill.prereq];
+                
+                const btn = document.createElement('div');
+                btn.className = 'action-btn';
+                
+                let statusBadge = "";
+                if (isUnlocked) { statusBadge = `<span style="color:#4caf50; font-size:12px;">✅ Unlocked</span>`; btn.style.borderColor = '#4caf50'; }
+                else if (!meetsLevel) { statusBadge = `<span style="color:#ff4757; font-size:12px;">🔒 Requires Lv.${skill.minLevel}</span>`; btn.style.opacity = "0.5"; }
+                else if (!meetsPrereq) { statusBadge = `<span style="color:#ff4757; font-size:12px;">🔒 Requires Previous Skill</span>`; btn.style.opacity = "0.5"; }
+                else { statusBadge = `<button class="btn-primary" onclick="unlockSkill('${skill.id}')">Unlock (1 SP)</button>`; }
+
+                btn.innerHTML = `
+                    <div class="action-title" style="margin-bottom:8px;"><span>✨ ${skill.name}</span> <span>${statusBadge}</span></div>
+                    <div class="action-desc">${skill.desc}</div>
+                    <div style="font-size: 11px; color: #888; margin-top: 6px;">Cost: ${skill.mpCost} MP | Type: ${skill.type.replace('_', ' ')}</div>
+                `;
+                list.appendChild(btn);
+            });
+        }
+
+        function unlockSkill(skillId) {
+            tg.HapticFeedback.impactOccurred('medium');
+            showToast("Unlocking...");
+            fetch(GAS_WEBHOOK_URL, {
+                method: 'POST', body: JSON.stringify({ action: "unlock_skill", userId: userId, skillId: skillId })
+            }).then(() => location.reload());
+        }
+
+        // =====================================
+        // INVENTORY LOGIC
+        // =====================================
+        function renderInventory(equipped, backpack) {
+            const grid = document.getElementById('eq-grid');
+            const slots = ["Head", "Amulet", "Upper_Body", "Weapon", "Lower_Body", "Shield", "Hands", "Ring", "Foot"];
+            
+            grid.innerHTML = "";
+            slots.forEach(slot => {
+                const item = equipped[slot];
+                const div = document.createElement('div');
+                div.className = item ? 'eq-slot filled' : 'eq-slot';
+                
+                let icon = "🛡️";
+                if(slot==="Weapon") icon="⚔️"; if(slot==="Ring" || slot==="Amulet") icon="💍"; if(slot==="Head") icon="🪖";
+                
+                div.innerHTML = `
+                    <div class="slot-label">${icon} ${slot.replace('_', ' ')}</div>
+                    <div class="item-name">${item ? item.name : "Empty"}</div>
+                `;
+                grid.appendChild(div);
+            });
+
+            const invList = document.getElementById('inv-list');
+            invList.innerHTML = "";
+            
+            if (backpack.length === 0) {
+                invList.innerHTML = `<div style="text-align:center; color:#888; font-size:12px;">Your backpack is empty.</div>`;
+                return;
+            }
+
+            backpack.forEach(item => {
+                if (item.type === "Material" || item.type === "Consumable") return; 
+                const div = document.createElement('div');
+                div.className = 'inv-item';
+                let statText = Object.entries(item.stats).map(([k, v]) => `${k.toUpperCase()} +${v}`).join(' | ');
+                if (item.effect !== "none") statText += ` | ✨ ${item.effect}`;
+
+                div.innerHTML = `
+                    <div class="inv-details">
+                        <div class="action-title" style="margin:0; font-size:14px; color:#e2b714;">${item.name}</div>
+                        <div class="inv-stats">${item.type} • ${statText}</div>
+                    </div>
+                    <button class="btn-primary" onclick="equipItem('${item.id}')">Equip</button>
+                `;
+                invList.appendChild(div);
+            });
+        }
+
+        function equipItem(itemId) {
+            tg.HapticFeedback.impactOccurred('medium');
+            showToast("Equipping...");
+            fetch(GAS_WEBHOOK_URL, {
+                method: 'POST', body: JSON.stringify({ action: "equip_item", userId: userId, itemId: itemId })
+            }).then(() => location.reload());
+        }
+
+        // =====================================
+        // COMBAT LOGIC
+        // =====================================
+        function renderCombatHeader(char) {
+            const hpPct = Math.max(0, Math.min(100, (char.hp / char.maxHp) * 100));
+            const mpPct = Math.max(0, Math.min(100, (char.mp / char.maxMp) * 100));
+            document.getElementById('status-header').innerHTML = `
+                <div style="font-weight:bold; margin-bottom:8px;">${char.name} (Lv.${char.level} ${char.className})</div>
+                <div class="bar-container"><div class="hp-fill" style="width: ${hpPct}%;"></div></div>
+                <div class="stat-labels"><span>❤️ HP</span><span>${char.hp} / ${char.maxHp}</span></div>
+                <div style="height:8px;"></div>
+                <div class="bar-container"><div class="mp-fill" style="width: ${mpPct}%;"></div></div>
+                <div class="stat-labels"><span>🔹 MP</span><span>${char.mp} / ${char.maxMp}</span></div>
+            `;
+        }
+
+        function renderActions(skills, char) {
+            const list = document.getElementById('action-list');
+            list.innerHTML = `<div class="action-btn" onclick="openTargetMenu('basic_attack')">
+                <div class="action-title"><span>🗡️ Basic Attack</span></div><div class="action-desc">Physical damage based on stats.</div>
+            </div>`;
+
+            skills.forEach(skill => {
+                const btn = document.createElement('div');
+                btn.className = 'action-btn';
+                if (char.mp < skill.mpCost) { btn.style.opacity = "0.5"; btn.style.pointerEvents = "none"; }
+                btn.innerHTML = `<div class="action-title"><span>✨ ${skill.name}</span> <span style="color:#1e90ff">${skill.mpCost} MP</span></div><div class="action-desc">${skill.description}</div>`;
+                btn.onclick = () => { skill.targetType === "SINGLE_ENEMY" || skill.targetType === "SINGLE_ALLY" ? openTargetMenu(skill.id) : submitAction(skill.id, null); };
+                list.appendChild(btn);
+            });
+        }
+
+        function openTargetMenu(skillId) {
+            document.getElementById('skill-menu').style.display = 'none';
+            document.getElementById('target-menu').style.display = 'block';
+            const tList = document.getElementById('target-list');
+            tList.innerHTML = "";
+
+            globalMonsters.forEach(m => {
+                const btn = document.createElement('div');
+                btn.className = 'action-btn';
+                const hpPct = Math.max(0, Math.min(100, (m.hp / m.maxHp) * 100));
+                btn.innerHTML = `
+                    <div class="action-title"><span>👹 ${m.name}</span></div>
+                    <div class="bar-container" style="margin-top: 6px;"><div class="hp-fill" style="width: ${hpPct}%;"></div></div>
+                    <div class="stat-labels"><span>HP: ${m.hp} / ${m.maxHp}</span></div>
+                `;
+                btn.onclick = () => submitAction(skillId, m.id);
+                tList.appendChild(btn);
+            });
+        }
+
+        function backToSkills() {
+            document.getElementById('target-menu').style.display = 'none';
+            document.getElementById('skill-menu').style.display = 'block';
+        }
+
+        function submitAction(skillId, targetId) {
+            tg.HapticFeedback.impactOccurred('medium');
+            fetch(GAS_WEBHOOK_URL, {
+                method: 'POST', body: JSON.stringify({ action: "submit_combat_action", userId: userId, skillId: skillId, targetId: targetId })
+            });
+            setTimeout(() => tg.close(), 100); 
+        }
+
+        // =====================================
+        // UTILS
+        // =====================================
+        function showToast(msg) {
+            const toast = document.getElementById("toast");
+            toast.innerText = msg;
+            toast.className = "show";
+        }
+    </script>
+</body>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TeleTales RPG</title>
     <script src="https://script.google.com/macros/s/AKfycbxr9JHs-_hq2rBr85EoOj-6urlj6FONsLAKsBou3DY8WTblcXWIVloTbfc-AiHLn1hbNA/exec"></script>
     <style>
         :root {

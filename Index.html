@@ -16,7 +16,7 @@
         
         #loading { text-align: center; margin-top: 50px; color: var(--text-muted); }
         
-        /* Combat UI Styles */
+        /* Combat & Generic UI Styles */
         .status-header { background: var(--surface-color); padding: 12px; border-radius: 8px; margin-bottom: 16px; }
         .bar-container { background: #111; border-radius: 4px; height: 8px; margin-bottom: 8px; overflow: hidden; }
         .hp-fill { background: var(--hp-color); height: 100%; transition: width 0.3s; }
@@ -24,7 +24,7 @@
         .stat-labels { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted); }
         
         .action-list { display: flex; flex-direction: column; gap: 10px; }
-        .action-btn { background: var(--surface-color); border: 1px solid #333; border-radius: 8px; padding: 12px; text-align: left; color: var(--text-main); }
+        .action-btn { background: var(--surface-color); border: 1px solid #333; border-radius: 8px; padding: 12px; text-align: left; color: var(--text-main); cursor: pointer; transition: border-color 0.2s; }
         .action-btn:active { border-color: var(--accent-color); }
         .action-title { font-weight: bold; font-size: 15px; display: flex; justify-content: space-between; margin-bottom:4px; }
         .action-desc { font-size: 12px; color: var(--text-muted); line-height: 1.4; }
@@ -43,7 +43,7 @@
         .inv-item { background: var(--surface-color); border-radius: 8px; padding: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #333;}
         .inv-details { display: flex; flex-direction: column; }
         .inv-stats { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
-        .equip-btn { background: var(--accent-color); color: #000; border: none; border-radius: 4px; padding: 6px 12px; font-weight: bold; font-size: 12px; }
+        .equip-btn { background: var(--accent-color); color: #000; border: none; border-radius: 4px; padding: 6px 12px; font-weight: bold; font-size: 12px; cursor: pointer; }
 
         #toast { visibility: hidden; min-width: 250px; background-color: #333; color: #fff; text-align: center; border-radius: 4px; padding: 12px; position: fixed; z-index: 1; left: 50%; bottom: 30px; transform: translateX(-50%); font-size: 14px; }
         #toast.show { visibility: visible; animation: fadein 0.3s, fadeout 0.3s 2.7s; }
@@ -72,36 +72,61 @@
     <!-- INVENTORY VIEW -->
     <div id="inventory-ui" style="display: none;">
         <h2>🛡️ Equipped Gear</h2>
-        <div class="eq-grid" id="eq-grid">
-            <!-- Rendered by JS -->
-        </div>
+        <div class="eq-grid" id="eq-grid"></div>
 
         <h2>🎒 Backpack</h2>
-        <div id="inv-list">
-            <!-- Rendered by JS -->
+        <div id="inv-list"></div>
+    </div>
+
+    <!-- CHARACTER CREATION VIEW -->
+    <div id="creation-ui" style="display: none;">
+        <h2>🧙‍♂️ Forge Your Legend</h2>
+        <div style="margin-bottom: 20px; color: var(--text-muted); font-size: 14px;">Welcome to the realm. Choose your path wisely.</div>
+        
+        <input type="text" id="char-name" placeholder="Enter Character Name..." style="width: 100%; padding: 12px; background: #111; border: 1px solid #444; color: #fff; border-radius: 8px; margin-bottom: 16px; box-sizing: border-box; font-size: 16px;">
+        
+        <div class="action-list">
+            <div class="action-btn" onclick="selectClass('Warrior')" id="class-Warrior">🛡️ <b>Warrior</b> <br><span style="font-size:12px;color:#aaa">High HP & Strength. Masters of taunting and absorbing damage.</span></div>
+            <div class="action-btn" onclick="selectClass('Mage')" id="class-Mage">✨ <b>Mage</b> <br><span style="font-size:12px;color:#aaa">High MP & Intelligence. Devastating Area of Effect spells.</span></div>
+            <div class="action-btn" onclick="selectClass('Rogue')" id="class-Rogue">🗡️ <b>Rogue</b> <br><span style="font-size:12px;color:#aaa">High Dexterity & Critical Chance. Lethal single-target damage.</span></div>
+            <div class="action-btn" onclick="selectClass('Cleric')" id="class-Cleric">🔆 <b>Cleric</b> <br><span style="font-size:12px;color:#aaa">Balanced stats. Essential party healing and protective buffs.</span></div>
         </div>
+        
+        <button class="equip-btn" style="width: 100%; margin-top: 20px; padding: 14px; font-size: 16px;" onclick="submitCharacter()">Begin Adventure</button>
+    </div>
+
+    <!-- SKILL TREE VIEW -->
+    <div id="skills-ui" style="display: none;">
+        <h2>📖 Skill Tree</h2>
+        <div id="sp-tracker" style="margin-bottom: 16px; color: var(--accent-color); font-weight: bold;"></div>
+        <div class="action-list" id="skill-tree-list"></div>
     </div>
 
     <div id="toast">Action Locked In!</div>
 
     <script>
         const tg = window.Telegram.WebApp;
-        // REPLACE WITH YOUR REAL GOOGLE APPS SCRIPT URL!
-        const GAS_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbxr9JHs-_hq2rBr85EoOj-6urlj6FONsLAKsBou3DY8WTblcXWIVloTbfc-AiHLn1hbNA/exec"; 
+        tg.expand(); 
+        
+        // PASTE YOUR GOOGLE APPS SCRIPT WEB APP DEPLOYMENT URL HERE
+        const GAS_WEBHOOK_URL = "YOUR_GOOGLE_APPS_SCRIPT_EXEC_URL"; 
         
         let globalMonsters = []; 
         let userId = tg.initDataUnsafe?.user?.id || "123456789";
+        const startParam = tg.initDataUnsafe?.start_param || "";
 
         document.addEventListener("DOMContentLoaded", () => {
             fetch(GAS_WEBHOOK_URL, {
                 method: 'POST',
-                body: JSON.stringify({ action: "get_app_state", initData: tg.initData, userId: userId })
+                body: JSON.stringify({ action: "get_app_state", initData: tg.initData, userId: userId, startParam: startParam })
             })
             .then(res => res.json())
             .then(response => {
                 document.getElementById('loading').style.display = 'none';
                 
-                if (response.mode === "combat") {
+                if (response.mode === "creation") {
+                    document.getElementById('creation-ui').style.display = 'block';
+                } else if (response.mode === "combat") {
                     document.getElementById('combat-ui').style.display = 'block';
                     globalMonsters = response.data.monsters;
                     renderCombatHeader(response.data.character);
@@ -109,10 +134,77 @@
                 } else if (response.mode === "inventory") {
                     document.getElementById('inventory-ui').style.display = 'block';
                     renderInventory(response.data.equipped, response.data.backpack);
+                } else if (response.mode === "skills") {
+                    document.getElementById('skills-ui').style.display = 'block';
+                    renderSkillTree(response.data.character, response.data.tree);
                 }
             })
             .catch(() => { document.getElementById('loading').innerText = "⚠️ Connection Failed."; });
         });
+
+        // =====================================
+        // CHARACTER CREATION
+        // =====================================
+        let selectedClass = "";
+        function selectClass(cls) {
+            selectedClass = cls;
+            document.querySelectorAll('#creation-ui .action-btn').forEach(btn => btn.style.borderColor = '#333');
+            document.getElementById(`class-${cls}`).style.borderColor = 'var(--accent-color)';
+        }
+
+        function submitCharacter() {
+            const name = document.getElementById('char-name').value.trim();
+            if (!name || !selectedClass) return tg.showAlert("Please enter a name and select a class.");
+            
+            tg.HapticFeedback.impactOccurred('heavy');
+            fetch(GAS_WEBHOOK_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action: "create_character", userId: userId, name: name, charClass: selectedClass })
+            }).then(() => tg.close());
+        }
+
+        // =====================================
+        // SKILL TREE LOGIC
+        // =====================================
+        function renderSkillTree(char, tree) {
+            document.getElementById('sp-tracker').innerText = `Available Skill Points: ${char.skillPoints}`;
+            const list = document.getElementById('skill-tree-list');
+            list.innerHTML = "";
+            
+            tree.forEach(skill => {
+                const isUnlocked = char.unlocked[skill.id];
+                const meetsLevel = char.level >= skill.minLevel;
+                const meetsPrereq = !skill.prereq || char.unlocked[skill.prereq];
+                
+                const btn = document.createElement('div');
+                btn.className = 'action-btn';
+                
+                let statusBadge = "";
+                if (isUnlocked) { statusBadge = `<span style="color:#4caf50; font-size:12px;">✅ Unlocked</span>`; btn.style.borderColor = '#4caf50'; }
+                else if (!meetsLevel) { statusBadge = `<span style="color:#ff4757; font-size:12px;">🔒 Requires Lv.${skill.minLevel}</span>`; btn.style.opacity = "0.5"; }
+                else if (!meetsPrereq) { statusBadge = `<span style="color:#ff4757; font-size:12px;">🔒 Requires Previous Skill</span>`; btn.style.opacity = "0.5"; }
+                else { statusBadge = `<button class="equip-btn" onclick="unlockSkill('${skill.id}')">Unlock (1 SP)</button>`; }
+
+                btn.innerHTML = `
+                    <div class="action-title" style="margin-bottom:8px;"><span>✨ ${skill.name}</span> <span>${statusBadge}</span></div>
+                    <div class="action-desc">${skill.desc}</div>
+                    <div style="font-size: 11px; color: #888; margin-top: 6px;">Cost: ${skill.mpCost} MP | Type: ${skill.type.replace('_', ' ')}</div>
+                `;
+                list.appendChild(btn);
+            });
+        }
+
+        function unlockSkill(skillId) {
+            tg.HapticFeedback.impactOccurred('medium');
+            const toast = document.getElementById("toast");
+            toast.innerText = "Unlocking...";
+            toast.className = "show";
+
+            fetch(GAS_WEBHOOK_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action: "unlock_skill", userId: userId, skillId: skillId })
+            }).then(() => location.reload());
+        }
 
         // =====================================
         // INVENTORY LOGIC
@@ -146,12 +238,10 @@
             }
 
             backpack.forEach(item => {
-                if (item.type === "Material" || item.type === "Consumable") return; // Hide non-equippables for now
+                if (item.type === "Material" || item.type === "Consumable") return; 
                 
                 const div = document.createElement('div');
                 div.className = 'inv-item';
-                
-                // Format stats beautifully (e.g., {"str": 4} -> "STR +4")
                 let statText = Object.entries(item.stats).map(([k, v]) => `${k.toUpperCase()} +${v}`).join(' | ');
                 if (item.effect !== "none") statText += ` | ✨ ${item.effect}`;
 
@@ -175,20 +265,17 @@
             fetch(GAS_WEBHOOK_URL, {
                 method: 'POST',
                 body: JSON.stringify({ action: "equip_item", userId: userId, itemId: itemId })
-            }).then(() => {
-                // Refresh the page data
-                location.reload(); 
-            });
+            }).then(() => location.reload());
         }
 
         // =====================================
-        // COMBAT LOGIC (Retained from before)
+        // COMBAT LOGIC
         // =====================================
         function renderCombatHeader(char) {
             const hpPct = Math.max(0, Math.min(100, (char.hp / char.maxHp) * 100));
             const mpPct = Math.max(0, Math.min(100, (char.mp / char.maxMp) * 100));
             document.getElementById('status-header').innerHTML = `
-                <div style="font-weight:bold; margin-bottom:8px;">${char.name} (Lv.${char.level} ${char.class})</div>
+                <div style="font-weight:bold; margin-bottom:8px;">${char.name} (Lv.${char.level} ${char.className})</div>
                 <div class="bar-container"><div class="hp-fill" style="width: ${hpPct}%;"></div></div>
                 <div class="stat-labels"><span>❤️ HP</span><span>${char.hp} / ${char.maxHp}</span></div>
                 <div style="height:8px;"></div>
@@ -208,7 +295,7 @@
                 btn.className = 'action-btn';
                 if (char.mp < skill.mpCost) { btn.style.opacity = "0.5"; btn.style.pointerEvents = "none"; }
                 btn.innerHTML = `<div class="action-title"><span>✨ ${skill.name}</span> <span style="color:#1e90ff">${skill.mpCost} MP</span></div><div class="action-desc">${skill.description}</div>`;
-                btn.onclick = () => { skill.targetType === "SINGLE_ENEMY" ? openTargetMenu(skill.id) : submitAction(skill.id, null); };
+                btn.onclick = () => { skill.targetType === "SINGLE_ENEMY" || skill.targetType === "SINGLE_ALLY" ? openTargetMenu(skill.id) : submitAction(skill.id, null); };
                 list.appendChild(btn);
             });
         }
@@ -237,21 +324,17 @@
             document.getElementById('target-menu').style.display = 'none';
             document.getElementById('skill-menu').style.display = 'block';
         }
-        
+
         function submitAction(skillId, targetId) {
             tg.HapticFeedback.impactOccurred('medium');
-            const toast = document.getElementById("toast");
-            toast.innerText = "Action Locked In!";
-            toast.className = "show";
-
-            // Fire the request to Google Apps Script, but DO NOT wait for it to finish!
+            
             fetch(GAS_WEBHOOK_URL, {
                 method: 'POST',
                 body: JSON.stringify({ action: "submit_combat_action", userId: userId, skillId: skillId, targetId: targetId })
             });
 
-            // Close the MiniApp immediately so the player can watch the fight in the chat
-            setTimeout(() => tg.close(), 200); 
+            // Optimistic UI update: Close app immediately for faster UX
+            setTimeout(() => tg.close(), 100); 
         }
     </script>
 </body>

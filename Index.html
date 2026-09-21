@@ -11,12 +11,17 @@
             --text-main: #f5f5f5; --text-muted: #a0a0a0;
             --hp-color: #ff4757; --mp-color: #1e90ff; --danger-color: #ff4757;
         }
-        body { font-family: -apple-system, sans-serif; background-color: var(--bg-color); color: var(--text-main); margin: 0; padding: 16px; user-select: none; }
+        body { font-family: -apple-system, sans-serif; background-color: var(--bg-color); color: var(--text-main); margin: 0; padding: 16px; padding-bottom: 20px; user-select: none; }
         h2 { margin-top: 0; font-size: 16px; border-bottom: 1px solid #333; padding-bottom: 8px; color: var(--accent-color); }
         
         #loading { text-align: center; margin-top: 50px; color: var(--text-muted); font-family: monospace; }
         
-        /* Combat & Generic UI Styles */
+        /* Nav Tabs */
+        .tabs { display: flex; border-bottom: 1px solid #333; margin-bottom: 16px; }
+        .tab-btn { flex: 1; text-align: center; padding: 12px; color: var(--text-muted); font-weight: bold; cursor: pointer; transition: 0.2s; border-bottom: 2px solid transparent; }
+        .tab-btn.active { color: var(--accent-color); border-bottom: 2px solid var(--accent-color); }
+
+        /* Generic UI Styles */
         .status-header { background: var(--surface-color); padding: 12px; border-radius: 8px; margin-bottom: 16px; }
         .bar-container { background: #111; border-radius: 4px; height: 8px; margin-bottom: 8px; overflow: hidden; }
         .hp-fill { background: var(--hp-color); height: 100%; transition: width 0.3s; }
@@ -31,27 +36,26 @@
 
         /* Inventory UI Styles */
         .eq-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 24px; }
-        .eq-slot { 
-            background: var(--surface-color); border: 1px dashed #555; border-radius: 8px; 
-            padding: 10px 5px; text-align: center; display: flex; flex-direction: column; 
-            align-items: center; justify-content: center; min-height: 60px;
-        }
+        .eq-slot { background: var(--surface-color); border: 1px dashed #555; border-radius: 8px; padding: 10px 5px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 60px; }
         .eq-slot.filled { border-style: solid; border-color: #444; background: #2f2f3d; }
         .slot-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px; }
-        .item-name { font-size: 11px; font-weight: bold; color: var(--accent-color); }
+        .item-name { font-size: 11px; font-weight: bold; color: var(--accent-color); margin-bottom: 4px; }
 
         .inv-item { background: var(--surface-color); border-radius: 8px; padding: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #333;}
         .inv-details { display: flex; flex-direction: column; }
         .inv-stats { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
         
+        /* Stats Controller */
+        .stat-row { display: flex; justify-content: space-between; align-items: center; background: var(--surface-color); padding: 12px; border-radius: 8px; margin-bottom: 8px; }
+        .stat-controls { display: flex; align-items: center; gap: 12px; }
+        .stat-btn { background: #444; color: #fff; width: 28px; height: 28px; border-radius: 4px; border: none; font-weight: bold; font-size: 16px; cursor: pointer; display: flex; justify-content: center; align-items: center; }
+        
         .btn-primary { background: var(--accent-color); color: #000; border: none; border-radius: 4px; padding: 6px 12px; font-weight: bold; font-size: 12px; cursor: pointer; }
         .btn-danger { background: var(--danger-color); color: #fff; border: none; border-radius: 4px; padding: 6px 12px; font-weight: bold; font-size: 12px; cursor: pointer; }
         .btn-disabled { background: #444; color: #888; border: none; border-radius: 4px; padding: 6px 12px; font-weight: bold; font-size: 12px; pointer-events: none; }
 
-        #toast { visibility: hidden; min-width: 250px; background-color: #333; color: #fff; text-align: center; border-radius: 4px; padding: 12px; position: fixed; z-index: 1; left: 50%; bottom: 30px; transform: translateX(-50%); font-size: 14px; }
-        #toast.show { visibility: visible; animation: fadein 0.3s, fadeout 0.3s 2.7s; }
-        @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
-        @keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
+        /* Save Bar */
+        #save-bar { position: fixed; bottom: 0; left: 0; right: 0; padding: 16px; background: #111; border-top: 1px solid #444; z-index: 100; gap: 10px; box-shadow: 0 -4px 10px rgba(0,0,0,0.5); }
     </style>
 </head>
 <body>
@@ -70,15 +74,6 @@
             <div class="action-list" id="target-list"></div>
             <button class="action-btn" onclick="backToSkills()" style="text-align: center; margin-top: 12px; background: #444;">🔙 Back to Skills</button>
         </div>
-    </div>
-
-    <!-- INVENTORY VIEW -->
-    <div id="inventory-ui" style="display: none;">
-        <h2>🛡️ Equipped Gear</h2>
-        <div class="eq-grid" id="eq-grid"></div>
-
-        <h2>🎒 Backpack</h2>
-        <div id="inv-list"></div>
     </div>
 
     <!-- ROSTER / BARRACKS VIEW -->
@@ -106,17 +101,75 @@
         <button class="btn-primary" style="width: 100%; margin-top: 20px; padding: 14px; font-size: 16px;" onclick="submitCharacter()">Begin Adventure</button>
     </div>
 
-    <!-- SKILL TREE VIEW -->
-    <div id="skills-ui" style="display: none;">
-        <h2>📖 Skill Tree</h2>
-        <div id="sp-tracker" style="margin-bottom: 16px; color: var(--accent-color); font-weight: bold;"></div>
-        <div class="action-list" id="skill-tree-list"></div>
+    <!-- UNIFIED HERO HUB VIEW -->
+    <div id="hub-ui" style="display: none;">
+        <div class="tabs">
+            <div class="tab-btn active" id="tab-profile-btn" onclick="switchTab('profile')">Profile & Skills</div>
+            <div class="tab-btn" id="tab-inventory-btn" onclick="switchTab('inventory')">Inventory</div>
+        </div>
+
+        <div id="hub-profile">
+            <!-- Hero Stats Box -->
+            <div class="status-header">
+                <div style="font-weight:bold; font-size:16px; margin-bottom:4px; color:var(--accent-color);" id="hub-name"></div>
+                <div class="stat-labels" style="margin-bottom:12px;">
+                    <span id="hub-level"></span>
+                    <span id="hub-gold"></span>
+                </div>
+                <div class="bar-container" style="background:#000;"><div class="hp-fill" id="hub-xp-fill" style="background:#4caf50;"></div></div>
+                <div class="stat-labels"><span style="color:#4caf50">XP Progress</span><span id="hub-xp-text"></span></div>
+            </div>
+
+            <!-- Interactive Stats -->
+            <h2>📊 Vital Attributes</h2>
+            <div id="stat-pts-tracker" style="margin-bottom: 12px; color: var(--accent-color); font-weight: bold; font-size:13px;"></div>
+            
+            <div class="stat-row">
+                <div>💪 Strength <br><span style="font-size:10px; color:#888;">+10 Max HP</span></div>
+                <div class="stat-controls">
+                    <button class="stat-btn" id="btn-minus-str" onclick="changeStat('str', -1)">-</button>
+                    <span id="stat-val-str" style="width:24px; text-align:center; font-weight:bold;"></span>
+                    <button class="stat-btn" id="btn-plus-str" onclick="changeStat('str', 1)">+</button>
+                </div>
+            </div>
+            <div class="stat-row">
+                <div>🎯 Dexterity <br><span style="font-size:10px; color:#888;">+Hit & Crit</span></div>
+                <div class="stat-controls">
+                    <button class="stat-btn" id="btn-minus-dex" onclick="changeStat('dex', -1)">-</button>
+                    <span id="stat-val-dex" style="width:24px; text-align:center; font-weight:bold;"></span>
+                    <button class="stat-btn" id="btn-plus-dex" onclick="changeStat('dex', 1)">+</button>
+                </div>
+            </div>
+            <div class="stat-row" style="margin-bottom: 24px;">
+                <div>🧠 Intelligence <br><span style="font-size:10px; color:#888;">+5 Max MP</span></div>
+                <div class="stat-controls">
+                    <button class="stat-btn" id="btn-minus-int" onclick="changeStat('int', -1)">-</button>
+                    <span id="stat-val-int" style="width:24px; text-align:center; font-weight:bold;"></span>
+                    <button class="stat-btn" id="btn-plus-int" onclick="changeStat('int', 1)">+</button>
+                </div>
+            </div>
+
+            <!-- Skill Tree -->
+            <h2>📖 Skill Tree</h2>
+            <div id="skill-pts-tracker" style="margin-bottom: 12px; color: var(--accent-color); font-weight: bold; font-size:13px;"></div>
+            <div class="action-list" id="hub-skill-list"></div>
+        </div>
+
+        <div id="hub-inventory" style="display: none;">
+            <h2>🛡️ Equipped Gear</h2>
+            <div class="eq-grid" id="hub-eq-grid"></div>
+            <h2>🎒 Backpack</h2>
+            <div id="hub-inv-list"></div>
+        </div>
     </div>
 
-    <div id="toast">Action Locked In!</div>
+    <!-- Floating Save Bar -->
+    <div id="save-bar" style="display:none;">
+        <button class="btn-danger" style="flex:1; padding:12px; font-size:14px;" onclick="resetDraft()">Discard</button>
+        <button class="btn-primary" style="flex:2; padding:12px; font-size:14px;" onclick="saveBatch()">Save Changes</button>
+    </div>
 
     <script>
-        // GLOBAL ERROR LOGGER: Catch any syntax errors and print them to the screen
         window.onerror = function(msg, url, line) {
             document.getElementById('loading').innerHTML = `<span style="color:var(--danger-color); font-weight:bold;">⚠️ Javascript Crash</span><br><br>${msg}<br>Line: ${line}`;
             document.getElementById('loading').style.display = 'block';
@@ -126,27 +179,30 @@
         const tg = window.Telegram.WebApp;
         tg.expand(); 
         
-        // PRE-INJECTED WEBHOOK URL
         const GAS_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbxr9JHs-_hq2rBr85EoOj-6urlj6FONsLAKsBou3DY8WTblcXWIVloTbfc-AiHLn1hbNA/exec"; 
         
         let globalMonsters = []; 
         let userId = tg.initDataUnsafe?.user?.id || "123456789";
         const startParam = tg.initDataUnsafe?.start_param || "";
 
+        // BATCH STATE MANAGEMENT
+        let sData = null; // Original Server Data
+        let localItemDB = {}; // Master reference for all items user owns
+        let dState = { stats: {str:0, dex:0, int:0}, skills: [], equipment: {} }; // Draft Data
+
         document.addEventListener("DOMContentLoaded", () => {
             fetch(GAS_WEBHOOK_URL, {
                 method: 'POST',
                 body: JSON.stringify({ action: "get_app_state", initData: tg.initData, userId: userId, startParam: startParam })
             })
-            .then(res => res.text()) // Read as text first to catch 500 HTML errors
+            .then(res => res.text()) 
             .then(text => {
                 try { return JSON.parse(text); } 
-                catch(e) { throw new Error("Backend crashed and returned HTML: " + text.substring(0, 80) + "..."); }
+                catch(e) { throw new Error("Backend crashed and returned HTML."); }
             })
             .then(response => {
                 document.getElementById('loading').style.display = 'none';
                 
-                // Print explicit Backend Errors to the screen
                 if (response.mode === "error") {
                     document.getElementById('loading').style.display = 'block';
                     document.getElementById('loading').innerHTML = `<span style="color:var(--danger-color); font-weight:bold;">⚠️ Backend Error</span><br><br>${response.message}`;
@@ -163,18 +219,163 @@
                     globalMonsters = response.data.monsters;
                     renderCombatHeader(response.data.character);
                     renderActions(response.data.skills, response.data.character);
-                } else if (response.mode === "inventory") {
-                    document.getElementById('inventory-ui').style.display = 'block';
-                    renderInventory(response.data.equipped, response.data.backpack);
-                } else if (response.mode === "skills") {
-                    document.getElementById('skills-ui').style.display = 'block';
-                    renderSkillTree(response.data.character, response.data.tree);
+                } else if (response.mode === "hub") {
+                    document.getElementById('hub-ui').style.display = 'block';
+                    sData = response.data;
+                    
+                    // Build local item dictionary
+                    for(let slot in sData.equipped) { if (sData.equipped[slot]) localItemDB[sData.equipped[slot].id] = sData.equipped[slot]; }
+                    sData.backpack.forEach(item => localItemDB[item.id] = item);
+                    
+                    updateHubUI();
                 }
             })
-            .catch((err) => { 
-                document.getElementById('loading').innerHTML = `<span style="color:var(--danger-color); font-weight:bold;">⚠️ Fetch Error</span><br><br>${err.message}`; 
-            });
+            .catch((err) => { document.getElementById('loading').innerHTML = `<span style="color:var(--danger-color); font-weight:bold;">⚠️ Fetch Error</span><br><br>${err.message}`; });
         });
+
+        // =====================================
+        // UNIFIED HUB BATCH LOGIC
+        // =====================================
+        function switchTab(tabId) {
+            document.getElementById('tab-profile-btn').className = tabId === 'profile' ? 'tab-btn active' : 'tab-btn';
+            document.getElementById('tab-inventory-btn').className = tabId === 'inventory' ? 'tab-btn active' : 'tab-btn';
+            document.getElementById('hub-profile').style.display = tabId === 'profile' ? 'block' : 'none';
+            document.getElementById('hub-inventory').style.display = tabId === 'inventory' ? 'block' : 'none';
+        }
+
+        function hasChanges() {
+            return (dState.stats.str > 0 || dState.stats.dex > 0 || dState.stats.int > 0) || dState.skills.length > 0 || Object.keys(dState.equipment).length > 0;
+        }
+
+        function resetDraft() {
+            dState = { stats: {str:0, dex:0, int:0}, skills: [], equipment: {} };
+            updateHubUI();
+        }
+
+        function updateHubUI() {
+            // Render Header
+            let c = sData.character;
+            let xpNeeded = c.level * 100;
+            let xpPct = Math.max(0, Math.min(100, (c.xp / xpNeeded) * 100));
+            document.getElementById('hub-name').innerText = `${c.name} (Lv.${c.level} ${c.className})`;
+            document.getElementById('hub-level').innerText = `❤️ HP: ${sData.stats.maxHp} | 🔹 MP: ${sData.stats.maxMp}`;
+            document.getElementById('hub-gold').innerText = `💰 Gold: ${c.gold}`;
+            document.getElementById('hub-xp-fill').style.width = `${xpPct}%`;
+            document.getElementById('hub-xp-text').innerText = `${c.xp} / ${xpNeeded}`;
+
+            // Render Stats
+            let effStatPoints = c.statPoints - (dState.stats.str + dState.stats.dex + dState.stats.int);
+            document.getElementById('stat-pts-tracker').innerText = `Unallocated Stat Points: ${effStatPoints}`;
+            
+            ['str', 'dex', 'int'].forEach(stat => {
+                let base = parseInt(sData.stats[stat]);
+                let added = dState.stats[stat];
+                document.getElementById(`stat-val-${stat}`).innerText = base + added;
+                document.getElementById(`btn-minus-${stat}`).style.visibility = added > 0 ? "visible" : "hidden";
+                document.getElementById(`btn-plus-${stat}`).style.visibility = effStatPoints > 0 ? "visible" : "hidden";
+            });
+
+            // Render Skills
+            let effSkillPoints = c.skillPoints - dState.skills.length;
+            document.getElementById('skill-pts-tracker').innerText = `Available Skill Points: ${effSkillPoints}`;
+            const sList = document.getElementById('hub-skill-list');
+            sList.innerHTML = "";
+            
+            sData.tree.forEach(skill => {
+                const isBaseUnlocked = c.unlocked[skill.id];
+                const isDraftUnlocked = dState.skills.includes(skill.id);
+                const meetsLevel = c.level >= skill.minLevel;
+                const prereqMet = !skill.prereq || c.unlocked[skill.prereq] || dState.skills.includes(skill.prereq);
+
+                const btn = document.createElement('div');
+                btn.className = 'action-btn';
+                
+                let badge = "";
+                if (isBaseUnlocked) { badge = `<span style="color:#4caf50; font-size:12px;">✅ Unlocked</span>`; btn.style.borderColor = '#4caf50'; }
+                else if (isDraftUnlocked) { badge = `<button class="btn-danger" onclick="toggleSkill('${skill.id}')">⏳ Pending (Undo)</button>`; btn.style.borderColor = '#e2b714'; }
+                else if (!meetsLevel) { badge = `<span style="color:#ff4757; font-size:12px;">🔒 Requires Lv.${skill.minLevel}</span>`; btn.style.opacity = "0.5"; }
+                else if (!prereqMet) { badge = `<span style="color:#ff4757; font-size:12px;">🔒 Requires Previous Skill</span>`; btn.style.opacity = "0.5"; }
+                else { 
+                    if (effSkillPoints > 0) badge = `<button class="btn-primary" onclick="toggleSkill('${skill.id}')">Unlock (1 SP)</button>`;
+                    else badge = `<span style="color:#888; font-size:12px;">No SP Available</span>`;
+                }
+
+                btn.innerHTML = `<div class="action-title" style="margin-bottom:8px;"><span>✨ ${skill.name}</span> <span>${badge}</span></div><div class="action-desc">${skill.desc}</div>`;
+                sList.appendChild(btn);
+            });
+
+            // Render Inventory
+            const grid = document.getElementById('hub-eq-grid');
+            const slots = ["Head", "Amulet", "Upper_Body", "Weapon", "Lower_Body", "Shield", "Hands", "Ring", "Foot"];
+            grid.innerHTML = "";
+            
+            slots.forEach(slot => {
+                let itemId = sData.equipped[slot] ? sData.equipped[slot].id : null;
+                if (dState.equipment[slot] !== undefined) itemId = dState.equipment[slot]; 
+                
+                const item = itemId ? localItemDB[itemId] : null;
+                const div = document.createElement('div');
+                div.className = item ? 'eq-slot filled' : 'eq-slot';
+                div.innerHTML = `
+                    <div class="slot-label">${slot.replace('_', ' ')}</div>
+                    <div class="item-name">${item ? item.name : "Empty"}</div>
+                    ${item ? `<button class="btn-danger" style="padding:4px 8px; font-size:10px" onclick="setEquip('${slot}', null)">Unequip</button>` : ''}
+                `;
+                grid.appendChild(div);
+            });
+
+            const invList = document.getElementById('hub-inv-list');
+            invList.innerHTML = "";
+            let validBackpack = sData.backpack.filter(i => i.type !== "Material" && i.type !== "Consumable");
+            
+            let currentlyEquippedIds = slots.map(s => {
+                if (dState.equipment[s] !== undefined) return dState.equipment[s];
+                return sData.equipped[s] ? sData.equipped[s].id : null;
+            }).filter(id => id !== null);
+
+            validBackpack.forEach(item => {
+                let isEquipped = currentlyEquippedIds.includes(item.id);
+                const div = document.createElement('div');
+                div.className = 'inv-item';
+                if (isEquipped) div.style.borderColor = 'var(--accent-color)';
+                
+                div.innerHTML = `
+                    <div class="inv-details">
+                        <div class="action-title" style="margin:0; font-size:14px; color:${isEquipped ? 'var(--accent-color)' : '#e2b714'};">${item.name}</div>
+                        <div class="inv-stats">${item.type}</div>
+                    </div>
+                    ${isEquipped ? `<span style="font-size:12px; color:var(--accent-color); font-weight:bold;">Equipped</span>` : `<button class="btn-primary" onclick="setEquip('${item.type}', '${item.id}')">Equip</button>`}
+                `;
+                invList.appendChild(div);
+            });
+
+            // Save Bar Visibility
+            let changed = hasChanges();
+            document.getElementById('save-bar').style.display = changed ? "flex" : "none";
+            document.body.style.paddingBottom = changed ? "80px" : "16px";
+        }
+
+        function changeStat(stat, amount) { dState.stats[stat] += amount; updateHubUI(); }
+        
+        function toggleSkill(skillId) {
+            let idx = dState.skills.indexOf(skillId);
+            if (idx > -1) dState.skills.splice(idx, 1); else dState.skills.push(skillId);
+            updateHubUI();
+        }
+        
+        function setEquip(slot, itemId) { dState.equipment[slot] = itemId; updateHubUI(); }
+
+        function saveBatch() {
+            tg.HapticFeedback.impactOccurred('heavy');
+            document.getElementById('loading').innerHTML = `📡 Locking in your choices...`;
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('hub-ui').style.display = 'none';
+            document.getElementById('save-bar').style.display = 'none';
+
+            fetch(GAS_WEBHOOK_URL, {
+                method: 'POST', body: JSON.stringify({ action: "save_character_batch", userId: userId, updates: dState })
+            }).then(() => location.reload()).catch(() => tg.showAlert("Failed to save."));
+        }
 
         // =====================================
         // ROSTER (BARRACKS) LOGIC
@@ -182,58 +383,29 @@
         function renderRoster(roster) {
             const list = document.getElementById('roster-list');
             list.innerHTML = "";
-            
-            if (roster.length === 0) {
-                list.innerHTML = `<div style="text-align:center; color:#888; font-size:12px;">You have no characters. Forge one below!</div>`;
-                return;
-            }
+            if (roster.length === 0) return list.innerHTML = `<div style="text-align:center; color:#888; font-size:12px;">You have no characters. Forge one below!</div>`;
 
             roster.forEach(char => {
                 const div = document.createElement('div');
                 div.className = 'inv-item';
                 if (char.isActive) div.style.borderColor = 'var(--accent-color)';
 
-                let buttonsHTML = "";
-                if (char.isActive) {
-                    buttonsHTML = `<button class="btn-disabled">Currently Active</button>`;
-                } else {
-                    buttonsHTML = `
-                        <button class="btn-primary" onclick="switchChar('${char.id}')">Select</button>
-                        <button class="btn-danger" style="margin-left: 5px;" onclick="deleteChar('${char.id}', '${char.name}')">Delete</button>
-                    `;
-                }
+                let buttonsHTML = char.isActive ? `<button class="btn-disabled">Active</button>` : `<button class="btn-primary" onclick="switchChar('${char.id}')">Select</button><button class="btn-danger" style="margin-left: 5px;" onclick="deleteChar('${char.id}', '${char.name}')">Delete</button>`;
 
                 div.innerHTML = `
                     <div class="inv-details">
                         <div class="action-title" style="margin:0; font-size:14px; color:${char.isActive ? 'var(--accent-color)' : '#fff'};">${char.name} ${char.isActive ? '👑' : ''}</div>
                         <div class="inv-stats">Lv.${char.level} ${char.className} • ${char.state.replace('_', ' ')}</div>
-                    </div>
-                    <div style="display:flex;">${buttonsHTML}</div>
+                    </div><div style="display:flex;">${buttonsHTML}</div>
                 `;
                 list.appendChild(div);
             });
         }
-
-        function showCreation() {
-            document.getElementById('roster-ui').style.display = 'none';
-            document.getElementById('creation-ui').style.display = 'block';
-        }
-
-        function switchChar(charId) {
-            tg.HapticFeedback.impactOccurred('medium');
-            showToast("Switching characters...");
-            fetch(GAS_WEBHOOK_URL, {
-                method: 'POST', body: JSON.stringify({ action: "switch_character", userId: userId, charId: charId })
-            }).then(() => location.reload());
-        }
-
+        function showCreation() { document.getElementById('roster-ui').style.display = 'none'; document.getElementById('creation-ui').style.display = 'block'; }
+        function switchChar(charId) { tg.HapticFeedback.impactOccurred('medium'); fetch(GAS_WEBHOOK_URL, { method: 'POST', body: JSON.stringify({ action: "switch_character", userId: userId, charId: charId }) }).then(() => location.reload()); }
         function deleteChar(charId, charName) {
             if (!confirm(`Are you absolutely sure you want to delete ${charName}? This cannot be undone.`)) return;
-            tg.HapticFeedback.impactOccurred('heavy');
-            showToast("Deleting...");
-            fetch(GAS_WEBHOOK_URL, {
-                method: 'POST', body: JSON.stringify({ action: "delete_character", userId: userId, charId: charId })
-            }).then(() => location.reload());
+            tg.HapticFeedback.impactOccurred('heavy'); fetch(GAS_WEBHOOK_URL, { method: 'POST', body: JSON.stringify({ action: "delete_character", userId: userId, charId: charId }) }).then(() => location.reload());
         }
 
         // =====================================
@@ -245,112 +417,11 @@
             document.querySelectorAll('#creation-ui .action-btn').forEach(btn => btn.style.borderColor = '#333');
             document.getElementById(`class-${cls}`).style.borderColor = 'var(--accent-color)';
         }
-
         function submitCharacter() {
             const name = document.getElementById('char-name').value.trim();
             if (!name || !selectedClass) return tg.showAlert("Please enter a name and select a class.");
-            
             tg.HapticFeedback.impactOccurred('heavy');
-            fetch(GAS_WEBHOOK_URL, {
-                method: 'POST',
-                body: JSON.stringify({ action: "create_character", userId: userId, name: name, charClass: selectedClass })
-            }).then(() => tg.close());
-        }
-
-        // =====================================
-        // SKILL TREE LOGIC
-        // =====================================
-        function renderSkillTree(char, tree) {
-            document.getElementById('sp-tracker').innerText = `Available Skill Points: ${char.skillPoints}`;
-            const list = document.getElementById('skill-tree-list');
-            list.innerHTML = "";
-            
-            tree.forEach(skill => {
-                const isUnlocked = char.unlocked[skill.id];
-                const meetsLevel = char.level >= skill.minLevel;
-                const meetsPrereq = !skill.prereq || char.unlocked[skill.prereq];
-                
-                const btn = document.createElement('div');
-                btn.className = 'action-btn';
-                
-                let statusBadge = "";
-                if (isUnlocked) { statusBadge = `<span style="color:#4caf50; font-size:12px;">✅ Unlocked</span>`; btn.style.borderColor = '#4caf50'; }
-                else if (!meetsLevel) { statusBadge = `<span style="color:#ff4757; font-size:12px;">🔒 Requires Lv.${skill.minLevel}</span>`; btn.style.opacity = "0.5"; }
-                else if (!meetsPrereq) { statusBadge = `<span style="color:#ff4757; font-size:12px;">🔒 Requires Previous Skill</span>`; btn.style.opacity = "0.5"; }
-                else { statusBadge = `<button class="btn-primary" onclick="unlockSkill('${skill.id}')">Unlock (1 SP)</button>`; }
-
-                btn.innerHTML = `
-                    <div class="action-title" style="margin-bottom:8px;"><span>✨ ${skill.name}</span> <span>${statusBadge}</span></div>
-                    <div class="action-desc">${skill.desc}</div>
-                    <div style="font-size: 11px; color: #888; margin-top: 6px;">Cost: ${skill.mpCost} MP | Type: ${skill.type.replace('_', ' ')}</div>
-                `;
-                list.appendChild(btn);
-            });
-        }
-
-        function unlockSkill(skillId) {
-            tg.HapticFeedback.impactOccurred('medium');
-            showToast("Unlocking...");
-            fetch(GAS_WEBHOOK_URL, {
-                method: 'POST', body: JSON.stringify({ action: "unlock_skill", userId: userId, skillId: skillId })
-            }).then(() => location.reload());
-        }
-
-        // =====================================
-        // INVENTORY LOGIC
-        // =====================================
-        function renderInventory(equipped, backpack) {
-            const grid = document.getElementById('eq-grid');
-            const slots = ["Head", "Amulet", "Upper_Body", "Weapon", "Lower_Body", "Shield", "Hands", "Ring", "Foot"];
-            
-            grid.innerHTML = "";
-            slots.forEach(slot => {
-                const item = equipped[slot];
-                const div = document.createElement('div');
-                div.className = item ? 'eq-slot filled' : 'eq-slot';
-                
-                let icon = "🛡️";
-                if(slot==="Weapon") icon="⚔️"; if(slot==="Ring" || slot==="Amulet") icon="💍"; if(slot==="Head") icon="🪖";
-                
-                div.innerHTML = `
-                    <div class="slot-label">${icon} ${slot.replace('_', ' ')}</div>
-                    <div class="item-name">${item ? item.name : "Empty"}</div>
-                `;
-                grid.appendChild(div);
-            });
-
-            const invList = document.getElementById('inv-list');
-            invList.innerHTML = "";
-            
-            if (backpack.length === 0) {
-                invList.innerHTML = `<div style="text-align:center; color:#888; font-size:12px;">Your backpack is empty.</div>`;
-                return;
-            }
-
-            backpack.forEach(item => {
-                if (item.type === "Material" || item.type === "Consumable") return; 
-                const div = document.createElement('div');
-                div.className = 'inv-item';
-                let statText = Object.entries(item.stats).map(([k, v]) => `${k.toUpperCase()} +${v}`).join(' | ');
-                if (item.effect !== "none") statText += ` | ✨ ${item.effect}`;
-
-                div.innerHTML = `
-                    <div class="inv-details">
-                        <div class="action-title" style="margin:0; font-size:14px; color:#e2b714;">${item.name}</div>
-                        <div class="inv-stats">${item.type} • ${statText}</div>
-                    </div>
-                    <button class="btn-primary" onclick="equipItem('${item.id}')">Equip</button>
-                `;
-                invList.appendChild(div);
-            });
-        }
-
-        function equipItem(itemId) {
-            tg.HapticFeedback.impactOccurred('medium');
-            showToast("Equipping...");
-            fetch(GAS_WEBHOOK_URL, {
-                method: 'POST', body: JSON.stringify({ action: "equip_item", userId: userId, itemId: itemId })
-            }).then(() => location.reload());
+            fetch(GAS_WEBHOOK_URL, { method: 'POST', body: JSON.stringify({ action: "create_character", userId: userId, name: name, charClass: selectedClass }) }).then(() => tg.close());
         }
 
         // =====================================
@@ -371,10 +442,7 @@
 
         function renderActions(skills, char) {
             const list = document.getElementById('action-list');
-            list.innerHTML = `<div class="action-btn" onclick="openTargetMenu('basic_attack')">
-                <div class="action-title"><span>🗡️ Basic Attack</span></div><div class="action-desc">Physical damage based on stats.</div>
-            </div>`;
-
+            list.innerHTML = `<div class="action-btn" onclick="openTargetMenu('basic_attack')"><div class="action-title"><span>🗡️ Basic Attack</span></div><div class="action-desc">Physical damage based on stats.</div></div>`;
             skills.forEach(skill => {
                 const btn = document.createElement('div');
                 btn.className = 'action-btn';
@@ -390,7 +458,6 @@
             document.getElementById('target-menu').style.display = 'block';
             const tList = document.getElementById('target-list');
             tList.innerHTML = "";
-
             globalMonsters.forEach(m => {
                 const btn = document.createElement('div');
                 btn.className = 'action-btn';
@@ -405,27 +472,8 @@
             });
         }
 
-        function backToSkills() {
-            document.getElementById('target-menu').style.display = 'none';
-            document.getElementById('skill-menu').style.display = 'block';
-        }
-
-        function submitAction(skillId, targetId) {
-            tg.HapticFeedback.impactOccurred('medium');
-            fetch(GAS_WEBHOOK_URL, {
-                method: 'POST', body: JSON.stringify({ action: "submit_combat_action", userId: userId, skillId: skillId, targetId: targetId })
-            });
-            setTimeout(() => tg.close(), 100); 
-        }
-
-        // =====================================
-        // UTILS
-        // =====================================
-        function showToast(msg) {
-            const toast = document.getElementById("toast");
-            toast.innerText = msg;
-            toast.className = "show";
-        }
+        function backToSkills() { document.getElementById('target-menu').style.display = 'none'; document.getElementById('skill-menu').style.display = 'block'; }
+        function submitAction(skillId, targetId) { tg.HapticFeedback.impactOccurred('medium'); fetch(GAS_WEBHOOK_URL, { method: 'POST', body: JSON.stringify({ action: "submit_combat_action", userId: userId, skillId: skillId, targetId: targetId }) }); setTimeout(() => tg.close(), 100); }
     </script>
 </body>
 </html>

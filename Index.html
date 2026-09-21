@@ -9,7 +9,7 @@
         :root {
             --bg-color: #1a1a24; --surface-color: #2a2a35; --accent-color: #e2b714;
             --text-main: #f5f5f5; --text-muted: #a0a0a0;
-            --hp-color: #ff4757; --mp-color: #1e90ff;
+            --hp-color: #ff4757; --mp-color: #1e90ff; --danger-color: #ff4757;
         }
         body { font-family: -apple-system, sans-serif; background-color: var(--bg-color); color: var(--text-main); margin: 0; padding: 16px; user-select: none; }
         h2 { margin-top: 0; font-size: 16px; border-bottom: 1px solid #333; padding-bottom: 8px; color: var(--accent-color); }
@@ -43,7 +43,10 @@
         .inv-item { background: var(--surface-color); border-radius: 8px; padding: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #333;}
         .inv-details { display: flex; flex-direction: column; }
         .inv-stats { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
-        .equip-btn { background: var(--accent-color); color: #000; border: none; border-radius: 4px; padding: 6px 12px; font-weight: bold; font-size: 12px; cursor: pointer; }
+        
+        .btn-primary { background: var(--accent-color); color: #000; border: none; border-radius: 4px; padding: 6px 12px; font-weight: bold; font-size: 12px; cursor: pointer; }
+        .btn-danger { background: var(--danger-color); color: #fff; border: none; border-radius: 4px; padding: 6px 12px; font-weight: bold; font-size: 12px; cursor: pointer; }
+        .btn-disabled { background: #444; color: #888; border: none; border-radius: 4px; padding: 6px 12px; font-weight: bold; font-size: 12px; pointer-events: none; }
 
         #toast { visibility: hidden; min-width: 250px; background-color: #333; color: #fff; text-align: center; border-radius: 4px; padding: 12px; position: fixed; z-index: 1; left: 50%; bottom: 30px; transform: translateX(-50%); font-size: 14px; }
         #toast.show { visibility: visible; animation: fadein 0.3s, fadeout 0.3s 2.7s; }
@@ -78,6 +81,14 @@
         <div id="inv-list"></div>
     </div>
 
+    <!-- ROSTER / BARRACKS VIEW -->
+    <div id="roster-ui" style="display: none;">
+        <h2>👥 The Barracks</h2>
+        <div style="margin-bottom: 20px; color: var(--text-muted); font-size: 14px;">Select your active character to deploy into the realm. Note: All characters share the same backpack inventory!</div>
+        <div class="action-list" id="roster-list"></div>
+        <button class="btn-primary" style="width: 100%; margin-top: 20px; padding: 14px; font-size: 16px;" onclick="showCreation()">➕ Create New Character</button>
+    </div>
+
     <!-- CHARACTER CREATION VIEW -->
     <div id="creation-ui" style="display: none;">
         <h2>🧙‍♂️ Forge Your Legend</h2>
@@ -92,7 +103,7 @@
             <div class="action-btn" onclick="selectClass('Cleric')" id="class-Cleric">🔆 <b>Cleric</b> <br><span style="font-size:12px;color:#aaa">Balanced stats. Essential party healing and protective buffs.</span></div>
         </div>
         
-        <button class="equip-btn" style="width: 100%; margin-top: 20px; padding: 14px; font-size: 16px;" onclick="submitCharacter()">Begin Adventure</button>
+        <button class="btn-primary" style="width: 100%; margin-top: 20px; padding: 14px; font-size: 16px;" onclick="submitCharacter()">Begin Adventure</button>
     </div>
 
     <!-- SKILL TREE VIEW -->
@@ -124,7 +135,10 @@
             .then(response => {
                 document.getElementById('loading').style.display = 'none';
                 
-                if (response.mode === "creation") {
+                if (response.mode === "roster") {
+                    document.getElementById('roster-ui').style.display = 'block';
+                    renderRoster(response.data.roster);
+                } else if (response.mode === "creation") {
                     document.getElementById('creation-ui').style.display = 'block';
                 } else if (response.mode === "combat") {
                     document.getElementById('combat-ui').style.display = 'block';
@@ -141,6 +155,66 @@
             })
             .catch(() => { document.getElementById('loading').innerText = "⚠️ Connection Failed."; });
         });
+
+        // =====================================
+        // ROSTER (BARRACKS) LOGIC
+        // =====================================
+        function renderRoster(roster) {
+            const list = document.getElementById('roster-list');
+            list.innerHTML = "";
+            
+            if (roster.length === 0) {
+                list.innerHTML = `<div style="text-align:center; color:#888; font-size:12px;">You have no characters. Forge one below!</div>`;
+                return;
+            }
+
+            roster.forEach(char => {
+                const div = document.createElement('div');
+                div.className = 'inv-item';
+                if (char.isActive) div.style.borderColor = 'var(--accent-color)';
+
+                let buttonsHTML = "";
+                if (char.isActive) {
+                    buttonsHTML = `<button class="btn-disabled">Currently Active</button>`;
+                } else {
+                    buttonsHTML = `
+                        <button class="btn-primary" onclick="switchChar('${char.id}')">Select</button>
+                        <button class="btn-danger" style="margin-left: 5px;" onclick="deleteChar('${char.id}', '${char.name}')">Delete</button>
+                    `;
+                }
+
+                div.innerHTML = `
+                    <div class="inv-details">
+                        <div class="action-title" style="margin:0; font-size:14px; color:${char.isActive ? 'var(--accent-color)' : '#fff'};">${char.name} ${char.isActive ? '👑' : ''}</div>
+                        <div class="inv-stats">Lv.${char.level} ${char.className} • ${char.state.replace('_', ' ')}</div>
+                    </div>
+                    <div style="display:flex;">${buttonsHTML}</div>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        function showCreation() {
+            document.getElementById('roster-ui').style.display = 'none';
+            document.getElementById('creation-ui').style.display = 'block';
+        }
+
+        function switchChar(charId) {
+            tg.HapticFeedback.impactOccurred('medium');
+            showToast("Switching characters...");
+            fetch(GAS_WEBHOOK_URL, {
+                method: 'POST', body: JSON.stringify({ action: "switch_character", userId: userId, charId: charId })
+            }).then(() => location.reload());
+        }
+
+        function deleteChar(charId, charName) {
+            if (!confirm(`Are you absolutely sure you want to delete ${charName}? This cannot be undone.`)) return;
+            tg.HapticFeedback.impactOccurred('heavy');
+            showToast("Deleting...");
+            fetch(GAS_WEBHOOK_URL, {
+                method: 'POST', body: JSON.stringify({ action: "delete_character", userId: userId, charId: charId })
+            }).then(() => location.reload());
+        }
 
         // =====================================
         // CHARACTER CREATION
@@ -183,7 +257,7 @@
                 if (isUnlocked) { statusBadge = `<span style="color:#4caf50; font-size:12px;">✅ Unlocked</span>`; btn.style.borderColor = '#4caf50'; }
                 else if (!meetsLevel) { statusBadge = `<span style="color:#ff4757; font-size:12px;">🔒 Requires Lv.${skill.minLevel}</span>`; btn.style.opacity = "0.5"; }
                 else if (!meetsPrereq) { statusBadge = `<span style="color:#ff4757; font-size:12px;">🔒 Requires Previous Skill</span>`; btn.style.opacity = "0.5"; }
-                else { statusBadge = `<button class="equip-btn" onclick="unlockSkill('${skill.id}')">Unlock (1 SP)</button>`; }
+                else { statusBadge = `<button class="btn-primary" onclick="unlockSkill('${skill.id}')">Unlock (1 SP)</button>`; }
 
                 btn.innerHTML = `
                     <div class="action-title" style="margin-bottom:8px;"><span>✨ ${skill.name}</span> <span>${statusBadge}</span></div>
@@ -196,13 +270,9 @@
 
         function unlockSkill(skillId) {
             tg.HapticFeedback.impactOccurred('medium');
-            const toast = document.getElementById("toast");
-            toast.innerText = "Unlocking...";
-            toast.className = "show";
-
+            showToast("Unlocking...");
             fetch(GAS_WEBHOOK_URL, {
-                method: 'POST',
-                body: JSON.stringify({ action: "unlock_skill", userId: userId, skillId: skillId })
+                method: 'POST', body: JSON.stringify({ action: "unlock_skill", userId: userId, skillId: skillId })
             }).then(() => location.reload());
         }
 
@@ -239,7 +309,6 @@
 
             backpack.forEach(item => {
                 if (item.type === "Material" || item.type === "Consumable") return; 
-                
                 const div = document.createElement('div');
                 div.className = 'inv-item';
                 let statText = Object.entries(item.stats).map(([k, v]) => `${k.toUpperCase()} +${v}`).join(' | ');
@@ -250,7 +319,7 @@
                         <div class="action-title" style="margin:0; font-size:14px; color:#e2b714;">${item.name}</div>
                         <div class="inv-stats">${item.type} • ${statText}</div>
                     </div>
-                    <button class="equip-btn" onclick="equipItem('${item.id}')">Equip</button>
+                    <button class="btn-primary" onclick="equipItem('${item.id}')">Equip</button>
                 `;
                 invList.appendChild(div);
             });
@@ -258,13 +327,9 @@
 
         function equipItem(itemId) {
             tg.HapticFeedback.impactOccurred('medium');
-            const toast = document.getElementById("toast");
-            toast.innerText = "Equipping...";
-            toast.className = "show";
-
+            showToast("Equipping...");
             fetch(GAS_WEBHOOK_URL, {
-                method: 'POST',
-                body: JSON.stringify({ action: "equip_item", userId: userId, itemId: itemId })
+                method: 'POST', body: JSON.stringify({ action: "equip_item", userId: userId, itemId: itemId })
             }).then(() => location.reload());
         }
 
@@ -327,14 +392,19 @@
 
         function submitAction(skillId, targetId) {
             tg.HapticFeedback.impactOccurred('medium');
-            
             fetch(GAS_WEBHOOK_URL, {
-                method: 'POST',
-                body: JSON.stringify({ action: "submit_combat_action", userId: userId, skillId: skillId, targetId: targetId })
+                method: 'POST', body: JSON.stringify({ action: "submit_combat_action", userId: userId, skillId: skillId, targetId: targetId })
             });
-
-            // Optimistic UI update: Close app immediately for faster UX
             setTimeout(() => tg.close(), 100); 
+        }
+
+        // =====================================
+        // UTILS
+        // =====================================
+        function showToast(msg) {
+            const toast = document.getElementById("toast");
+            toast.innerText = msg;
+            toast.className = "show";
         }
     </script>
 </body>

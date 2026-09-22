@@ -231,7 +231,7 @@
         document.addEventListener("DOMContentLoaded", () => {
             fetch(BACKEND_URL, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache' },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ action: "get_app_state", initData: tg.initData, userId: String(userId), startParam: startParam })
             })
             .then(res => res.json())
@@ -268,7 +268,7 @@
                 document.getElementById('loading').style.display = 'block';
                 document.getElementById('loading').innerHTML = `
                     <span style="color:var(--danger-color); font-weight:bold;">⚠️ Connection Failed</span><br><br>
-                    The realm is currently unstable (Timeout/Network Error).<br><br>
+                    <small style="color:#aaa;">${err.message || 'Network / Preflight Error'}</small><br><br>
                     <button class='btn-primary' style='padding: 10px 20px;' onclick='location.reload()'>🔄 Reconnect</button>
                 `; 
             });
@@ -297,7 +297,7 @@
         function refreshShop() {
             fetch(BACKEND_URL, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache' },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ action: "get_app_state", initData: tg.initData, userId: String(userId), startParam: "shop" })
             }).then(res => res.json()).then(response => {
                 document.getElementById('loading').style.display = 'none';
@@ -447,7 +447,7 @@
         function backToSkills() { document.getElementById('target-menu').style.display = 'none'; document.getElementById('skill-menu').style.display = 'block'; document.getElementById('tab-act-btn').className = 'tab-btn active'; document.getElementById('tab-itm-btn').className = 'tab-btn'; }
         
         function submitAction(skillId, targetId) { 
-            tg.HapticFeedback.impactOccurred('medium'); fetch(BACKEND_URL, { method: 'POST', body: JSON.stringify({ action: "submit_combat_action", userId: userId, skillId: skillId, targetId: targetId, battleId: combatCharRef.battleId }) }); setTimeout(() => tg.close(), 100); 
+            tg.HapticFeedback.impactOccurred('medium'); fetch(BACKEND_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "submit_combat_action", userId: String(userId), skillId: skillId, targetId: targetId, battleId: combatCharRef.battleId }) }); setTimeout(() => tg.close(), 100); 
         }
 
         // --- HUB OUT-OF-COMBAT LOGIC ---
@@ -469,7 +469,7 @@
 
         function consumeItem(itemId) {
             tg.HapticFeedback.impactOccurred('medium'); document.getElementById('loading').innerHTML = `📡 Consuming item...`; document.getElementById('loading').style.display = 'block';
-            fetch(BACKEND_URL, { method: 'POST', body: JSON.stringify({ action: "consume_item", userId: userId, itemId: itemId }) }).then(() => location.reload());
+            fetch(BACKEND_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "consume_item", userId: String(userId), itemId: itemId }) }).then(() => location.reload());
         }
 
         function switchTab(tabId) {
@@ -648,7 +648,7 @@
             document.getElementById('save-bar').style.display = 'none';
 
             fetch(BACKEND_URL, {
-                method: 'POST', body: JSON.stringify({ action: "save_character_batch", userId: userId, updates: dState })
+                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "save_character_batch", userId: String(userId), updates: dState })
             }).then(() => location.reload()).catch((e) => {
                 document.getElementById('loading').innerHTML = `<span style="color:var(--danger-color); font-weight:bold;">⚠️ Save Failed</span><br><br>${e.message}`;
             });
@@ -675,10 +675,10 @@
         }
 
         function showCreation() { document.getElementById('roster-ui').style.display = 'none'; document.getElementById('creation-ui').style.display = 'block'; }
-        function switchChar(charId) { tg.HapticFeedback.impactOccurred('medium'); fetch(BACKEND_URL, { method: 'POST', body: JSON.stringify({ action: "switch_character", userId: userId, charId: charId }) }).then(() => location.reload()); }
+        function switchChar(charId) { tg.HapticFeedback.impactOccurred('medium'); fetch(BACKEND_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "switch_character", userId: String(userId), charId: charId }) }).then(() => location.reload()); }
         function deleteChar(charId, charName) {
             if (!confirm(`Are you absolutely sure you want to delete ${charName}? This cannot be undone.`)) return;
-            tg.HapticFeedback.impactOccurred('heavy'); fetch(BACKEND_URL, { method: 'POST', body: JSON.stringify({ action: "delete_character", userId: userId, charId: charId }) }).then(() => location.reload());
+            tg.HapticFeedback.impactOccurred('heavy'); fetch(BACKEND_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "delete_character", userId: String(userId), charId: charId }) }).then(() => location.reload());
         }
 
         let selectedClass = "";

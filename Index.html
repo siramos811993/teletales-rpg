@@ -96,6 +96,7 @@
 
     <!-- ROSTER / BARRACKS VIEW -->
     <div id="roster-ui" style="display: none;">
+        <img src="https://i.ibb.co/wrNzsqbY/Gemini-Generated-Image-dng8c3dng8c3dng8.jpg" style="width:100%; border-radius:8px; margin-bottom:16px; box-shadow:0 4px 10px rgba(0,0,0,0.5);" alt="Barracks Banner">
         <h2>👥 The Barracks</h2>
         <div style="margin-bottom: 20px; color: var(--text-muted); font-size: 14px;">Select your active character to deploy into the realm. Note: All characters share the same backpack inventory!</div>
         <div class="action-list" id="roster-list"></div>
@@ -303,10 +304,14 @@
                     div.className = 'inv-item';
                     const canAfford = char.gold >= item.buyPrice;
                     let itemDesc = item.description || item.desc || "No description available.";
+                    let statText = formatStats(item.stats);
+                    let statHTML = statText ? `<div style="font-size:11px; color:#4caf50; margin-bottom:4px;">${statText}</div>` : '';
+                    
                     div.innerHTML = `
                         <div class="inv-details" style="flex:1; padding-right:10px;">
                             <div class="action-title" style="margin:0; font-size:14px; color:${canAfford ? '#fff' : '#777'};">${item.name}</div>
                             <div class="action-desc" style="margin-bottom:4px; font-size:11px; color:#a0a0a0; line-height:1.2;">${itemDesc}</div>
+                            ${statHTML}
                             <div class="inv-stats" style="color:var(--accent-color);">💰 Price: ${item.buyPrice} Gold • Req Lv.${item.min_level || 1}</div>
                         </div>
                         <button class="${canAfford ? 'btn-primary' : 'btn-disabled'}" onclick="buyItem('${item.id}', ${item.buyPrice})">Buy</button>
@@ -324,10 +329,14 @@
                     const div = document.createElement('div');
                     div.className = 'inv-item';
                     let itemDesc = item.description || item.desc || "No description available.";
+                    let statText = formatStats(item.stats);
+                    let statHTML = statText ? `<div style="font-size:11px; color:#4caf50; margin-bottom:4px;">${statText}</div>` : '';
+
                     div.innerHTML = `
                         <div class="inv-details" style="flex:1; padding-right:10px;">
                             <div class="action-title" style="margin:0; font-size:14px;">${item.name} <span style="font-size:12px; color:#888;">x${item.qty}</span></div>
                             <div class="action-desc" style="margin-bottom:4px; font-size:11px; color:#a0a0a0; line-height:1.2;">${itemDesc}</div>
+                            ${statHTML}
                             <div class="inv-stats" style="color:var(--accent-color);">💰 Sells for: ${item.sellPrice} Gold</div>
                         </div>
                         <button class="btn-primary" onclick="sellItem('${item.id}', ${item.sellPrice})">Sell</button>
@@ -434,7 +443,7 @@
             if (!item) return;
 
             document.getElementById('modal-title').innerText = item.name;
-            document.getElementById('modal-desc').innerText = item.description || item.desc || item.effect || "No description available.";
+            document.getElementById('modal-desc').innerText = item.description || item.desc || "No description available.";
             document.getElementById('modal-stats').innerText = formatStats(item.stats) || "No stat bonuses.";
             
             document.getElementById('modal-unequip-btn').onclick = () => { setEquip(slot, null); closeModal(); };
@@ -467,7 +476,7 @@
             let xpNeeded = c.level * 100;
             let xpPct = Math.max(0, Math.min(100, (c.xp / xpNeeded) * 100));
             document.getElementById('hub-name').innerText = `${c.name} (Lv.${c.level} ${c.className})`;
-            document.getElementById('hub-level').innerText = `❤️ HP: ${sData.stats.hp}/${sData.stats.max_hp + sData.bonus.hp} | 🔹 MP: ${sData.stats.mp}/${sData.stats.max_mp + sData.bonus.mp}`;
+            document.getElementById('hub-level').innerText = `❤️ HP: ${sData.stats.hp}/${sData.stats.max_hp + (sData.bonus.hp || 0)} | 🔹 MP: ${sData.stats.mp}/${sData.stats.max_mp + (sData.bonus.mp || 0)}`;
             document.getElementById('hub-gold').innerText = `💰 Gold: ${c.gold}`;
             document.getElementById('hub-xp-fill').style.width = `${xpPct}%`;
             document.getElementById('hub-xp-text').innerText = `${c.xp} / ${xpNeeded}`;
@@ -538,7 +547,6 @@
                 grid.appendChild(div);
             });
 
-            // Update Backpack Tabs State
             document.getElementById('btn-tab-cons').className = currentInvTab === 'cons' ? 'btn-primary' : 'btn-disabled';
             document.getElementById('btn-tab-equip').className = currentInvTab === 'equip' ? 'btn-primary' : 'btn-disabled';
 
@@ -547,7 +555,8 @@
             
             let filteredBackpack = sData.backpack.filter(i => {
                 if (currentInvTab === 'cons') return i.type === 'Consumable' || i.type === 'Material';
-                return i.type !== 'Consumable' && i.type !== 'Material';
+                const eqTypes = ["Head", "Shield", "Weapon", "Upper_Body", "Lower_Body", "Hands", "Foot", "Ring", "Amulet"];
+                return eqTypes.includes(i.type);
             });
 
             if (filteredBackpack.length === 0) {
@@ -574,7 +583,7 @@
                     actionBtnHTML = `<button class="btn-primary" onclick="setEquip('${item.type}', '${item.id}')">Equip</button>`;
                 }
 
-                let itemDesc = item.description || item.desc || "No description.";
+                let itemDesc = item.description || item.desc || "No description available.";
                 let statText = formatStats(item.stats);
                 let statHTML = statText ? `<div style="font-size:11px; color:#4caf50; margin-bottom:4px;">${statText}</div>` : '';
 

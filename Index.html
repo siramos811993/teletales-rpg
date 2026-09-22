@@ -568,10 +568,14 @@
             const invContainer = document.getElementById('inv-items-container');
             invContainer.innerHTML = "";
             
+            // SMART INVENTORY FILTER FIX: Automatically handles variations in type strings
             let filteredBackpack = sData.backpack.filter(i => {
-                if (currentInvTab === 'cons') return i.type === 'Consumable' || i.type === 'Material';
-                const eqTypes = ["Head", "Shield", "Weapon", "Upper_Body", "Lower_Body", "Hands", "Foot", "Ring", "Amulet"];
-                return eqTypes.includes(i.type);
+                let t = String(i.type || "").trim().toUpperCase();
+                if (currentInvTab === 'cons') {
+                    return t === 'CONSUMABLE' || t === 'MATERIAL';
+                } else {
+                    return t !== 'CONSUMABLE' && t !== 'MATERIAL';
+                }
             });
 
             if (filteredBackpack.length === 0) {
@@ -589,13 +593,26 @@
                 div.className = 'inv-item';
                 if (isEquipped) div.style.borderColor = 'var(--accent-color)';
                 
+                let rawType = String(item.type || "").trim();
+                let upType = rawType.toUpperCase();
+                
                 let actionBtnHTML = "";
-                if (item.type === "Consumable") {
+                if (upType === "CONSUMABLE") {
                     actionBtnHTML = `<button class="btn-primary" onclick="consumeItem('${item.id}')">Use</button>`;
                 } else if (isEquipped) {
                     actionBtnHTML = `<span style="font-size:12px; color:var(--accent-color); font-weight:bold;">Equipped</span>`;
-                } else if (item.type !== "Material") {
-                    actionBtnHTML = `<button class="btn-primary" onclick="setEquip('${item.type}', '${item.id}')">Equip</button>`;
+                } else if (upType !== "MATERIAL") {
+                    // Force the raw string into the exact DB column format (e.g. "Upper Body" -> "Upper_Body")
+                    let safeSlotName = rawType.replace(/\s+/g, '_'); 
+                    let slotMapping = {
+                        "HEAD": "Head", "SHIELD": "Shield", "WEAPON": "Weapon",
+                        "UPPER_BODY": "Upper_Body", "UPPER BODY": "Upper_Body",
+                        "LOWER_BODY": "Lower_Body", "LOWER BODY": "Lower_Body",
+                        "HANDS": "Hands", "FOOT": "Foot", "RING": "Ring", "AMULET": "Amulet"
+                    };
+                    let finalTargetSlot = slotMapping[upType] || safeSlotName;
+                    
+                    actionBtnHTML = `<button class="btn-primary" onclick="setEquip('${finalTargetSlot}', '${item.id}')">Equip</button>`;
                 }
 
                 let itemDesc = item.description || item.desc || "No description available.";

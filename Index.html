@@ -33,7 +33,7 @@
         .action-desc { font-size: 12px; color: var(--text-muted); line-height: 1.4; }
 
         .eq-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 24px; }
-        .eq-slot { background: var(--surface-color); border: 1px dashed #555; border-radius: 8px; padding: 10px 5px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 60px; }
+        .eq-slot { background: var(--surface-color); border: 1px dashed #555; border-radius: 8px; padding: 10px 5px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 60px; cursor: pointer; }
         .eq-slot.filled { border-style: solid; border-color: #444; background: #2f2f3d; }
         .slot-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px; }
         .item-name { font-size: 11px; font-weight: bold; color: var(--accent-color); margin-bottom: 4px; }
@@ -137,7 +137,7 @@
                 <div>💪 Strength</div>
                 <div class="stat-controls">
                     <button class="stat-btn" id="btn-minus-str" onclick="changeStat('str', -1)">-</button>
-                    <span id="stat-val-str" style="width:24px; text-align:center; font-weight:bold;"></span>
+                    <span id="stat-val-str" style="min-width:30px; text-align:center; font-weight:bold;"></span>
                     <button class="stat-btn" id="btn-plus-str" onclick="changeStat('str', 1)">+</button>
                 </div>
             </div>
@@ -145,7 +145,7 @@
                 <div>🎯 Dexterity</div>
                 <div class="stat-controls">
                     <button class="stat-btn" id="btn-minus-dex" onclick="changeStat('dex', -1)">-</button>
-                    <span id="stat-val-dex" style="width:24px; text-align:center; font-weight:bold;"></span>
+                    <span id="stat-val-dex" style="min-width:30px; text-align:center; font-weight:bold;"></span>
                     <button class="stat-btn" id="btn-plus-dex" onclick="changeStat('dex', 1)">+</button>
                 </div>
             </div>
@@ -153,7 +153,7 @@
                 <div>🧠 Intelligence</div>
                 <div class="stat-controls">
                     <button class="stat-btn" id="btn-minus-int" onclick="changeStat('int', -1)">-</button>
-                    <span id="stat-val-int" style="width:24px; text-align:center; font-weight:bold;"></span>
+                    <span id="stat-val-int" style="min-width:30px; text-align:center; font-weight:bold;"></span>
                     <button class="stat-btn" id="btn-plus-int" onclick="changeStat('int', 1)">+</button>
                 </div>
             </div>
@@ -166,8 +166,13 @@
         <div id="hub-inventory" style="display: none;">
             <h2>🛡️ Equipped Gear</h2>
             <div class="eq-grid" id="hub-eq-grid"></div>
+            
             <h2>🎒 Backpack</h2>
-            <div id="hub-inv-list"></div>
+            <div style="display:flex; gap:10px; margin-bottom:16px;">
+                <button id="btn-tab-cons" class="btn-primary" style="flex:1; padding:8px;" onclick="setInvTab('cons')">Consumables & Misc</button>
+                <button id="btn-tab-equip" class="btn-disabled" style="flex:1; padding:8px;" onclick="setInvTab('equip')">Equipment</button>
+            </div>
+            <div id="inv-items-container"></div>
         </div>
     </div>
 
@@ -175,6 +180,19 @@
     <div id="save-bar" style="display:none;">
         <button class="btn-danger" style="flex:1; padding:12px; font-size:14px;" onclick="resetDraft()">Discard</button>
         <button class="btn-primary" style="flex:2; padding:12px; font-size:14px;" onclick="saveBatch()">Save Changes</button>
+    </div>
+
+    <!-- ITEM MODAL (POPUP) -->
+    <div id="item-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:1000; justify-content:center; align-items:center;">
+        <div style="background:var(--surface-color); padding:20px; border-radius:12px; width:80%; max-width:300px; border:1px solid #444; box-shadow: 0 4px 15px rgba(0,0,0,0.5);">
+            <h3 id="modal-title" style="margin-top:0; color:var(--accent-color);"></h3>
+            <p id="modal-desc" style="font-size:12px; color:var(--text-muted); line-height:1.4;"></p>
+            <div id="modal-stats" style="font-size:12px; margin-bottom:16px; color:#4caf50; font-weight:bold;"></div>
+            <div style="display:flex; gap:10px;">
+                <button class="btn-danger" style="flex:1; padding:10px;" id="modal-unequip-btn">Unequip</button>
+                <button class="btn-primary" style="flex:1; padding:10px;" onclick="closeModal()">Close</button>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -197,6 +215,7 @@
         let localItemDB = {}; 
         let dState = { stats: {str:0, dex:0, int:0}, skills: [], equipment: {} }; 
         let combatCharRef = null;
+        let currentInvTab = 'cons';
 
         document.addEventListener("DOMContentLoaded", () => {
             fetch(BACKEND_URL, {
@@ -239,8 +258,19 @@
             });
         });
 
+        function formatStats(statsObj) {
+            if (typeof statsObj === 'string') { try { statsObj = JSON.parse(statsObj); } catch(e) { return ""; } }
+            if (!statsObj) return "";
+            let s = [];
+            if (statsObj.hp) s.push(`+${statsObj.hp} HP`);
+            if (statsObj.mp) s.push(`+${statsObj.mp} MP`);
+            if (statsObj.str) s.push(`+${statsObj.str} STR`);
+            if (statsObj.dex) s.push(`+${statsObj.dex} DEX`);
+            if (statsObj.int) s.push(`+${statsObj.int} INT`);
+            return s.join(" | ");
+        }
+
         // --- ITEM SHOP LOGIC ---
-// --- ITEM SHOP LOGIC ---
         function switchShopTab(tabId) {
             document.getElementById('tab-buy-btn').className = tabId === 'buy' ? 'tab-btn active' : 'tab-btn';
             document.getElementById('tab-sell-btn').className = tabId === 'sell' ? 'tab-btn active' : 'tab-btn';
@@ -253,22 +283,13 @@
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ action: "get_app_state", initData: tg.initData, userId: String(userId), startParam: "shop" })
-            })
-            .then(res => res.json())
-            .then(response => {
+            }).then(res => res.json()).then(response => {
                 document.getElementById('loading').style.display = 'none';
-                if (response.mode === "shop") {
-                    document.getElementById('shop-ui').style.display = 'block';
-                    renderShop(response.data.character, response.data.shopItems, response.data.inventory);
-                }
-            })
-            .catch(() => {
-                document.getElementById('loading').style.display = 'none';
-                document.getElementById('shop-ui').style.display = 'block';
-            });
+                if (response.mode === "shop") { document.getElementById('shop-ui').style.display = 'block'; renderShop(response.data.character, response.data.shopItems, response.data.inventory); }
+            }).catch(() => { document.getElementById('loading').style.display = 'none'; document.getElementById('shop-ui').style.display = 'block'; });
         }
 
-function renderShop(char, shopItems, inventory) {
+        function renderShop(char, shopItems, inventory) {
             document.getElementById('shop-name').innerText = `🛒 The Local Merchant`;
             document.getElementById('shop-gold').innerText = `💰 Gold: ${char.gold}`;
 
@@ -281,10 +302,7 @@ function renderShop(char, shopItems, inventory) {
                     const div = document.createElement('div');
                     div.className = 'inv-item';
                     const canAfford = char.gold >= item.buyPrice;
-                    
-                    // Directly target the Description column, ignoring Effects
                     let itemDesc = item.description || item.desc || "No description available.";
-                    
                     div.innerHTML = `
                         <div class="inv-details" style="flex:1; padding-right:10px;">
                             <div class="action-title" style="margin:0; font-size:14px; color:${canAfford ? '#fff' : '#777'};">${item.name}</div>
@@ -305,10 +323,7 @@ function renderShop(char, shopItems, inventory) {
                 inventory.forEach(item => {
                     const div = document.createElement('div');
                     div.className = 'inv-item';
-                    
-                    // Directly target the Description column, ignoring Effects
                     let itemDesc = item.description || item.desc || "No description available.";
-                    
                     div.innerHTML = `
                         <div class="inv-details" style="flex:1; padding-right:10px;">
                             <div class="action-title" style="margin:0; font-size:14px;">${item.name} <span style="font-size:12px; color:#888;">x${item.qty}</span></div>
@@ -321,44 +336,19 @@ function renderShop(char, shopItems, inventory) {
                 });
             }
         }
+
         function buyItem(itemId, price) {
-            tg.HapticFeedback.impactOccurred('medium');
-            document.getElementById('loading').style.display = 'block';
-            document.getElementById('shop-ui').style.display = 'none';
-            fetch(BACKEND_URL, { 
-                method: 'POST', 
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: "buy_item", userId: String(userId), itemId: itemId, price: price }) 
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (!data.success) alert(data.message || "Purchase failed!");
-                refreshShop();
-            })
-            .catch(err => {
-                alert("Network error: " + err.message);
-                refreshShop();
-            });
+            tg.HapticFeedback.impactOccurred('medium'); document.getElementById('loading').style.display = 'block'; document.getElementById('shop-ui').style.display = 'none';
+            fetch(BACKEND_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "buy_item", userId: String(userId), itemId: itemId, price: price }) })
+            .then(res => res.json()).then(data => { if (!data.success) alert(data.message || "Purchase failed!"); refreshShop(); })
+            .catch(err => { alert("Network error: " + err.message); refreshShop(); });
         }
 
         function sellItem(itemId, price) {
-            tg.HapticFeedback.impactOccurred('medium');
-            document.getElementById('loading').style.display = 'block';
-            document.getElementById('shop-ui').style.display = 'none';
-            fetch(BACKEND_URL, { 
-                method: 'POST', 
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: "sell_item", userId: String(userId), itemId: itemId, price: price }) 
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (!data.success) alert(data.message || "Sale failed!");
-                refreshShop();
-            })
-            .catch(err => {
-                alert("Network error: " + err.message);
-                refreshShop();
-            });
+            tg.HapticFeedback.impactOccurred('medium'); document.getElementById('loading').style.display = 'block'; document.getElementById('shop-ui').style.display = 'none';
+            fetch(BACKEND_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "sell_item", userId: String(userId), itemId: itemId, price: price }) })
+            .then(res => res.json()).then(data => { if (!data.success) alert(data.message || "Sale failed!"); refreshShop(); })
+            .catch(err => { alert("Network error: " + err.message); refreshShop(); });
         }
 
         // --- COMBAT UI LOGIC ---
@@ -433,22 +423,29 @@ function renderShop(char, shopItems, inventory) {
         function backToSkills() { document.getElementById('target-menu').style.display = 'none'; document.getElementById('skill-menu').style.display = 'block'; document.getElementById('tab-act-btn').className = 'tab-btn active'; document.getElementById('tab-itm-btn').className = 'tab-btn'; }
         
         function submitAction(skillId, targetId) { 
-            tg.HapticFeedback.impactOccurred('medium'); 
-            fetch(BACKEND_URL, { 
-                method: 'POST', 
-                body: JSON.stringify({ action: "submit_combat_action", userId: userId, skillId: skillId, targetId: targetId, battleId: combatCharRef.battleId }) 
-            }); 
-            setTimeout(() => tg.close(), 100); 
+            tg.HapticFeedback.impactOccurred('medium'); fetch(BACKEND_URL, { method: 'POST', body: JSON.stringify({ action: "submit_combat_action", userId: userId, skillId: skillId, targetId: targetId, battleId: combatCharRef.battleId }) }); setTimeout(() => tg.close(), 100); 
         }
 
         // --- HUB OUT-OF-COMBAT LOGIC ---
+        function openModal(slot) {
+            let itemId = dState.equipment[slot] !== undefined ? dState.equipment[slot] : (sData.equipped[slot] ? sData.equipped[slot].id : null);
+            if (!itemId) return;
+            const item = localItemDB[itemId];
+            if (!item) return;
+
+            document.getElementById('modal-title').innerText = item.name;
+            document.getElementById('modal-desc').innerText = item.description || item.desc || item.effect || "No description available.";
+            document.getElementById('modal-stats').innerText = formatStats(item.stats) || "No stat bonuses.";
+            
+            document.getElementById('modal-unequip-btn').onclick = () => { setEquip(slot, null); closeModal(); };
+            document.getElementById('item-modal').style.display = 'flex';
+        }
+
+        function closeModal() { document.getElementById('item-modal').style.display = 'none'; }
+
         function consumeItem(itemId) {
-            tg.HapticFeedback.impactOccurred('medium');
-            document.getElementById('loading').innerHTML = `📡 Consuming item...`;
-            document.getElementById('loading').style.display = 'block';
-            fetch(BACKEND_URL, {
-                method: 'POST', body: JSON.stringify({ action: "consume_item", userId: userId, itemId: itemId })
-            }).then(() => location.reload());
+            tg.HapticFeedback.impactOccurred('medium'); document.getElementById('loading').innerHTML = `📡 Consuming item...`; document.getElementById('loading').style.display = 'block';
+            fetch(BACKEND_URL, { method: 'POST', body: JSON.stringify({ action: "consume_item", userId: userId, itemId: itemId }) }).then(() => location.reload());
         }
 
         function switchTab(tabId) {
@@ -456,6 +453,10 @@ function renderShop(char, shopItems, inventory) {
             document.getElementById('tab-inventory-btn').className = tabId === 'inventory' ? 'tab-btn active' : 'tab-btn';
             document.getElementById('hub-profile').style.display = tabId === 'profile' ? 'block' : 'none';
             document.getElementById('hub-inventory').style.display = tabId === 'inventory' ? 'block' : 'none';
+        }
+
+        function setInvTab(tabId) {
+            currentInvTab = tabId; updateHubUI();
         }
 
         function hasChanges() { return (dState.stats.str > 0 || dState.stats.dex > 0 || dState.stats.int > 0) || dState.skills.length > 0 || Object.keys(dState.equipment).length > 0; }
@@ -466,7 +467,7 @@ function renderShop(char, shopItems, inventory) {
             let xpNeeded = c.level * 100;
             let xpPct = Math.max(0, Math.min(100, (c.xp / xpNeeded) * 100));
             document.getElementById('hub-name').innerText = `${c.name} (Lv.${c.level} ${c.className})`;
-            document.getElementById('hub-level').innerText = `❤️ HP: ${sData.stats.hp}/${sData.stats.max_hp} | 🔹 MP: ${sData.stats.mp}/${sData.stats.max_mp}`;
+            document.getElementById('hub-level').innerText = `❤️ HP: ${sData.stats.hp}/${sData.stats.max_hp + sData.bonus.hp} | 🔹 MP: ${sData.stats.mp}/${sData.stats.max_mp + sData.bonus.mp}`;
             document.getElementById('hub-gold').innerText = `💰 Gold: ${c.gold}`;
             document.getElementById('hub-xp-fill').style.width = `${xpPct}%`;
             document.getElementById('hub-xp-text').innerText = `${c.xp} / ${xpNeeded}`;
@@ -476,8 +477,13 @@ function renderShop(char, shopItems, inventory) {
             
             ['str', 'dex', 'int'].forEach(stat => {
                 let base = sData.stats[stat] !== undefined ? parseInt(sData.stats[stat]) : 0;
-                let added = dState.stats[stat];
-                document.getElementById(`stat-val-${stat}`).innerText = base + added;
+                let added = dState.stats[stat] || 0;
+                let bonus = sData.bonus ? parseInt(sData.bonus[stat] || 0) : 0;
+                
+                let valStr = `${base + added}`;
+                if (bonus > 0) valStr += ` <span style="color:#4caf50; font-size:10px;">(+${bonus})</span>`;
+                
+                document.getElementById(`stat-val-${stat}`).innerHTML = valStr;
                 document.getElementById(`btn-minus-${stat}`).style.visibility = added > 0 ? "visible" : "hidden";
                 document.getElementById(`btn-plus-${stat}`).style.visibility = effStatPoints > 0 ? "visible" : "hidden";
             });
@@ -524,21 +530,36 @@ function renderShop(char, shopItems, inventory) {
                 div.innerHTML = `
                     <div class="slot-label">${slot.replace('_', ' ')}</div>
                     <div class="item-name">${item ? item.name : "Empty"}</div>
-                    ${item ? `<button class="btn-danger" style="padding:4px 8px; font-size:10px" onclick="setEquip('${slot}', null)">Unequip</button>` : ''}
+                    ${item ? `<div style="font-size:9px; color:#4caf50">${formatStats(item.stats)}</div>` : ''}
                 `;
+                if (item) {
+                    div.onclick = () => openModal(slot);
+                }
                 grid.appendChild(div);
             });
 
-            const invList = document.getElementById('hub-inv-list');
-            invList.innerHTML = "";
-            let validBackpack = sData.backpack.filter(i => i.type !== "Material");
+            // Update Backpack Tabs State
+            document.getElementById('btn-tab-cons').className = currentInvTab === 'cons' ? 'btn-primary' : 'btn-disabled';
+            document.getElementById('btn-tab-equip').className = currentInvTab === 'equip' ? 'btn-primary' : 'btn-disabled';
+
+            const invContainer = document.getElementById('inv-items-container');
+            invContainer.innerHTML = "";
             
+            let filteredBackpack = sData.backpack.filter(i => {
+                if (currentInvTab === 'cons') return i.type === 'Consumable' || i.type === 'Material';
+                return i.type !== 'Consumable' && i.type !== 'Material';
+            });
+
+            if (filteredBackpack.length === 0) {
+                invContainer.innerHTML = `<div style="text-align:center; color:#888; font-size:12px; margin-top:20px;">No items in this category.</div>`;
+            }
+
             let currentlyEquippedIds = slots.map(s => {
                 if (dState.equipment[s] !== undefined) return dState.equipment[s];
                 return sData.equipped[s] ? sData.equipped[s].id : null;
             }).filter(id => id !== null);
 
-            validBackpack.forEach(item => {
+            filteredBackpack.forEach(item => {
                 let isEquipped = currentlyEquippedIds.includes(item.id);
                 const div = document.createElement('div');
                 div.className = 'inv-item';
@@ -549,18 +570,24 @@ function renderShop(char, shopItems, inventory) {
                     actionBtnHTML = `<button class="btn-primary" onclick="consumeItem('${item.id}')">Use</button>`;
                 } else if (isEquipped) {
                     actionBtnHTML = `<span style="font-size:12px; color:var(--accent-color); font-weight:bold;">Equipped</span>`;
-                } else {
+                } else if (item.type !== "Material") {
                     actionBtnHTML = `<button class="btn-primary" onclick="setEquip('${item.type}', '${item.id}')">Equip</button>`;
                 }
 
+                let itemDesc = item.description || item.desc || "No description.";
+                let statText = formatStats(item.stats);
+                let statHTML = statText ? `<div style="font-size:11px; color:#4caf50; margin-bottom:4px;">${statText}</div>` : '';
+
                 div.innerHTML = `
-                    <div class="inv-details">
+                    <div class="inv-details" style="flex:1; padding-right:10px;">
                         <div class="action-title" style="margin:0; font-size:14px; color:${isEquipped ? 'var(--accent-color)' : '#e2b714'};">${item.name} <span style="font-size:12px; color:#888;">x${item.qty}</span></div>
+                        <div class="action-desc" style="margin-bottom:4px; font-size:11px; color:#a0a0a0; line-height:1.2;">${itemDesc}</div>
+                        ${statHTML}
                         <div class="inv-stats">${item.type}</div>
                     </div>
                     ${actionBtnHTML}
                 `;
-                invList.appendChild(div);
+                invContainer.appendChild(div);
             });
 
             let changed = hasChanges();

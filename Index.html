@@ -16,12 +16,10 @@
         
         #loading { text-align: center; margin-top: 50px; color: var(--text-muted); font-family: monospace; }
         
-        /* Nav Tabs */
         .tabs { display: flex; border-bottom: 1px solid #333; margin-bottom: 16px; }
         .tab-btn { flex: 1; text-align: center; padding: 12px; color: var(--text-muted); font-weight: bold; cursor: pointer; transition: 0.2s; border-bottom: 2px solid transparent; }
         .tab-btn.active { color: var(--accent-color); border-bottom: 2px solid var(--accent-color); }
 
-        /* Generic UI Styles */
         .status-header { background: var(--surface-color); padding: 12px; border-radius: 8px; margin-bottom: 16px; }
         .bar-container { background: #111; border-radius: 4px; height: 8px; margin-bottom: 8px; overflow: hidden; }
         .hp-fill { background: var(--hp-color); height: 100%; transition: width 0.3s; }
@@ -34,7 +32,6 @@
         .action-title { font-weight: bold; font-size: 15px; display: flex; justify-content: space-between; margin-bottom:4px; }
         .action-desc { font-size: 12px; color: var(--text-muted); line-height: 1.4; }
 
-        /* Inventory UI Styles */
         .eq-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 24px; }
         .eq-slot { background: var(--surface-color); border: 1px dashed #555; border-radius: 8px; padding: 10px 5px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 60px; }
         .eq-slot.filled { border-style: solid; border-color: #444; background: #2f2f3d; }
@@ -45,7 +42,6 @@
         .inv-details { display: flex; flex-direction: column; }
         .inv-stats { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
         
-        /* Stats Controller */
         .stat-row { display: flex; justify-content: space-between; align-items: center; background: var(--surface-color); padding: 12px; border-radius: 8px; margin-bottom: 8px; }
         .stat-controls { display: flex; align-items: center; gap: 12px; }
         .stat-btn { background: #444; color: #fff; width: 28px; height: 28px; border-radius: 4px; border: none; font-weight: bold; font-size: 16px; cursor: pointer; display: flex; justify-content: center; align-items: center; }
@@ -54,13 +50,26 @@
         .btn-danger { background: var(--danger-color); color: #fff; border: none; border-radius: 4px; padding: 6px 12px; font-weight: bold; font-size: 12px; cursor: pointer; }
         .btn-disabled { background: #444; color: #888; border: none; border-radius: 4px; padding: 6px 12px; font-weight: bold; font-size: 12px; pointer-events: none; }
 
-        /* Save Bar */
         #save-bar { position: fixed; bottom: 0; left: 0; right: 0; padding: 16px; background: #111; border-top: 1px solid #444; z-index: 100; gap: 10px; box-shadow: 0 -4px 10px rgba(0,0,0,0.5); }
     </style>
 </head>
 <body>
 
     <div id="loading">📡 Syncing with the Edge Server...</div>
+
+    <!-- COMBAT VIEW (RESTORED) -->
+    <div id="combat-ui" style="display: none;">
+        <div class="status-header" id="status-header"></div>
+        <div id="skill-menu">
+            <h2>⚔️ Choose Action</h2>
+            <div class="action-list" id="action-list"></div>
+        </div>
+        <div id="target-menu" style="display: none;">
+            <h2>🎯 Select Target</h2>
+            <div class="action-list" id="target-list"></div>
+            <button class="action-btn" onclick="backToSkills()" style="text-align: center; margin-top: 12px; background: #444;">🔙 Back to Skills</button>
+        </div>
+    </div>
 
     <!-- ROSTER / BARRACKS VIEW -->
     <div id="roster-ui" style="display: none;">
@@ -73,17 +82,13 @@
     <!-- CHARACTER CREATION VIEW -->
     <div id="creation-ui" style="display: none;">
         <h2>🧙‍♂️ Forge Your Legend</h2>
-        <div style="margin-bottom: 20px; color: var(--text-muted); font-size: 14px;">Welcome to the realm. Choose your path wisely.</div>
-        
         <input type="text" id="char-name" placeholder="Enter Character Name..." style="width: 100%; padding: 12px; background: #111; border: 1px solid #444; color: #fff; border-radius: 8px; margin-bottom: 16px; box-sizing: border-box; font-size: 16px;">
-        
         <div class="action-list">
-            <div class="action-btn" onclick="selectClass('Warrior')" id="class-Warrior">🛡️ <b>Warrior</b> <br><span style="font-size:12px;color:#aaa">High HP & Strength. Masters of taunting and absorbing damage.</span></div>
-            <div class="action-btn" onclick="selectClass('Mage')" id="class-Mage">✨ <b>Mage</b> <br><span style="font-size:12px;color:#aaa">High MP & Intelligence. Devastating Area of Effect spells.</span></div>
-            <div class="action-btn" onclick="selectClass('Rogue')" id="class-Rogue">🗡️ <b>Rogue</b> <br><span style="font-size:12px;color:#aaa">High Dexterity & Critical Chance. Lethal single-target damage.</span></div>
-            <div class="action-btn" onclick="selectClass('Cleric')" id="class-Cleric">🔆 <b>Cleric</b> <br><span style="font-size:12px;color:#aaa">Balanced stats. Essential party healing and protective buffs.</span></div>
+            <div class="action-btn" onclick="selectClass('Warrior')" id="class-Warrior">🛡️ <b>Warrior</b> <br><span style="font-size:12px;color:#aaa">High HP & Strength.</span></div>
+            <div class="action-btn" onclick="selectClass('Mage')" id="class-Mage">✨ <b>Mage</b> <br><span style="font-size:12px;color:#aaa">High MP & Intelligence.</span></div>
+            <div class="action-btn" onclick="selectClass('Rogue')" id="class-Rogue">🗡️ <b>Rogue</b> <br><span style="font-size:12px;color:#aaa">High Dexterity & Critical Chance.</span></div>
+            <div class="action-btn" onclick="selectClass('Cleric')" id="class-Cleric">🔆 <b>Cleric</b> <br><span style="font-size:12px;color:#aaa">Balanced stats.</span></div>
         </div>
-        
         <button class="btn-primary" style="width: 100%; margin-top: 20px; padding: 14px; font-size: 16px;" onclick="submitCharacter()">Begin Adventure</button>
     </div>
 
@@ -95,23 +100,18 @@
         </div>
 
         <div id="hub-profile">
-            <!-- Hero Stats Box -->
             <div class="status-header">
                 <div style="font-weight:bold; font-size:16px; margin-bottom:4px; color:var(--accent-color);" id="hub-name"></div>
-                <div class="stat-labels" style="margin-bottom:12px;">
-                    <span id="hub-level"></span>
-                    <span id="hub-gold"></span>
-                </div>
+                <div class="stat-labels" style="margin-bottom:12px;"><span id="hub-level"></span><span id="hub-gold"></span></div>
                 <div class="bar-container" style="background:#000;"><div class="hp-fill" id="hub-xp-fill" style="background:#4caf50;"></div></div>
                 <div class="stat-labels"><span style="color:#4caf50">XP Progress</span><span id="hub-xp-text"></span></div>
             </div>
 
-            <!-- Interactive Stats -->
             <h2>📊 Vital Attributes</h2>
             <div id="stat-pts-tracker" style="margin-bottom: 12px; color: var(--accent-color); font-weight: bold; font-size:13px;"></div>
             
             <div class="stat-row">
-                <div>💪 Strength <br><span style="font-size:10px; color:#888;">+10 Max HP</span></div>
+                <div>💪 Strength</div>
                 <div class="stat-controls">
                     <button class="stat-btn" id="btn-minus-str" onclick="changeStat('str', -1)">-</button>
                     <span id="stat-val-str" style="width:24px; text-align:center; font-weight:bold;"></span>
@@ -119,7 +119,7 @@
                 </div>
             </div>
             <div class="stat-row">
-                <div>🎯 Dexterity <br><span style="font-size:10px; color:#888;">+Hit & Crit</span></div>
+                <div>🎯 Dexterity</div>
                 <div class="stat-controls">
                     <button class="stat-btn" id="btn-minus-dex" onclick="changeStat('dex', -1)">-</button>
                     <span id="stat-val-dex" style="width:24px; text-align:center; font-weight:bold;"></span>
@@ -127,7 +127,7 @@
                 </div>
             </div>
             <div class="stat-row" style="margin-bottom: 24px;">
-                <div>🧠 Intelligence <br><span style="font-size:10px; color:#888;">+5 Max MP</span></div>
+                <div>🧠 Intelligence</div>
                 <div class="stat-controls">
                     <button class="stat-btn" id="btn-minus-int" onclick="changeStat('int', -1)">-</button>
                     <span id="stat-val-int" style="width:24px; text-align:center; font-weight:bold;"></span>
@@ -135,7 +135,6 @@
                 </div>
             </div>
 
-            <!-- Skill Tree -->
             <h2>📖 Skill Tree</h2>
             <div id="skill-pts-tracker" style="margin-bottom: 12px; color: var(--accent-color); font-weight: bold; font-size:13px;"></div>
             <div class="action-list" id="hub-skill-list"></div>
@@ -156,8 +155,10 @@
     </div>
 
     <script>
+        // Catch-all visual error alert
         window.onerror = function(msg, url, line) {
-            document.getElementById('loading').innerHTML = `<span style="color:var(--danger-color); font-weight:bold;">⚠️ Javascript Crash</span><br><br>${msg}<br>Line: ${line}`;
+            alert("Crash Detected: " + msg);
+            document.getElementById('loading').innerHTML = `<span style="color:var(--danger-color); font-weight:bold;">⚠️ Crash Detected</span><br><br>${msg}`;
             document.getElementById('loading').style.display = 'block';
             return false;
         };
@@ -165,18 +166,20 @@
         const tg = window.Telegram.WebApp;
         tg.expand(); 
         
-        // POINT TO CLOUDFLARE WORKER INSTEAD OF GAS
-        const WORKER_URL = "https://teletales-backend.sir-amos81.workers.dev"; 
+        // WIRE TO CLOUDFLARE EDGE
+        const BACKEND_URL = "https://teletales-backend.sir-amos81.workers.dev"; 
         
+        let globalMonsters = []; 
         let userId = tg.initDataUnsafe?.user?.id || "123456789";
         const startParam = tg.initDataUnsafe?.start_param || "";
 
         let sData = null; 
         let localItemDB = {}; 
         let dState = { stats: {str:0, dex:0, int:0}, skills: [], equipment: {} }; 
+        let combatCharRef = null;
 
         document.addEventListener("DOMContentLoaded", () => {
-            fetch(WORKER_URL, {
+            fetch(BACKEND_URL, {
                 method: 'POST',
                 body: JSON.stringify({ action: "get_app_state", initData: tg.initData, userId: userId, startParam: startParam })
             })
@@ -199,16 +202,82 @@
                     
                     for(let slot in sData.equipped) { if (sData.equipped[slot]) localItemDB[sData.equipped[slot].id] = sData.equipped[slot]; }
                     sData.backpack.forEach(item => localItemDB[item.id] = item);
-                    
                     updateHubUI();
+                } else if (response.mode === "combat") {
+                    // RESTORED COMBAT RENDER LOGIC
+                    document.getElementById('combat-ui').style.display = 'block';
+                    globalMonsters = response.data.monsters;
+                    combatCharRef = response.data.character;
+                    renderCombatHeader(response.data.character);
+                    renderActions(response.data.skills, response.data.character);
                 }
             })
             .catch((err) => { 
+                alert("Fetch Error: " + err.message);
                 document.getElementById('loading').style.display = 'block';
                 document.getElementById('loading').innerHTML = `<span style="color:var(--danger-color); font-weight:bold;">⚠️ Fetch Error</span><br><br>${err.message}`; 
             });
         });
 
+        // --- COMBAT UI LOGIC ---
+        function renderCombatHeader(char) {
+            const hpPct = Math.max(0, Math.min(100, (char.hp / char.maxHp) * 100));
+            const mpPct = Math.max(0, Math.min(100, (char.mp / char.maxMp) * 100));
+            document.getElementById('status-header').innerHTML = `
+                <div style="font-weight:bold; margin-bottom:8px;">${char.name} (Lv.${char.level} ${char.className})</div>
+                <div class="bar-container"><div class="hp-fill" style="width: ${hpPct}%;"></div></div>
+                <div class="stat-labels"><span>❤️ HP</span><span>${char.hp} / ${char.maxHp}</span></div>
+                <div style="height:8px;"></div>
+                <div class="bar-container"><div class="mp-fill" style="width: ${mpPct}%;"></div></div>
+                <div class="stat-labels"><span>🔹 MP</span><span>${char.mp} / ${char.maxMp}</span></div>
+            `;
+        }
+
+        function renderActions(skills, char) {
+            const list = document.getElementById('action-list');
+            list.innerHTML = `<div class="action-btn" onclick="openTargetMenu('basic_attack')"><div class="action-title"><span>🗡️ Basic Attack</span></div><div class="action-desc">Physical damage based on stats.</div></div>`;
+            skills.forEach(skill => {
+                const btn = document.createElement('div');
+                btn.className = 'action-btn';
+                if (char.mp < skill.mpCost) { btn.style.opacity = "0.5"; btn.style.pointerEvents = "none"; }
+                btn.innerHTML = `<div class="action-title"><span>✨ ${skill.name}</span> <span style="color:#1e90ff">${skill.mpCost} MP</span></div><div class="action-desc">${skill.description}</div>`;
+                btn.onclick = () => { skill.targetType === "SINGLE_ENEMY" || skill.targetType === "SINGLE_ALLY" ? openTargetMenu(skill.id) : submitAction(skill.id, null); };
+                list.appendChild(btn);
+            });
+        }
+
+        function openTargetMenu(skillId) {
+            document.getElementById('skill-menu').style.display = 'none';
+            document.getElementById('target-menu').style.display = 'block';
+            const tList = document.getElementById('target-list');
+            tList.innerHTML = "";
+            globalMonsters.forEach(m => {
+                const btn = document.createElement('div');
+                btn.className = 'action-btn';
+                const hpPct = Math.max(0, Math.min(100, (m.hp / m.maxHp) * 100));
+                btn.innerHTML = `
+                    <div class="action-title"><span>👹 ${m.name}</span></div>
+                    <div class="bar-container" style="margin-top: 6px;"><div class="hp-fill" style="width: ${hpPct}%;"></div></div>
+                    <div class="stat-labels"><span>HP: ${m.hp} / ${m.maxHp}</span></div>
+                `;
+                btn.onclick = () => submitAction(skillId, m.id);
+                tList.appendChild(btn);
+            });
+        }
+
+        function backToSkills() { document.getElementById('target-menu').style.display = 'none'; document.getElementById('skill-menu').style.display = 'block'; }
+        
+        function submitAction(skillId, targetId) { 
+            tg.HapticFeedback.impactOccurred('medium'); 
+            fetch(BACKEND_URL, { 
+                method: 'POST', 
+                body: JSON.stringify({ action: "submit_combat_action", userId: userId, skillId: skillId, targetId: targetId, battleId: combatCharRef.battleId }) 
+            }); 
+            setTimeout(() => tg.close(), 100); 
+        }
+
+
+        // --- HUB & ROSTER LOGIC ---
         function switchTab(tabId) {
             document.getElementById('tab-profile-btn').className = tabId === 'profile' ? 'tab-btn active' : 'tab-btn';
             document.getElementById('tab-inventory-btn').className = tabId === 'inventory' ? 'tab-btn active' : 'tab-btn';
@@ -340,7 +409,7 @@
             document.getElementById('hub-ui').style.display = 'none';
             document.getElementById('save-bar').style.display = 'none';
 
-            fetch(WORKER_URL, {
+            fetch(BACKEND_URL, {
                 method: 'POST', body: JSON.stringify({ action: "save_character_batch", userId: userId, updates: dState })
             }).then(() => location.reload()).catch((e) => {
                 document.getElementById('loading').innerHTML = `<span style="color:var(--danger-color); font-weight:bold;">⚠️ Save Failed</span><br><br>${e.message}`;
@@ -370,10 +439,10 @@
         }
 
         function showCreation() { document.getElementById('roster-ui').style.display = 'none'; document.getElementById('creation-ui').style.display = 'block'; }
-        function switchChar(charId) { tg.HapticFeedback.impactOccurred('medium'); fetch(WORKER_URL, { method: 'POST', body: JSON.stringify({ action: "switch_character", userId: userId, charId: charId }) }).then(() => location.reload()); }
+        function switchChar(charId) { tg.HapticFeedback.impactOccurred('medium'); fetch(BACKEND_URL, { method: 'POST', body: JSON.stringify({ action: "switch_character", userId: userId, charId: charId }) }).then(() => location.reload()); }
         function deleteChar(charId, charName) {
             if (!confirm(`Are you absolutely sure you want to delete ${charName}? This cannot be undone.`)) return;
-            tg.HapticFeedback.impactOccurred('heavy'); fetch(WORKER_URL, { method: 'POST', body: JSON.stringify({ action: "delete_character", userId: userId, charId: charId }) }).then(() => location.reload());
+            tg.HapticFeedback.impactOccurred('heavy'); fetch(BACKEND_URL, { method: 'POST', body: JSON.stringify({ action: "delete_character", userId: userId, charId: charId }) }).then(() => location.reload());
         }
 
         let selectedClass = "";
@@ -390,7 +459,7 @@
             document.getElementById('loading').style.display = 'block';
             document.getElementById('creation-ui').style.display = 'none';
 
-            fetch(WORKER_URL, { method: 'POST', body: JSON.stringify({ action: "create_character", userId: userId, name: name, charClass: selectedClass }) })
+            fetch(BACKEND_URL, { method: 'POST', body: JSON.stringify({ action: "create_character", userId: userId, name: name, charClass: selectedClass }) })
             .then(res => res.json())
             .then(data => {
                 if (data.success) { tg.close(); } 

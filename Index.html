@@ -240,11 +240,32 @@
         });
 
         // --- ITEM SHOP LOGIC ---
+// --- ITEM SHOP LOGIC ---
         function switchShopTab(tabId) {
             document.getElementById('tab-buy-btn').className = tabId === 'buy' ? 'tab-btn active' : 'tab-btn';
             document.getElementById('tab-sell-btn').className = tabId === 'sell' ? 'tab-btn active' : 'tab-btn';
             document.getElementById('shop-buy-list').style.display = tabId === 'buy' ? 'flex' : 'none';
             document.getElementById('shop-sell-list').style.display = tabId === 'sell' ? 'flex' : 'none';
+        }
+
+        function refreshShop() {
+            fetch(BACKEND_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: "get_app_state", initData: tg.initData, userId: String(userId), startParam: "shop" })
+            })
+            .then(res => res.json())
+            .then(response => {
+                document.getElementById('loading').style.display = 'none';
+                if (response.mode === "shop") {
+                    document.getElementById('shop-ui').style.display = 'block';
+                    renderShop(response.data.character, response.data.shopItems, response.data.inventory);
+                }
+            })
+            .catch(() => {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('shop-ui').style.display = 'block';
+            });
         }
 
         function renderShop(char, shopItems, inventory) {
@@ -253,24 +274,28 @@
 
             const buyList = document.getElementById('shop-buy-list');
             buyList.innerHTML = "";
-            shopItems.forEach(item => {
-                const div = document.createElement('div');
-                div.className = 'inv-item';
-                let canAfford = char.gold >= item.buyPrice;
-                div.innerHTML = `
-                    <div class="inv-details">
-                        <div class="action-title" style="margin:0; font-size:14px; color:${canAfford ? '#fff' : '#555'};">${item.name}</div>
-                        <div class="inv-stats">💰 Costs: ${item.buyPrice} Gold</div>
-                    </div>
-                    <button class="${canAfford ? 'btn-primary' : 'btn-disabled'}" onclick="buyItem('${item.id}', ${item.buyPrice})">Buy</button>
-                `;
-                buyList.appendChild(div);
-            });
+            if (shopItems.length === 0) {
+                buyList.innerHTML = `<div style="text-align:center; color:#888; font-size:12px; margin-top:20px;">No items available for your level.</div>`;
+            } else {
+                shopItems.forEach(item => {
+                    const div = document.createElement('div');
+                    div.className = 'inv-item';
+                    const canAfford = char.gold >= item.buyPrice;
+                    div.innerHTML = `
+                        <div class="inv-details">
+                            <div class="action-title" style="margin:0; font-size:14px; color:${canAfford ? '#fff' : '#777'};">${item.name}</div>
+                            <div class="inv-stats">💰 Price: ${item.buyPrice} Gold • Lv.${item.min_level || 1}+</div>
+                        </div>
+                        <button class="${canAfford ? 'btn-primary' : 'btn-disabled'}" onclick="buyItem('${item.id}', ${item.buyPrice})">Buy</button>
+                    `;
+                    buyList.appendChild(div);
+                });
+            }
 
             const sellList = document.getElementById('shop-sell-list');
             sellList.innerHTML = "";
             if (inventory.length === 0) {
-                sellList.innerHTML = `<div style="text-align:center; color:#888; font-size:12px;">Your backpack is empty.</div>`;
+                sellList.innerHTML = `<div style="text-align:center; color:#888; font-size:12px; margin-top:20px;">Your backpack is empty.</div>`;
             } else {
                 inventory.forEach(item => {
                     const div = document.createElement('div');
@@ -290,15 +315,42 @@
         function buyItem(itemId, price) {
             tg.HapticFeedback.impactOccurred('medium');
             document.getElementById('loading').style.display = 'block';
-            fetch(BACKEND_URL, { method: 'POST', body: JSON.stringify({ action: "buy_item", userId: userId, itemId: itemId, price: price }) }).then(() => location.reload());
+            document.getElementById('shop-ui').style.display = 'none';
+            fetch(BACKEND_URL, { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: "buy_item", userId: String(userId), itemId: itemId, price: price }) 
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (!data.success) alert(data.message || "Purchase failed!");
+                refreshShop();
+            })
+            .catch(err => {
+                alert("Network error: " + err.message);
+                refreshShop();
+            });
         }
 
         function sellItem(itemId, price) {
             tg.HapticFeedback.impactOccurred('medium');
             document.getElementById('loading').style.display = 'block';
-            fetch(BACKEND_URL, { method: 'POST', body: JSON.stringify({ action: "sell_item", userId: userId, itemId: itemId, price: price }) }).then(() => location.reload());
+            document.getElementById('shop-ui').style.display = 'none';
+            fetch(BACKEND_URL, { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: "sell_item", userId: String(userId), itemId: itemId, price: price }) 
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (!data.success) alert(data.message || "Sale failed!");
+                refreshShop();
+            })
+            .catch(err => {
+                alert("Network error: " + err.message);
+                refreshShop();
+            });
         }
-
 
         // --- COMBAT UI LOGIC ---
         function switchCombatTab(tabId) {

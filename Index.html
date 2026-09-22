@@ -57,6 +57,22 @@
 
     <div id="loading">📡 Syncing with the Edge Server...</div>
 
+    <!-- ITEM SHOP VIEW -->
+    <div id="shop-ui" style="display: none;">
+        <div class="status-header">
+            <div style="font-weight:bold; font-size:16px; margin-bottom:4px; color:var(--accent-color);" id="shop-name"></div>
+            <div class="stat-labels" style="margin-bottom:12px;"><span id="shop-gold" style="color:#4caf50; font-weight:bold;">💰 Gold: 0</span></div>
+        </div>
+
+        <div class="tabs">
+            <div class="tab-btn active" id="tab-buy-btn" onclick="switchShopTab('buy')">Buy Items</div>
+            <div class="tab-btn" id="tab-sell-btn" onclick="switchShopTab('sell')">Sell Items</div>
+        </div>
+
+        <div id="shop-buy-list" class="action-list"></div>
+        <div id="shop-sell-list" class="action-list" style="display: none;"></div>
+    </div>
+
     <!-- COMBAT VIEW -->
     <div id="combat-ui" style="display: none;">
         <div class="status-header" id="status-header"></div>
@@ -203,7 +219,6 @@
                 } else if (response.mode === "hub") {
                     document.getElementById('hub-ui').style.display = 'block';
                     sData = response.data;
-                    
                     for(let slot in sData.equipped) { if (sData.equipped[slot]) localItemDB[sData.equipped[slot].id] = sData.equipped[slot]; }
                     sData.backpack.forEach(item => localItemDB[item.id] = item);
                     updateHubUI();
@@ -213,6 +228,9 @@
                     combatCharRef = response.data.character;
                     renderCombatHeader(response.data.character);
                     renderActions(response.data.skills, response.data.consumables, response.data.character);
+                } else if (response.mode === "shop") {
+                    document.getElementById('shop-ui').style.display = 'block';
+                    renderShop(response.data.character, response.data.shopItems, response.data.inventory);
                 }
             })
             .catch((err) => { 
@@ -220,6 +238,67 @@
                 document.getElementById('loading').innerHTML = `<span style="color:var(--danger-color); font-weight:bold;">⚠️ Fetch Error</span><br><br>${err.message}`; 
             });
         });
+
+        // --- ITEM SHOP LOGIC ---
+        function switchShopTab(tabId) {
+            document.getElementById('tab-buy-btn').className = tabId === 'buy' ? 'tab-btn active' : 'tab-btn';
+            document.getElementById('tab-sell-btn').className = tabId === 'sell' ? 'tab-btn active' : 'tab-btn';
+            document.getElementById('shop-buy-list').style.display = tabId === 'buy' ? 'flex' : 'none';
+            document.getElementById('shop-sell-list').style.display = tabId === 'sell' ? 'flex' : 'none';
+        }
+
+        function renderShop(char, shopItems, inventory) {
+            document.getElementById('shop-name').innerText = `🛒 The Local Merchant`;
+            document.getElementById('shop-gold').innerText = `💰 Gold: ${char.gold}`;
+
+            const buyList = document.getElementById('shop-buy-list');
+            buyList.innerHTML = "";
+            shopItems.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'inv-item';
+                let canAfford = char.gold >= item.buyPrice;
+                div.innerHTML = `
+                    <div class="inv-details">
+                        <div class="action-title" style="margin:0; font-size:14px; color:${canAfford ? '#fff' : '#555'};">${item.name}</div>
+                        <div class="inv-stats">💰 Costs: ${item.buyPrice} Gold</div>
+                    </div>
+                    <button class="${canAfford ? 'btn-primary' : 'btn-disabled'}" onclick="buyItem('${item.id}', ${item.buyPrice})">Buy</button>
+                `;
+                buyList.appendChild(div);
+            });
+
+            const sellList = document.getElementById('shop-sell-list');
+            sellList.innerHTML = "";
+            if (inventory.length === 0) {
+                sellList.innerHTML = `<div style="text-align:center; color:#888; font-size:12px;">Your backpack is empty.</div>`;
+            } else {
+                inventory.forEach(item => {
+                    const div = document.createElement('div');
+                    div.className = 'inv-item';
+                    div.innerHTML = `
+                        <div class="inv-details">
+                            <div class="action-title" style="margin:0; font-size:14px;">${item.name} <span style="font-size:12px; color:#888;">x${item.qty}</span></div>
+                            <div class="inv-stats">💰 Sells for: ${item.sellPrice} Gold</div>
+                        </div>
+                        <button class="btn-primary" onclick="sellItem('${item.id}', ${item.sellPrice})">Sell</button>
+                    `;
+                    sellList.appendChild(div);
+                });
+            }
+        }
+
+        function buyItem(itemId, price) {
+            tg.HapticFeedback.impactOccurred('medium');
+            document.getElementById('loading').style.display = 'block';
+            fetch(BACKEND_URL, { method: 'POST', body: JSON.stringify({ action: "buy_item", userId: userId, itemId: itemId, price: price }) }).then(() => location.reload());
+        }
+
+        function sellItem(itemId, price) {
+            tg.HapticFeedback.impactOccurred('medium');
+            document.getElementById('loading').style.display = 'block';
+            fetch(BACKEND_URL, { method: 'POST', body: JSON.stringify({ action: "sell_item", userId: userId, itemId: itemId, price: price }) }).then(() => location.reload());
+        }
+
 
         // --- COMBAT UI LOGIC ---
         function switchCombatTab(tabId) {

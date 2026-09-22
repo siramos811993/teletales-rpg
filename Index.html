@@ -203,6 +203,7 @@
                 } else if (response.mode === "hub") {
                     document.getElementById('hub-ui').style.display = 'block';
                     sData = response.data;
+                    
                     for(let slot in sData.equipped) { if (sData.equipped[slot]) localItemDB[sData.equipped[slot].id] = sData.equipped[slot]; }
                     sData.backpack.forEach(item => localItemDB[item.id] = item);
                     updateHubUI();
@@ -300,7 +301,16 @@
             setTimeout(() => tg.close(), 100); 
         }
 
-        // --- HUB & ROSTER LOGIC ---
+        // --- HUB OUT-OF-COMBAT LOGIC ---
+        function consumeItem(itemId) {
+            tg.HapticFeedback.impactOccurred('medium');
+            document.getElementById('loading').innerHTML = `📡 Consuming item...`;
+            document.getElementById('loading').style.display = 'block';
+            fetch(BACKEND_URL, {
+                method: 'POST', body: JSON.stringify({ action: "consume_item", userId: userId, itemId: itemId })
+            }).then(() => location.reload());
+        }
+
         function switchTab(tabId) {
             document.getElementById('tab-profile-btn').className = tabId === 'profile' ? 'tab-btn active' : 'tab-btn';
             document.getElementById('tab-inventory-btn').className = tabId === 'inventory' ? 'tab-btn active' : 'tab-btn';
@@ -316,7 +326,7 @@
             let xpNeeded = c.level * 100;
             let xpPct = Math.max(0, Math.min(100, (c.xp / xpNeeded) * 100));
             document.getElementById('hub-name').innerText = `${c.name} (Lv.${c.level} ${c.className})`;
-            document.getElementById('hub-level').innerText = `❤️ HP: ${sData.stats.max_hp} | 🔹 MP: ${sData.stats.max_mp}`;
+            document.getElementById('hub-level').innerText = `❤️ HP: ${sData.stats.hp}/${sData.stats.max_hp} | 🔹 MP: ${sData.stats.mp}/${sData.stats.max_mp}`;
             document.getElementById('hub-gold').innerText = `💰 Gold: ${c.gold}`;
             document.getElementById('hub-xp-fill').style.width = `${xpPct}%`;
             document.getElementById('hub-xp-text').innerText = `${c.xp} / ${xpNeeded}`;
@@ -381,7 +391,7 @@
 
             const invList = document.getElementById('hub-inv-list');
             invList.innerHTML = "";
-            let validBackpack = sData.backpack.filter(i => i.type !== "Material" && i.type !== "Consumable");
+            let validBackpack = sData.backpack.filter(i => i.type !== "Material");
             
             let currentlyEquippedIds = slots.map(s => {
                 if (dState.equipment[s] !== undefined) return dState.equipment[s];
@@ -394,12 +404,21 @@
                 div.className = 'inv-item';
                 if (isEquipped) div.style.borderColor = 'var(--accent-color)';
                 
+                let actionBtnHTML = "";
+                if (item.type === "Consumable") {
+                    actionBtnHTML = `<button class="btn-primary" onclick="consumeItem('${item.id}')">Use</button>`;
+                } else if (isEquipped) {
+                    actionBtnHTML = `<span style="font-size:12px; color:var(--accent-color); font-weight:bold;">Equipped</span>`;
+                } else {
+                    actionBtnHTML = `<button class="btn-primary" onclick="setEquip('${item.type}', '${item.id}')">Equip</button>`;
+                }
+
                 div.innerHTML = `
                     <div class="inv-details">
-                        <div class="action-title" style="margin:0; font-size:14px; color:${isEquipped ? 'var(--accent-color)' : '#e2b714'};">${item.name}</div>
+                        <div class="action-title" style="margin:0; font-size:14px; color:${isEquipped ? 'var(--accent-color)' : '#e2b714'};">${item.name} <span style="font-size:12px; color:#888;">x${item.qty}</span></div>
                         <div class="inv-stats">${item.type}</div>
                     </div>
-                    ${isEquipped ? `<span style="font-size:12px; color:var(--accent-color); font-weight:bold;">Equipped</span>` : `<button class="btn-primary" onclick="setEquip('${item.type}', '${item.id}')">Equip</button>`}
+                    ${actionBtnHTML}
                 `;
                 invList.appendChild(div);
             });

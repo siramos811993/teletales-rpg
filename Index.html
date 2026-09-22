@@ -51,6 +51,7 @@
         .stat-btn { background: #444; color: #fff; width: 28px; height: 28px; border-radius: 4px; border: none; font-weight: bold; font-size: 16px; cursor: pointer; display: flex; justify-content: center; align-items: center; }
         
         .btn-primary { background: var(--accent-color); color: #000; border: none; border-radius: 4px; padding: 6px 12px; font-weight: bold; font-size: 12px; cursor: pointer; }
+        .btn-secondary { background: #444; color: #888; border: none; border-radius: 4px; padding: 6px 12px; font-weight: bold; font-size: 12px; cursor: pointer; }
         .btn-danger { background: var(--danger-color); color: #fff; border: none; border-radius: 4px; padding: 6px 12px; font-weight: bold; font-size: 12px; cursor: pointer; }
         .btn-disabled { background: #444; color: #888; border: none; border-radius: 4px; padding: 6px 12px; font-weight: bold; font-size: 12px; pointer-events: none; }
 
@@ -175,7 +176,7 @@
             <h2>🎒 Backpack</h2>
             <div style="display:flex; gap:10px; margin-bottom:16px;">
                 <button id="btn-tab-cons" class="btn-primary" style="flex:1; padding:8px;" onclick="setInvTab('cons')">Consumables & Misc</button>
-                <button id="btn-tab-equip" class="btn-disabled" style="flex:1; padding:8px;" onclick="setInvTab('equip')">Equipment</button>
+                <button id="btn-tab-equip" class="btn-secondary" style="flex:1; padding:8px;" onclick="setInvTab('equip')">Equipment</button>
             </div>
             <div id="inv-items-container"></div>
         </div>
@@ -318,15 +319,13 @@
                     const div = document.createElement('div');
                     div.className = 'inv-item';
                     const canAfford = char.gold >= item.buyPrice;
+                    
                     let itemDesc = item.description || item.desc || "No description available.";
-                    let statText = formatStats(item.stats);
-                    let statHTML = statText ? `<div style="font-size:11px; color:#4caf50; margin-bottom:4px;">${statText}</div>` : '';
                     
                     div.innerHTML = `
                         <div class="inv-details" style="flex:1; padding-right:10px;">
                             <div class="action-title" style="margin:0; font-size:14px; color:${canAfford ? '#fff' : '#777'};">${item.name}</div>
                             <div class="action-desc" style="margin-bottom:4px; font-size:11px; color:#a0a0a0; line-height:1.2;">${itemDesc}</div>
-                            ${statHTML}
                             <div class="inv-stats" style="color:var(--accent-color);">💰 Price: ${item.buyPrice} Gold • Req Lv.${item.min_level || 1}</div>
                         </div>
                         <button class="${canAfford ? 'btn-primary' : 'btn-disabled'}" onclick="buyItem('${item.id}', ${item.buyPrice})">Buy</button>
@@ -343,15 +342,13 @@
                 inventory.forEach(item => {
                     const div = document.createElement('div');
                     div.className = 'inv-item';
+                    
                     let itemDesc = item.description || item.desc || "No description available.";
-                    let statText = formatStats(item.stats);
-                    let statHTML = statText ? `<div style="font-size:11px; color:#4caf50; margin-bottom:4px;">${statText}</div>` : '';
-
+                    
                     div.innerHTML = `
                         <div class="inv-details" style="flex:1; padding-right:10px;">
                             <div class="action-title" style="margin:0; font-size:14px;">${item.name} <span style="font-size:12px; color:#888;">x${item.qty}</span></div>
                             <div class="action-desc" style="margin-bottom:4px; font-size:11px; color:#a0a0a0; line-height:1.2;">${itemDesc}</div>
-                            ${statHTML}
                             <div class="inv-stats" style="color:var(--accent-color);">💰 Sells for: ${item.sellPrice} Gold</div>
                         </div>
                         <button class="btn-primary" onclick="sellItem('${item.id}', ${item.sellPrice})">Sell</button>
@@ -562,8 +559,8 @@
                 grid.appendChild(div);
             });
 
-            document.getElementById('btn-tab-cons').className = currentInvTab === 'cons' ? 'btn-primary' : 'btn-disabled';
-            document.getElementById('btn-tab-equip').className = currentInvTab === 'equip' ? 'btn-primary' : 'btn-disabled';
+            document.getElementById('btn-tab-cons').className = currentInvTab === 'cons' ? 'btn-primary' : 'btn-secondary';
+            document.getElementById('btn-tab-equip').className = currentInvTab === 'equip' ? 'btn-primary' : 'btn-secondary';
 
             const invContainer = document.getElementById('inv-items-container');
             invContainer.innerHTML = "";

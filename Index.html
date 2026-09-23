@@ -203,9 +203,7 @@
 
     <script>
         window.onerror = function(msg, url, line) {
-            // IGNORE HARMLESS TELEGRAM SCRIPT WARNINGS
             if (msg === 'Script error.' || String(msg).includes('Script error')) return false; 
-            
             document.getElementById('loading').innerHTML = `
                 <span style="color:var(--danger-color); font-weight:bold;">⚠️ UI Interruption Detected</span><br><br>${msg}<br><br>
                 <button class='btn-primary' style='padding: 10px 20px; margin-top:15px;' onclick='location.reload()'>🔄 Reload App</button>
@@ -287,7 +285,6 @@
             return s.join(" | ");
         }
 
-        // --- ITEM SHOP LOGIC ---
         function switchShopTab(tabId) {
             document.getElementById('tab-buy-btn').className = tabId === 'buy' ? 'tab-btn active' : 'tab-btn';
             document.getElementById('tab-sell-btn').className = tabId === 'sell' ? 'tab-btn active' : 'tab-btn';
@@ -296,193 +293,80 @@
         }
 
         function refreshShop() {
-            fetch(BACKEND_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: "get_app_state", initData: tg.initData, userId: String(userId), startParam: "shop" })
-            }).then(res => res.json()).then(response => {
-                document.getElementById('loading').style.display = 'none';
-                if (response.mode === "shop") { document.getElementById('shop-ui').style.display = 'block'; renderShop(response.data.character, response.data.shopItems, response.data.inventory); }
-            }).catch(() => { document.getElementById('loading').style.display = 'none'; document.getElementById('shop-ui').style.display = 'block'; });
+            fetch(BACKEND_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "get_app_state", initData: tg.initData, userId: String(userId), startParam: "shop" }) })
+            .then(res => res.json()).then(response => { document.getElementById('loading').style.display = 'none'; if (response.mode === "shop") { document.getElementById('shop-ui').style.display = 'block'; renderShop(response.data.character, response.data.shopItems, response.data.inventory); } })
+            .catch(() => { document.getElementById('loading').style.display = 'none'; document.getElementById('shop-ui').style.display = 'block'; });
         }
 
         function renderShop(char, shopItems, inventory) {
             document.getElementById('shop-name').innerText = `🛒 The Local Merchant`;
             document.getElementById('shop-gold').innerText = `💰 Gold: ${char.gold}`;
+            const buyList = document.getElementById('shop-buy-list'); buyList.innerHTML = "";
+            if (shopItems.length === 0) { buyList.innerHTML = `<div style="text-align:center; color:#888; font-size:12px; margin-top:20px;">No items available for your level.</div>`; } 
+            else { shopItems.forEach(item => { const div = document.createElement('div'); div.className = 'inv-item'; const canAfford = char.gold >= item.buyPrice; div.innerHTML = `<div class="inv-details" style="flex:1; padding-right:10px;"><div class="action-title" style="margin:0; font-size:14px; color:${canAfford ? '#fff' : '#777'};">${item.name}</div><div class="action-desc" style="margin-bottom:4px; font-size:11px; color:#a0a0a0; line-height:1.2;">${item.description || item.desc || ""}</div><div class="inv-stats" style="color:var(--accent-color);">💰 Price: ${item.buyPrice} Gold • Req Lv.${item.min_level || 1}</div></div><button class="${canAfford ? 'btn-primary' : 'btn-disabled'}" onclick="buyItem('${item.id}', ${item.buyPrice})">Buy</button>`; buyList.appendChild(div); }); }
 
-            const buyList = document.getElementById('shop-buy-list');
-            buyList.innerHTML = "";
-            if (shopItems.length === 0) {
-                buyList.innerHTML = `<div style="text-align:center; color:#888; font-size:12px; margin-top:20px;">No items available for your level.</div>`;
-            } else {
-                shopItems.forEach(item => {
-                    const div = document.createElement('div');
-                    div.className = 'inv-item';
-                    const canAfford = char.gold >= item.buyPrice;
-                    
-                    let itemDesc = item.description || item.desc || "No description available.";
-                    
-                    div.innerHTML = `
-                        <div class="inv-details" style="flex:1; padding-right:10px;">
-                            <div class="action-title" style="margin:0; font-size:14px; color:${canAfford ? '#fff' : '#777'};">${item.name}</div>
-                            <div class="action-desc" style="margin-bottom:4px; font-size:11px; color:#a0a0a0; line-height:1.2;">${itemDesc}</div>
-                            <div class="inv-stats" style="color:var(--accent-color);">💰 Price: ${item.buyPrice} Gold • Req Lv.${item.min_level || 1}</div>
-                        </div>
-                        <button class="${canAfford ? 'btn-primary' : 'btn-disabled'}" onclick="buyItem('${item.id}', ${item.buyPrice})">Buy</button>
-                    `;
-                    buyList.appendChild(div);
-                });
-            }
-
-            const sellList = document.getElementById('shop-sell-list');
-            sellList.innerHTML = "";
-            if (inventory.length === 0) {
-                sellList.innerHTML = `<div style="text-align:center; color:#888; font-size:12px; margin-top:20px;">Your backpack is empty.</div>`;
-            } else {
-                inventory.forEach(item => {
-                    const div = document.createElement('div');
-                    div.className = 'inv-item';
-                    
-                    let itemDesc = item.description || item.desc || "No description available.";
-                    
-                    div.innerHTML = `
-                        <div class="inv-details" style="flex:1; padding-right:10px;">
-                            <div class="action-title" style="margin:0; font-size:14px;">${item.name} <span style="font-size:12px; color:#888;">x${item.qty}</span></div>
-                            <div class="action-desc" style="margin-bottom:4px; font-size:11px; color:#a0a0a0; line-height:1.2;">${itemDesc}</div>
-                            <div class="inv-stats" style="color:var(--accent-color);">💰 Sells for: ${item.sellPrice} Gold</div>
-                        </div>
-                        <button class="btn-primary" onclick="sellItem('${item.id}', ${item.sellPrice})">Sell</button>
-                    `;
-                    sellList.appendChild(div);
-                });
-            }
+            const sellList = document.getElementById('shop-sell-list'); sellList.innerHTML = "";
+            if (inventory.length === 0) { sellList.innerHTML = `<div style="text-align:center; color:#888; font-size:12px; margin-top:20px;">Your backpack is empty.</div>`; } 
+            else { inventory.forEach(item => { const div = document.createElement('div'); div.className = 'inv-item'; div.innerHTML = `<div class="inv-details" style="flex:1; padding-right:10px;"><div class="action-title" style="margin:0; font-size:14px;">${item.name} <span style="font-size:12px; color:#888;">x${item.qty}</span></div><div class="action-desc" style="margin-bottom:4px; font-size:11px; color:#a0a0a0; line-height:1.2;">${item.description || item.desc || ""}</div><div class="inv-stats" style="color:var(--accent-color);">💰 Sells for: ${item.sellPrice} Gold</div></div><button class="btn-primary" onclick="sellItem('${item.id}', ${item.sellPrice})">Sell</button>`; sellList.appendChild(div); }); }
         }
 
-        function buyItem(itemId, price) {
-            tg.HapticFeedback.impactOccurred('medium'); document.getElementById('loading').style.display = 'block'; document.getElementById('shop-ui').style.display = 'none';
-            fetch(BACKEND_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "buy_item", userId: String(userId), itemId: itemId, price: price }) })
-            .then(res => res.json()).then(data => { if (!data.success) alert(data.message || "Purchase failed!"); refreshShop(); })
-            .catch(err => { alert("Network error: " + err.message); refreshShop(); });
-        }
+        function buyItem(itemId, price) { tg.HapticFeedback.impactOccurred('medium'); document.getElementById('loading').style.display = 'block'; document.getElementById('shop-ui').style.display = 'none'; fetch(BACKEND_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "buy_item", userId: String(userId), itemId: itemId, price: price }) }).then(res => res.json()).then(data => { if (!data.success) alert(data.message || "Purchase failed!"); refreshShop(); }).catch(err => { alert("Network error: " + err.message); refreshShop(); }); }
+        function sellItem(itemId, price) { tg.HapticFeedback.impactOccurred('medium'); document.getElementById('loading').style.display = 'block'; document.getElementById('shop-ui').style.display = 'none'; fetch(BACKEND_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "sell_item", userId: String(userId), itemId: itemId, price: price }) }).then(res => res.json()).then(data => { if (!data.success) alert(data.message || "Sale failed!"); refreshShop(); }).catch(err => { alert("Network error: " + err.message); refreshShop(); }); }
 
-        function sellItem(itemId, price) {
-            tg.HapticFeedback.impactOccurred('medium'); document.getElementById('loading').style.display = 'block'; document.getElementById('shop-ui').style.display = 'none';
-            fetch(BACKEND_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "sell_item", userId: String(userId), itemId: itemId, price: price }) })
-            .then(res => res.json()).then(data => { if (!data.success) alert(data.message || "Sale failed!"); refreshShop(); })
-            .catch(err => { alert("Network error: " + err.message); refreshShop(); });
-        }
-
-        // --- COMBAT UI LOGIC ---
         function switchCombatTab(tabId) {
-            document.getElementById('tab-act-btn').className = tabId === 'action' ? 'tab-btn active' : 'tab-btn';
-            document.getElementById('tab-itm-btn').className = tabId === 'item' ? 'tab-btn active' : 'tab-btn';
-            document.getElementById('skill-menu').style.display = tabId === 'action' ? 'block' : 'none';
-            document.getElementById('item-menu').style.display = tabId === 'item' ? 'block' : 'none';
-            document.getElementById('target-menu').style.display = 'none';
+            document.getElementById('tab-act-btn').className = tabId === 'action' ? 'tab-btn active' : 'tab-btn'; document.getElementById('tab-itm-btn').className = tabId === 'item' ? 'tab-btn active' : 'tab-btn';
+            document.getElementById('skill-menu').style.display = tabId === 'action' ? 'block' : 'none'; document.getElementById('item-menu').style.display = tabId === 'item' ? 'block' : 'none'; document.getElementById('target-menu').style.display = 'none';
         }
 
         function renderCombatHeader(char) {
-            const hpPct = Math.max(0, Math.min(100, (char.hp / char.maxHp) * 100));
-            const mpPct = Math.max(0, Math.min(100, (char.mp / char.maxMp) * 100));
-            document.getElementById('status-header').innerHTML = `
-                <div style="font-weight:bold; margin-bottom:8px;">${char.name} (Lv.${char.level} ${char.className})</div>
-                <div class="bar-container"><div class="hp-fill" style="width: ${hpPct}%;"></div></div>
-                <div class="stat-labels"><span>❤️ HP</span><span>${char.hp} / ${char.maxHp}</span></div>
-                <div style="height:8px;"></div>
-                <div class="bar-container"><div class="mp-fill" style="width: ${mpPct}%;"></div></div>
-                <div class="stat-labels"><span>🔹 MP</span><span>${char.mp} / ${char.maxMp}</span></div>
-            `;
+            const hpPct = Math.max(0, Math.min(100, (char.hp / char.maxHp) * 100)); const mpPct = Math.max(0, Math.min(100, (char.mp / char.maxMp) * 100));
+            document.getElementById('status-header').innerHTML = `<div style="font-weight:bold; margin-bottom:8px;">${char.name} (Lv.${char.level} ${char.className})</div><div class="bar-container"><div class="hp-fill" style="width: ${hpPct}%;"></div></div><div class="stat-labels"><span>❤️ HP</span><span>${char.hp} / ${char.maxHp}</span></div><div style="height:8px;"></div><div class="bar-container"><div class="mp-fill" style="width: ${mpPct}%;"></div></div><div class="stat-labels"><span>🔹 MP</span><span>${char.mp} / ${char.maxMp}</span></div>`;
         }
 
         function renderActions(skills, consumables, char) {
-            const list = document.getElementById('action-list');
-            list.innerHTML = `<div class="action-btn" onclick="openTargetMenu('basic_attack')"><div class="action-title"><span>🗡️ Basic Attack</span></div><div class="action-desc">Physical damage based on stats.</div></div>`;
+            const list = document.getElementById('action-list'); list.innerHTML = `<div class="action-btn" onclick="openTargetMenu('basic_attack')"><div class="action-title"><span>🗡️ Basic Attack</span></div><div class="action-desc">Physical damage based on stats.</div></div>`;
             skills.forEach(skill => {
-                const btn = document.createElement('div');
-                btn.className = 'action-btn';
+                const btn = document.createElement('div'); btn.className = 'action-btn';
                 if (char.mp < skill.mpCost) { btn.style.opacity = "0.5"; btn.style.pointerEvents = "none"; }
                 btn.innerHTML = `<div class="action-title"><span>✨ ${skill.name}</span> <span style="color:#1e90ff">${skill.mpCost} MP</span></div><div class="action-desc">${skill.description}</div>`;
                 btn.onclick = () => { skill.targetType === "SINGLE_ENEMY" || skill.targetType === "SINGLE_ALLY" ? openTargetMenu(skill.id) : submitAction(skill.id, null); };
                 list.appendChild(btn);
             });
 
-            const iList = document.getElementById('combat-item-list');
-            iList.innerHTML = "";
-            if (consumables.length === 0) {
-                iList.innerHTML = `<div style="text-align:center; color:#888; font-size:12px; margin-top:20px;">Your backpack is empty.</div>`;
-            } else {
-                consumables.forEach(item => {
-                    const btn = document.createElement('div');
-                    btn.className = 'action-btn';
-                    btn.innerHTML = `<div class="action-title"><span>🧪 ${item.name}</span> <span style="color:#e2b714">x${item.qty}</span></div><div class="action-desc">${item.desc}</div>`;
-                    btn.onclick = () => submitAction('item_' + item.id, null);
-                    iList.appendChild(btn);
-                });
-            }
+            const iList = document.getElementById('combat-item-list'); iList.innerHTML = "";
+            if (consumables.length === 0) { iList.innerHTML = `<div style="text-align:center; color:#888; font-size:12px; margin-top:20px;">Your backpack is empty.</div>`; } 
+            else { consumables.forEach(item => { const btn = document.createElement('div'); btn.className = 'action-btn'; btn.innerHTML = `<div class="action-title"><span>🧪 ${item.name}</span> <span style="color:#e2b714">x${item.qty}</span></div><div class="action-desc">${item.desc}</div>`; btn.onclick = () => submitAction('item_' + item.id, null); iList.appendChild(btn); }); }
         }
 
         function openTargetMenu(skillId) {
-            document.getElementById('skill-menu').style.display = 'none';
-            document.getElementById('item-menu').style.display = 'none';
-            document.getElementById('target-menu').style.display = 'block';
-            const tList = document.getElementById('target-list');
-            tList.innerHTML = "";
+            document.getElementById('skill-menu').style.display = 'none'; document.getElementById('item-menu').style.display = 'none'; document.getElementById('target-menu').style.display = 'block';
+            const tList = document.getElementById('target-list'); tList.innerHTML = "";
             globalMonsters.forEach(m => {
-                const btn = document.createElement('div');
-                btn.className = 'action-btn';
+                const btn = document.createElement('div'); btn.className = 'action-btn';
                 const hpPct = Math.max(0, Math.min(100, (m.hp / m.maxHp) * 100));
-                btn.innerHTML = `
-                    <div class="action-title"><span>👹 ${m.name}</span></div>
-                    <div class="bar-container" style="margin-top: 6px;"><div class="hp-fill" style="width: ${hpPct}%;"></div></div>
-                    <div class="stat-labels"><span>HP: ${m.hp} / ${m.maxHp}</span></div>
-                `;
-                btn.onclick = () => submitAction(skillId, m.id);
-                tList.appendChild(btn);
+                btn.innerHTML = `<div class="action-title"><span>👹 ${m.name}</span></div><div class="bar-container" style="margin-top: 6px;"><div class="hp-fill" style="width: ${hpPct}%;"></div></div><div class="stat-labels"><span>HP: ${m.hp} / ${m.maxHp}</span></div>`;
+                btn.onclick = () => submitAction(skillId, m.id); tList.appendChild(btn);
             });
         }
 
         function backToSkills() { document.getElementById('target-menu').style.display = 'none'; document.getElementById('skill-menu').style.display = 'block'; document.getElementById('tab-act-btn').className = 'tab-btn active'; document.getElementById('tab-itm-btn').className = 'tab-btn'; }
-        
-        function submitAction(skillId, targetId) { 
-            tg.HapticFeedback.impactOccurred('medium'); fetch(BACKEND_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "submit_combat_action", userId: String(userId), skillId: skillId, targetId: targetId, battleId: combatCharRef.battleId }) }); setTimeout(() => tg.close(), 100); 
-        }
+        function submitAction(skillId, targetId) { tg.HapticFeedback.impactOccurred('medium'); fetch(BACKEND_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "submit_combat_action", userId: String(userId), skillId: skillId, targetId: targetId, battleId: combatCharRef.battleId }) }); setTimeout(() => tg.close(), 100); }
 
-        // --- HUB OUT-OF-COMBAT LOGIC ---
         function openModal(slot) {
             let itemId = dState.equipment[slot] !== undefined ? dState.equipment[slot] : (sData.equipped[slot] ? sData.equipped[slot].id : null);
-            if (!itemId) return;
-            const item = localItemDB[itemId];
-            if (!item) return;
-
-            document.getElementById('modal-title').innerText = item.name;
-            document.getElementById('modal-desc').innerText = item.description || item.desc || "No description available.";
-            document.getElementById('modal-stats').innerText = formatStats(item.stats) || "No stat bonuses.";
-            
-            document.getElementById('modal-unequip-btn').onclick = () => { setEquip(slot, null); closeModal(); };
-            document.getElementById('item-modal').style.display = 'flex';
+            if (!itemId) return; const item = localItemDB[itemId]; if (!item) return;
+            document.getElementById('modal-title').innerText = item.name; document.getElementById('modal-desc').innerText = item.description || item.desc || "No description available."; document.getElementById('modal-stats').innerText = formatStats(item.stats) || "No stat bonuses.";
+            document.getElementById('modal-unequip-btn').onclick = () => { setEquip(slot, null); closeModal(); }; document.getElementById('item-modal').style.display = 'flex';
         }
 
         function closeModal() { document.getElementById('item-modal').style.display = 'none'; }
-
-        function consumeItem(itemId) {
-            tg.HapticFeedback.impactOccurred('medium'); document.getElementById('loading').innerHTML = `📡 Consuming item...`; document.getElementById('loading').style.display = 'block';
-            fetch(BACKEND_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "consume_item", userId: String(userId), itemId: itemId }) }).then(() => location.reload());
-        }
-
-        function switchTab(tabId) {
-            document.getElementById('tab-profile-btn').className = tabId === 'profile' ? 'tab-btn active' : 'tab-btn';
-            document.getElementById('tab-inventory-btn').className = tabId === 'inventory' ? 'tab-btn active' : 'tab-btn';
-            document.getElementById('hub-profile').style.display = tabId === 'profile' ? 'block' : 'none';
-            document.getElementById('hub-inventory').style.display = tabId === 'inventory' ? 'block' : 'none';
-        }
-
-        function setInvTab(tabId) {
-            currentInvTab = tabId; updateHubUI();
-        }
-
+        function consumeItem(itemId) { tg.HapticFeedback.impactOccurred('medium'); document.getElementById('loading').innerHTML = `📡 Consuming item...`; document.getElementById('loading').style.display = 'block'; fetch(BACKEND_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "consume_item", userId: String(userId), itemId: itemId }) }).then(() => location.reload()); }
+        function switchTab(tabId) { document.getElementById('tab-profile-btn').className = tabId === 'profile' ? 'tab-btn active' : 'tab-btn'; document.getElementById('tab-inventory-btn').className = tabId === 'inventory' ? 'tab-btn active' : 'tab-btn'; document.getElementById('hub-profile').style.display = tabId === 'profile' ? 'block' : 'none'; document.getElementById('hub-inventory').style.display = tabId === 'inventory' ? 'block' : 'none'; }
+        function setInvTab(tabId) { currentInvTab = tabId; updateHubUI(); }
         function hasChanges() { return (dState.stats.str > 0 || dState.stats.dex > 0 || dState.stats.int > 0) || dState.skills.length > 0 || Object.keys(dState.equipment).length > 0; }
         function resetDraft() { dState = { stats: {str:0, dex:0, int:0}, skills: [], equipment: {} }; updateHubUI(); }
 
+        // HUB UI RENDERER (Including Updated Skill System)
         function updateHubUI() {
             let c = sData.character;
             let xpNeeded = c.level * 100;
@@ -500,7 +384,6 @@
                 let base = sData.stats[stat] !== undefined ? parseInt(sData.stats[stat]) : 0;
                 let added = dState.stats[stat] || 0;
                 let bonus = sData.bonus ? parseInt(sData.bonus[stat] || 0) : 0;
-                
                 let valStr = `${base + added}`;
                 if (bonus > 0) valStr += ` <span style="color:#4caf50; font-size:10px;">(+${bonus})</span>`;
                 
@@ -509,31 +392,62 @@
                 document.getElementById(`btn-plus-${stat}`).style.visibility = effStatPoints > 0 ? "visible" : "hidden";
             });
 
+            // UPDATED SKILL LEVELING ENGINE UI
             let effSkillPoints = c.skillPoints - dState.skills.length;
             document.getElementById('skill-pts-tracker').innerText = `Available Skill Points: ${effSkillPoints}`;
             const sList = document.getElementById('hub-skill-list');
             sList.innerHTML = "";
             
             sData.tree.forEach(skill => {
-                const isBaseUnlocked = c.unlocked[skill.id];
-                const isDraftUnlocked = dState.skills.includes(skill.id);
-                const meetsLevel = c.level >= skill.minLevel;
-                const prereqMet = !skill.prereq || c.unlocked[skill.prereq] || dState.skills.includes(skill.prereq);
+                let baseLvlRaw = c.unlocked[skill.id];
+                let baseLvl = baseLvlRaw === true ? 1 : (parseInt(baseLvlRaw) || 0);
+                let draftLvl = dState.skills.filter(id => id === skill.id).length;
+                let currentLvl = baseLvl + draftLvl;
+                let maxLvl = skill.maxLevel || 1;
+                
+                let prereqBase = skill.prereq ? (c.unlocked[skill.prereq] === true ? 1 : (parseInt(c.unlocked[skill.prereq]) || 0)) : 0;
+                let prereqDraft = skill.prereq ? dState.skills.filter(id => id === skill.prereq).length : 0;
+                let prereqMet = !skill.prereq || (prereqBase + prereqDraft > 0);
+                let meetsLevel = c.level >= skill.minLevel;
+                
+                // Calculate Dynamic Power display
+                let pwrRaw = skill.baseMult + (Math.max(0, currentLvl - 1) * skill.levelMult);
+                let nextPwrRaw = skill.baseMult + (currentLvl * skill.levelMult);
+                let pwrText = currentLvl > 0 ? `Current Power: ${(pwrRaw * 100).toFixed(0)}%` : `Power at Lv.1: ${(skill.baseMult * 100).toFixed(0)}%`;
+                
+                if (currentLvl > 0 && currentLvl < maxLvl) pwrText += ` ➡️ Next: ${(nextPwrRaw * 100).toFixed(0)}%`;
+                if (skill.levelMult == 0 && maxLvl == 1 && currentLvl > 0) pwrText = `Power: ${(skill.baseMult * 100).toFixed(0)}%`;
+
+                let headerHTML = `<div style="font-weight:bold; font-size:15px; color:#fff;">✨ ${skill.name} <span style="color:#a0a0a0; font-size:11px; font-weight:normal;">Lv.${currentLvl}/${maxLvl}</span></div>`;
+                let btnControls = "";
+                
+                if (!meetsLevel) {
+                    btnControls = `<span style="color:#ff4757; font-size:11px;">🔒 Requires Lv.${skill.minLevel}</span>`;
+                } else if (!prereqMet) {
+                    btnControls = `<span style="color:#ff4757; font-size:11px;">🔒 Requires Previous Skill</span>`;
+                } else {
+                    if (draftLvl > 0) btnControls += `<button class="btn-danger" style="padding:4px 10px; border-radius:4px; font-weight:bold; margin-right:6px;" onclick="removeSkill('${skill.id}')">-</button>`;
+                    if (currentLvl < maxLvl && effSkillPoints > 0) btnControls += `<button class="btn-primary" style="padding:4px 10px; border-radius:4px; font-weight:bold;" onclick="addSkill('${skill.id}')">+</button>`;
+                    else if (currentLvl >= maxLvl) btnControls += `<span style="color:#4caf50; font-size:11px; font-weight:bold;">MAXED</span>`;
+                }
 
                 const btn = document.createElement('div');
                 btn.className = 'action-btn';
-                
-                let badge = "";
-                if (isBaseUnlocked) { badge = `<span style="color:#4caf50; font-size:12px;">✅ Unlocked</span>`; btn.style.borderColor = '#4caf50'; }
-                else if (isDraftUnlocked) { badge = `<button class="btn-danger" onclick="toggleSkill('${skill.id}')">⏳ Pending (Undo)</button>`; btn.style.borderColor = '#e2b714'; }
-                else if (!meetsLevel) { badge = `<span style="color:#ff4757; font-size:12px;">🔒 Requires Lv.${skill.minLevel}</span>`; btn.style.opacity = "0.5"; }
-                else if (!prereqMet) { badge = `<span style="color:#ff4757; font-size:12px;">🔒 Requires Previous Skill</span>`; btn.style.opacity = "0.5"; }
-                else { 
-                    if (effSkillPoints > 0) badge = `<button class="btn-primary" onclick="toggleSkill('${skill.id}')">Unlock (1 SP)</button>`;
-                    else badge = `<span style="color:#888; font-size:12px;">No SP Available</span>`;
-                }
+                if (!meetsLevel || !prereqMet) btn.style.opacity = "0.5";
+                if (draftLvl > 0) btn.style.borderColor = '#e2b714';
+                else if (baseLvl > 0 && currentLvl >= maxLvl) btn.style.borderColor = '#4caf50';
 
-                btn.innerHTML = `<div class="action-title" style="margin-bottom:8px;"><span>✨ ${skill.name}</span> <span>${badge}</span></div><div class="action-desc">${skill.desc}</div>`;
+                btn.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                        ${headerHTML}
+                        <div style="display:flex; align-items:center;">${btnControls}</div>
+                    </div>
+                    <div class="action-desc" style="margin-bottom:8px;">${skill.desc}</div>
+                    <div style="display:flex; justify-content:space-between; font-size:11px; font-weight:bold;">
+                        <span style="color:#4caf50;">${pwrText}</span>
+                        <span style="color:#1e90ff;">🔹 ${skill.mpCost} MP</span>
+                    </div>
+                `;
                 sList.appendChild(btn);
             });
 
@@ -553,9 +467,7 @@
                     <div class="item-name">${item ? item.name : "Empty"}</div>
                     ${item ? `<div style="font-size:9px; color:#4caf50">${formatStats(item.stats)}</div>` : ''}
                 `;
-                if (item) {
-                    div.onclick = () => openModal(slot);
-                }
+                if (item) div.onclick = () => openModal(slot);
                 grid.appendChild(div);
             });
 
@@ -565,19 +477,13 @@
             const invContainer = document.getElementById('inv-items-container');
             invContainer.innerHTML = "";
             
-            // SMART INVENTORY FILTER FIX: Automatically handles variations in type strings
             let filteredBackpack = sData.backpack.filter(i => {
                 let t = String(i.type || "").trim().toUpperCase();
-                if (currentInvTab === 'cons') {
-                    return t === 'CONSUMABLE' || t === 'MATERIAL';
-                } else {
-                    return t !== 'CONSUMABLE' && t !== 'MATERIAL';
-                }
+                if (currentInvTab === 'cons') return t === 'CONSUMABLE' || t === 'MATERIAL';
+                else return t !== 'CONSUMABLE' && t !== 'MATERIAL';
             });
 
-            if (filteredBackpack.length === 0) {
-                invContainer.innerHTML = `<div style="text-align:center; color:#888; font-size:12px; margin-top:20px;">No items in this category.</div>`;
-            }
+            if (filteredBackpack.length === 0) invContainer.innerHTML = `<div style="text-align:center; color:#888; font-size:12px; margin-top:20px;">No items in this category.</div>`;
 
             let currentlyEquippedIds = slots.map(s => {
                 if (dState.equipment[s] !== undefined) return dState.equipment[s];
@@ -594,21 +500,12 @@
                 let upType = rawType.toUpperCase();
                 
                 let actionBtnHTML = "";
-                if (upType === "CONSUMABLE") {
-                    actionBtnHTML = `<button class="btn-primary" onclick="consumeItem('${item.id}')">Use</button>`;
-                } else if (isEquipped) {
-                    actionBtnHTML = `<span style="font-size:12px; color:var(--accent-color); font-weight:bold;">Equipped</span>`;
-                } else if (upType !== "MATERIAL") {
-                    // Force the raw string into the exact DB column format (e.g. "Upper Body" -> "Upper_Body")
+                if (upType === "CONSUMABLE") { actionBtnHTML = `<button class="btn-primary" onclick="consumeItem('${item.id}')">Use</button>`; } 
+                else if (isEquipped) { actionBtnHTML = `<span style="font-size:12px; color:var(--accent-color); font-weight:bold;">Equipped</span>`; } 
+                else if (upType !== "MATERIAL") {
                     let safeSlotName = rawType.replace(/\s+/g, '_'); 
-                    let slotMapping = {
-                        "HEAD": "Head", "SHIELD": "Shield", "WEAPON": "Weapon",
-                        "UPPER_BODY": "Upper_Body", "UPPER BODY": "Upper_Body",
-                        "LOWER_BODY": "Lower_Body", "LOWER BODY": "Lower_Body",
-                        "HANDS": "Hands", "FOOT": "Foot", "RING": "Ring", "AMULET": "Amulet"
-                    };
+                    let slotMapping = { "HEAD": "Head", "SHIELD": "Shield", "WEAPON": "Weapon", "UPPER_BODY": "Upper_Body", "UPPER BODY": "Upper_Body", "LOWER_BODY": "Lower_Body", "LOWER BODY": "Lower_Body", "HANDS": "Hands", "FOOT": "Foot", "RING": "Ring", "AMULET": "Amulet" };
                     let finalTargetSlot = slotMapping[upType] || safeSlotName;
-                    
                     actionBtnHTML = `<button class="btn-primary" onclick="setEquip('${finalTargetSlot}', '${item.id}')">Equip</button>`;
                 }
 
@@ -634,69 +531,38 @@
         }
 
         function changeStat(stat, amount) { dState.stats[stat] += amount; updateHubUI(); }
-        function toggleSkill(skillId) { let idx = dState.skills.indexOf(skillId); if (idx > -1) dState.skills.splice(idx, 1); else dState.skills.push(skillId); updateHubUI(); }
+        function addSkill(skillId) { dState.skills.push(skillId); updateHubUI(); }
+        function removeSkill(skillId) { let idx = dState.skills.lastIndexOf(skillId); if (idx > -1) dState.skills.splice(idx, 1); updateHubUI(); }
         function setEquip(slot, itemId) { dState.equipment[slot] = itemId; updateHubUI(); }
 
         function saveBatch() {
-            tg.HapticFeedback.impactOccurred('heavy');
-            document.getElementById('loading').innerHTML = `📡 Locking in your choices...`;
-            document.getElementById('loading').style.display = 'block';
-            document.getElementById('hub-ui').style.display = 'none';
-            document.getElementById('save-bar').style.display = 'none';
-
-            fetch(BACKEND_URL, {
-                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "save_character_batch", userId: String(userId), updates: dState })
-            }).then(() => location.reload()).catch((e) => {
-                document.getElementById('loading').innerHTML = `<span style="color:var(--danger-color); font-weight:bold;">⚠️ Save Failed</span><br><br>${e.message}`;
-            });
+            tg.HapticFeedback.impactOccurred('heavy'); document.getElementById('loading').innerHTML = `📡 Locking in your choices...`; document.getElementById('loading').style.display = 'block'; document.getElementById('hub-ui').style.display = 'none'; document.getElementById('save-bar').style.display = 'none';
+            fetch(BACKEND_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "save_character_batch", userId: String(userId), updates: dState }) }).then(() => location.reload()).catch((e) => { document.getElementById('loading').innerHTML = `<span style="color:var(--danger-color); font-weight:bold;">⚠️ Save Failed</span><br><br>${e.message}`; });
         }
 
         function renderRoster(roster) {
-            const list = document.getElementById('roster-list');
-            list.innerHTML = "";
+            const list = document.getElementById('roster-list'); list.innerHTML = "";
             if (roster.length === 0) return list.innerHTML = `<div style="text-align:center; color:#888; font-size:12px;">You have no characters. Forge one below!</div>`;
-
             roster.forEach(char => {
-                const div = document.createElement('div');
-                div.className = 'inv-item';
+                const div = document.createElement('div'); div.className = 'inv-item';
                 if (char.isActive) div.style.borderColor = 'var(--accent-color)';
                 let buttonsHTML = char.isActive ? `<button class="btn-disabled">Active</button>` : `<button class="btn-primary" onclick="switchChar('${char.id}')">Select</button><button class="btn-danger" style="margin-left: 5px;" onclick="deleteChar('${char.id}', '${char.name}')">Delete</button>`;
-                div.innerHTML = `
-                    <div class="inv-details">
-                        <div class="action-title" style="margin:0; font-size:14px; color:${char.isActive ? 'var(--accent-color)' : '#fff'};">${char.name} ${char.isActive ? '👑' : ''}</div>
-                        <div class="inv-stats">Lv.${char.level} ${char.className} • ${char.state.replace('_', ' ')}</div>
-                    </div><div style="display:flex;">${buttonsHTML}</div>
-                `;
+                div.innerHTML = `<div class="inv-details"><div class="action-title" style="margin:0; font-size:14px; color:${char.isActive ? 'var(--accent-color)' : '#fff'};">${char.name} ${char.isActive ? '👑' : ''}</div><div class="inv-stats">Lv.${char.level} ${char.className} • ${char.state.replace('_', ' ')}</div></div><div style="display:flex;">${buttonsHTML}</div>`;
                 list.appendChild(div);
             });
         }
 
         function showCreation() { document.getElementById('roster-ui').style.display = 'none'; document.getElementById('creation-ui').style.display = 'block'; }
         function switchChar(charId) { tg.HapticFeedback.impactOccurred('medium'); fetch(BACKEND_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "switch_character", userId: String(userId), charId: charId }) }).then(() => location.reload()); }
-        function deleteChar(charId, charName) {
-            if (!confirm(`Are you absolutely sure you want to delete ${charName}? This cannot be undone.`)) return;
-            tg.HapticFeedback.impactOccurred('heavy'); fetch(BACKEND_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "delete_character", userId: String(userId), charId: charId }) }).then(() => location.reload());
-        }
+        function deleteChar(charId, charName) { if (!confirm(`Are you absolutely sure you want to delete ${charName}? This cannot be undone.`)) return; tg.HapticFeedback.impactOccurred('heavy'); fetch(BACKEND_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "delete_character", userId: String(userId), charId: charId }) }).then(() => location.reload()); }
 
         let selectedClass = "";
-        function selectClass(cls) {
-            selectedClass = cls;
-            document.querySelectorAll('#creation-ui .action-btn').forEach(btn => btn.style.borderColor = '#333');
-            document.getElementById(`class-${cls}`).style.borderColor = 'var(--accent-color)';
-        }
+        function selectClass(cls) { selectedClass = cls; document.querySelectorAll('#creation-ui .action-btn').forEach(btn => btn.style.borderColor = '#333'); document.getElementById(`class-${cls}`).style.borderColor = 'var(--accent-color)'; }
         function submitCharacter() {
             const name = document.getElementById('char-name').value.trim();
             if (!name || !selectedClass) return tg.showAlert("Please enter a name and select a class.");
-            tg.HapticFeedback.impactOccurred('heavy');
-            document.getElementById('loading').style.display = 'block';
-            document.getElementById('creation-ui').style.display = 'none';
-
-            fetch(BACKEND_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "create_character", userId: String(userId), name: name, charClass: selectedClass }) })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) { tg.close(); } 
-                else { document.getElementById('loading').style.display = 'none'; document.getElementById('creation-ui').style.display = 'block'; tg.showAlert(data.message); }
-            }).catch(e => { document.getElementById('loading').innerHTML = `<span style="color:var(--danger-color); font-weight:bold;">⚠️ Creation Failed</span><br><br>${e.message}`; });
+            tg.HapticFeedback.impactOccurred('heavy'); document.getElementById('loading').style.display = 'block'; document.getElementById('creation-ui').style.display = 'none';
+            fetch(BACKEND_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "create_character", userId: String(userId), name: name, charClass: selectedClass }) }).then(res => res.json()).then(data => { if (data.success) { tg.close(); } else { document.getElementById('loading').style.display = 'none'; document.getElementById('creation-ui').style.display = 'block'; tg.showAlert(data.message); } }).catch(e => { document.getElementById('loading').innerHTML = `<span style="color:var(--danger-color); font-weight:bold;">⚠️ Creation Failed</span><br><br>${e.message}`; });
         }
     </script>
 </body>

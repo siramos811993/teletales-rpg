@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <!-- Cache-busting meta tags -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
@@ -399,7 +398,7 @@
         function hasChanges() { return (dState.stats.str > 0 || dState.stats.dex > 0 || dState.stats.int > 0) || dState.skills.length > 0 || Object.keys(dState.equipment).length > 0; }
         function resetDraft() { dState = { stats: {str:0, dex:0, int:0}, skills: [], equipment: {} }; updateHubUI(); }
 
-        // HUB UI RENDERER (Including Complete Skill Parameter Display)
+        // HUB UI RENDERER
         function updateHubUI() {
             let c = sData.character;
             let xpNeeded = c.level * 100;
@@ -442,7 +441,6 @@
                 let prereqMet = !skill.prereq || (prereqBase + prereqDraft > 0);
                 let meetsLevel = c.level >= skill.minLevel;
                 
-                // Parse Dynamic Effect Parameters and construct full UI strings
                 let p = skill.params || {};
                 let curStats = [];
                 let nxtStats = [];
@@ -466,6 +464,11 @@
                 if (p.stacks_base !== undefined) {
                     curStats.push(`Poison: ${Math.floor(p.stacks_base + (Math.max(0, currentLvl - 1) * (p.stacks_lvl || 0)))} Stacks`);
                     if (currentLvl < maxLvl) nxtStats.push(`Poison: ${Math.floor(p.stacks_base + (currentLvl * (p.stacks_lvl || 0)))} Stacks`);
+                }
+                // DYNAMIC PARSER: Adds the AC Shred tracking to the Hero Hub
+                if (p.ac_base !== undefined) {
+                    curStats.push(`-AC: ${Math.floor(p.ac_base + (Math.max(0, currentLvl - 1) * (p.ac_lvl || 0)))}`);
+                    if (currentLvl < maxLvl) nxtStats.push(`-AC: ${Math.floor(p.ac_base + (currentLvl * (p.ac_lvl || 0)))}`);
                 }
                 
                 if (curStats.length === 0) curStats.push("Power: 100%");

@@ -328,7 +328,27 @@
             skills.forEach(skill => {
                 const btn = document.createElement('div'); btn.className = 'action-btn';
                 if (char.mp < skill.mpCost) { btn.style.opacity = "0.5"; btn.style.pointerEvents = "none"; }
-                btn.innerHTML = `<div class="action-title"><span>✨ ${skill.name}</span> <span style="color:#1e90ff">${skill.mpCost} MP</span></div><div class="action-desc">${skill.description}</div>`;
+                
+                // MAP ACTIVE PARAMETERS FOR THE COMBAT MENU
+                let p = skill.params || {};
+                let currentLvl = skill.level || 1;
+                let curStats = [];
+                
+                if (p.charge_base !== undefined) curStats.push(`Setup: ${Math.max(0, Math.floor(p.charge_base + (Math.max(0, currentLvl - 1) * (p.charge_lvl || 0))))} Turns`);
+                if (p.hits_base !== undefined) curStats.push(`Strikes: ${Math.floor(p.hits_base + (Math.max(0, currentLvl - 1) * (p.hits_lvl || 0)))}`);
+                if (p.dmg_base !== undefined) curStats.push(`Dmg: ${((p.dmg_base + (Math.max(0, currentLvl - 1) * (p.dmg_lvl || 0))) * 100).toFixed(0)}%`);
+                if (p.crit_base !== undefined) curStats.push(`Crit: +${(p.crit_base + (Math.max(0, currentLvl - 1) * (p.crit_lvl || 0))).toFixed(0)}%`);
+                if (p.ac_drop_base !== undefined) curStats.push(`Self AC: -${(p.ac_drop_base + (Math.max(0, currentLvl - 1) * (p.ac_drop_lvl || 0))).toFixed(0)}`);
+                if (p.heal_base !== undefined) curStats.push(`Heal: ${(p.heal_base + (Math.max(0, currentLvl - 1) * (p.heal_lvl || 0))).toFixed(0)} HP`);
+                if (p.chance_base !== undefined) curStats.push(`Chance: ${(p.chance_base + (Math.max(0, currentLvl - 1) * (p.chance_lvl || 0))).toFixed(0)}%`);
+                if (p.dur_base !== undefined) curStats.push(`Dur: ${Math.floor(p.dur_base + (Math.max(0, currentLvl - 1) * (p.dur_lvl || 0)))} Turns`);
+                if (p.stacks_base !== undefined) curStats.push(`Poison: ${Math.floor(p.stacks_base + (Math.max(0, currentLvl - 1) * (p.stacks_lvl || 0)))} Stacks`);
+                if (p.ac_base !== undefined) curStats.push(`-AC: ${Math.floor(p.ac_base + (Math.max(0, currentLvl - 1) * (p.ac_lvl || 0)))}`);
+                if (p.mp_dmg_base !== undefined) curStats.push(`MP Cost: ${((p.mp_dmg_base + (Math.max(0, currentLvl - 1) * (p.mp_dmg_lvl || 0)))).toFixed(1)}x`);
+                
+                let statStr = curStats.length > 0 ? `<div style="font-size:11px; color:#4caf50; font-weight:bold; margin-top:4px;">${curStats.join(" | ")}</div>` : "";
+
+                btn.innerHTML = `<div class="action-title"><span>✨ ${skill.name}</span> <span style="color:#1e90ff">${skill.mpCost} MP</span></div><div class="action-desc">${skill.description}</div>${statStr}`;
                 btn.onclick = () => { skill.targetType === "SINGLE_ENEMY" || skill.targetType === "SINGLE_ALLY" ? openTargetMenu(skill.id) : submitAction(skill.id, null); };
                 list.appendChild(btn);
             });
@@ -399,13 +419,28 @@
         function hasChanges() { return (dState.stats.str > 0 || dState.stats.dex > 0 || dState.stats.int > 0) || dState.skills.length > 0 || Object.keys(dState.equipment).length > 0; }
         function resetDraft() { dState = { stats: {str:0, dex:0, int:0}, skills: [], equipment: {} }; updateHubUI(); }
 
-        // HUB UI RENDERER (Includes Rogue Parameter Formatting)
+        // HUB UI RENDERER (Cleanly separated Base vs Bonus stats)
         function updateHubUI() {
             let c = sData.character;
             let xpNeeded = c.level * 100;
             let xpPct = Math.max(0, Math.min(100, (c.xp / xpNeeded) * 100));
             document.getElementById('hub-name').innerText = `${c.name} (Lv.${c.level} ${c.className})`;
-            document.getElementById('hub-level').innerText = `❤️ HP: ${sData.stats.hp}/${sData.stats.max_hp + (sData.bonus?.hp || 0)} | 🔹 MP: ${sData.stats.mp}/${sData.stats.max_mp + (sData.bonus?.mp || 0)}`;
+            
+            // Clean Base vs Bonus Stat breakdown
+            let baseHp = parseInt(sData.stats.max_hp) || 0;
+            let bonusHp = parseInt(sData.bonus?.hp) || 0;
+            let totalHp = baseHp + bonusHp;
+            let hpStr = `${totalHp} <span style="color:#4caf50; font-size:10px;">(${baseHp}+${bonusHp})</span>`;
+
+            let baseMp = parseInt(sData.stats.max_mp) || 0;
+            let bonusMp = parseInt(sData.bonus?.mp) || 0;
+            let totalInt = (parseInt(sData.stats.int) || 0) + (parseInt(sData.bonus?.int) || 0) + (dState.stats.int || 0);
+            let intMpBonus = totalInt * 2;
+            let totalMp = baseMp + bonusMp + intMpBonus;
+            let mpStr = `${totalMp} <span style="color:#1e90ff; font-size:10px;">(${baseMp}+${bonusMp + intMpBonus})</span>`;
+
+            document.getElementById('hub-level').innerHTML = `❤️ HP: ${sData.stats.hp} / ${hpStr} | 🔹 MP: ${sData.stats.mp} / ${mpStr}`;
+            
             document.getElementById('hub-gold').innerText = `💰 Gold: ${c.gold}`;
             document.getElementById('hub-xp-fill').style.width = `${xpPct}%`;
             document.getElementById('hub-xp-text').innerText = `${c.xp} / ${xpNeeded}`;

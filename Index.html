@@ -399,7 +399,7 @@
         function hasChanges() { return (dState.stats.str > 0 || dState.stats.dex > 0 || dState.stats.int > 0) || dState.skills.length > 0 || Object.keys(dState.equipment).length > 0; }
         function resetDraft() { dState = { stats: {str:0, dex:0, int:0}, skills: [], equipment: {} }; updateHubUI(); }
 
-        // HUB UI RENDERER (Includes Rogue Skill Parameter Mapping)
+        // HUB UI RENDERER (Includes Rogue Parameter Formatting)
         function updateHubUI() {
             let c = sData.character;
             let xpNeeded = c.level * 100;
@@ -446,6 +446,10 @@
                 let curStats = [];
                 let nxtStats = [];
                 
+                if (p.charge_base !== undefined) {
+                    curStats.push(`Setup: ${Math.max(0, Math.floor(p.charge_base + (Math.max(0, currentLvl - 1) * (p.charge_lvl || 0))))} Turns`);
+                    if (currentLvl < maxLvl) nxtStats.push(`Setup: ${Math.max(0, Math.floor(p.charge_base + (currentLvl * (p.charge_lvl || 0))))} Turns`);
+                }
                 if (p.hits_base !== undefined) {
                     curStats.push(`Strikes: ${Math.floor(p.hits_base + (Math.max(0, currentLvl - 1) * (p.hits_lvl || 0)))}`);
                     if (currentLvl < maxLvl) nxtStats.push(`Strikes: ${Math.floor(p.hits_base + (currentLvl * (p.hits_lvl || 0)))}`);

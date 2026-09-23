@@ -399,7 +399,7 @@
         function hasChanges() { return (dState.stats.str > 0 || dState.stats.dex > 0 || dState.stats.int > 0) || dState.skills.length > 0 || Object.keys(dState.equipment).length > 0; }
         function resetDraft() { dState = { stats: {str:0, dex:0, int:0}, skills: [], equipment: {} }; updateHubUI(); }
 
-        // HUB UI RENDERER (Including Updated Skill System & JSON Parameters)
+        // HUB UI RENDERER (Including Complete Skill Parameter Display)
         function updateHubUI() {
             let c = sData.character;
             let xpNeeded = c.level * 100;
@@ -425,7 +425,6 @@
                 document.getElementById(`btn-plus-${stat}`).style.visibility = effStatPoints > 0 ? "visible" : "hidden";
             });
 
-            // UPDATED SKILL LEVELING ENGINE UI
             let effSkillPoints = c.skillPoints - dState.skills.length;
             document.getElementById('skill-pts-tracker').innerText = `Available Skill Points: ${effSkillPoints}`;
             const sList = document.getElementById('hub-skill-list');
@@ -443,37 +442,44 @@
                 let prereqMet = !skill.prereq || (prereqBase + prereqDraft > 0);
                 let meetsLevel = c.level >= skill.minLevel;
                 
-                // Parse Dynamic Effect Parameters
+                // Parse Dynamic Effect Parameters and construct full UI strings
                 let p = skill.params || {};
-                let pwrRaw = 0, nextPwrRaw = 0, pwrType = "Power";
+                let curStats = [];
+                let nxtStats = [];
                 
                 if (p.dmg_base !== undefined) {
-                    pwrRaw = (p.dmg_base + (Math.max(0, currentLvl - 1) * (p.dmg_lvl || 0))) * 100;
-                    nextPwrRaw = (p.dmg_base + (currentLvl * (p.dmg_lvl || 0))) * 100;
-                    pwrType = "Damage";
-                } else if (p.heal_base !== undefined) {
-                    pwrRaw = p.heal_base + (Math.max(0, currentLvl - 1) * (p.heal_lvl || 0));
-                    nextPwrRaw = p.heal_base + (currentLvl * (p.heal_lvl || 0));
-                    pwrType = "Heal";
-                } else if (p.chance_base !== undefined) {
-                    pwrRaw = p.chance_base + (Math.max(0, currentLvl - 1) * (p.chance_lvl || 0));
-                    nextPwrRaw = p.chance_base + (currentLvl * (p.chance_lvl || 0));
-                    pwrType = "Chance";
-                } else if (p.stacks_base !== undefined) {
-                    pwrRaw = p.stacks_base + (Math.max(0, currentLvl - 1) * (p.stacks_lvl || 0));
-                    nextPwrRaw = p.stacks_base + (currentLvl * (p.stacks_lvl || 0));
-                    pwrType = "Stacks";
-                } else if (p.dur_base !== undefined) {
-                    pwrRaw = p.dur_base + (Math.max(0, currentLvl - 1) * (p.dur_lvl || 0));
-                    nextPwrRaw = p.dur_base + (currentLvl * (p.dur_lvl || 0));
-                    pwrType = "Duration";
-                } else {
-                    pwrRaw = 100; nextPwrRaw = 100;
+                    curStats.push(`Dmg: ${((p.dmg_base + (Math.max(0, currentLvl - 1) * (p.dmg_lvl || 0))) * 100).toFixed(0)}%`);
+                    if (currentLvl < maxLvl) nxtStats.push(`Dmg: ${((p.dmg_base + (currentLvl * (p.dmg_lvl || 0))) * 100).toFixed(0)}%`);
+                }
+                if (p.heal_base !== undefined) {
+                    curStats.push(`Heal: ${(p.heal_base + (Math.max(0, currentLvl - 1) * (p.heal_lvl || 0))).toFixed(0)} HP`);
+                    if (currentLvl < maxLvl) nxtStats.push(`Heal: ${(p.heal_base + (currentLvl * (p.heal_lvl || 0))).toFixed(0)} HP`);
+                }
+                if (p.chance_base !== undefined) {
+                    curStats.push(`Chance: ${(p.chance_base + (Math.max(0, currentLvl - 1) * (p.chance_lvl || 0))).toFixed(0)}%`);
+                    if (currentLvl < maxLvl) nxtStats.push(`Chance: ${(p.chance_base + (currentLvl * (p.chance_lvl || 0))).toFixed(0)}%`);
+                }
+                if (p.dur_base !== undefined) {
+                    curStats.push(`Dur: ${Math.floor(p.dur_base + (Math.max(0, currentLvl - 1) * (p.dur_lvl || 0)))} Turns`);
+                    if (currentLvl < maxLvl) nxtStats.push(`Dur: ${Math.floor(p.dur_base + (currentLvl * (p.dur_lvl || 0)))} Turns`);
+                }
+                if (p.stacks_base !== undefined) {
+                    curStats.push(`Poison: ${Math.floor(p.stacks_base + (Math.max(0, currentLvl - 1) * (p.stacks_lvl || 0)))} Stacks`);
+                    if (currentLvl < maxLvl) nxtStats.push(`Poison: ${Math.floor(p.stacks_base + (currentLvl * (p.stacks_lvl || 0)))} Stacks`);
                 }
                 
-                let isPct = (pwrType === 'Damage' || pwrType === 'Chance') ? '%' : '';
-                let pwrText = currentLvl > 0 ? `Current ${pwrType}: ${pwrRaw.toFixed(0)}${isPct}` : `Base ${pwrType}: ${pwrRaw.toFixed(0)}${isPct}`;
-                if (currentLvl > 0 && currentLvl < maxLvl) pwrText += ` ➡️ Next: ${nextPwrRaw.toFixed(0)}${isPct}`;
+                if (curStats.length === 0) curStats.push("Power: 100%");
+                
+                let pwrHTML = `<div style="display:flex; flex-direction:column; gap:2px;">`;
+                if (currentLvl > 0) {
+                    pwrHTML += `<span style="color:#4caf50;">Current: ${curStats.join(" | ")}</span>`;
+                    if (currentLvl < maxLvl && nxtStats.length > 0) {
+                        pwrHTML += `<span style="color:#888; font-size:10px;">Next ➡️ ${nxtStats.join(" | ")}</span>`;
+                    }
+                } else {
+                    pwrHTML += `<span style="color:#4caf50;">Base: ${curStats.join(" | ")}</span>`;
+                }
+                pwrHTML += `</div>`;
 
                 let headerHTML = `<div style="font-weight:bold; font-size:15px; color:#fff;">✨ ${skill.name} <span style="color:#a0a0a0; font-size:11px; font-weight:normal;">Lv.${currentLvl}/${maxLvl}</span></div>`;
                 let btnControls = "";
@@ -500,9 +506,9 @@
                         <div style="display:flex; align-items:center;">${btnControls}</div>
                     </div>
                     <div class="action-desc" style="margin-bottom:8px;">${skill.desc}</div>
-                    <div style="display:flex; justify-content:space-between; font-size:11px; font-weight:bold;">
-                        <span style="color:#4caf50;">${pwrText}</span>
-                        <span style="color:#1e90ff;">🔹 ${skill.mpCost} MP</span>
+                    <div style="display:flex; justify-content:space-between; font-size:11px; font-weight:bold; align-items:flex-end;">
+                        ${pwrHTML}
+                        <span style="color:#1e90ff; min-width:45px; text-align:right;">🔹 ${skill.mpCost} MP</span>
                     </div>
                 `;
                 sList.appendChild(btn);

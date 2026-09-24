@@ -237,9 +237,11 @@
             .then(response => {
                 document.getElementById('loading').style.display = 'none';
                 
+                // --- COMBAT EXPLOIT LOCK ---
                 if (response.mode === "error") {
                     document.getElementById('loading').style.display = 'block';
-                    document.getElementById('loading').innerHTML = `<span style="color:var(--danger-color); font-weight:bold;">⚠️ Backend Error</span><br><br>${response.message}`;
+                    document.getElementById('loading').innerHTML = `<span style="color:var(--danger-color); font-weight:bold;">⚠️ Backend Error</span><br><br>${response.message}<br><br><button class='btn-primary' style='padding: 10px 20px;' onclick='tg.close()'>Close App</button>`;
+                    if (response.close) setTimeout(() => tg.close(), 3000);
                     return;
                 }
                 
@@ -294,7 +296,11 @@
 
         function refreshShop() {
             fetch(BACKEND_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "get_app_state", initData: tg.initData, userId: String(userId), startParam: "shop" }) })
-            .then(res => res.json()).then(response => { document.getElementById('loading').style.display = 'none'; if (response.mode === "shop") { document.getElementById('shop-ui').style.display = 'block'; renderShop(response.data.character, response.data.shopItems, response.data.inventory); } })
+            .then(res => res.json()).then(response => { 
+                document.getElementById('loading').style.display = 'none'; 
+                if (response.close) return tg.showAlert(response.message, () => tg.close());
+                if (response.mode === "shop") { document.getElementById('shop-ui').style.display = 'block'; renderShop(response.data.character, response.data.shopItems, response.data.inventory); } 
+            })
             .catch(() => { document.getElementById('loading').style.display = 'none'; document.getElementById('shop-ui').style.display = 'block'; });
         }
 
@@ -310,8 +316,9 @@
             else { inventory.forEach(item => { const div = document.createElement('div'); div.className = 'inv-item'; div.innerHTML = `<div class="inv-details" style="flex:1; padding-right:10px;"><div class="action-title" style="margin:0; font-size:14px;">${item.name} <span style="font-size:12px; color:#888;">x${item.qty}</span></div><div class="action-desc" style="margin-bottom:4px; font-size:11px; color:#a0a0a0; line-height:1.2;">${item.description || item.desc || ""}</div><div class="inv-stats" style="color:var(--accent-color);">💰 Sells for: ${item.sellPrice} Gold</div></div><button class="btn-primary" onclick="sellItem('${item.id}', ${item.sellPrice})">Sell</button>`; sellList.appendChild(div); }); }
         }
 
-        function buyItem(itemId, price) { tg.HapticFeedback.impactOccurred('medium'); document.getElementById('loading').style.display = 'block'; document.getElementById('shop-ui').style.display = 'none'; fetch(BACKEND_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "buy_item", userId: String(userId), itemId: itemId, price: price }) }).then(res => res.json()).then(data => { if (!data.success) alert(data.message || "Purchase failed!"); refreshShop(); }).catch(err => { alert("Network error: " + err.message); refreshShop(); }); }
-        function sellItem(itemId, price) { tg.HapticFeedback.impactOccurred('medium'); document.getElementById('loading').style.display = 'block'; document.getElementById('shop-ui').style.display = 'none'; fetch(BACKEND_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "sell_item", userId: String(userId), itemId: itemId, price: price }) }).then(res => res.json()).then(data => { if (!data.success) alert(data.message || "Sale failed!"); refreshShop(); }).catch(err => { alert("Network error: " + err.message); refreshShop(); }); }
+        // Action Buttons with specific Exploit Interceptors
+        function buyItem(itemId, price) { tg.HapticFeedback.impactOccurred('medium'); document.getElementById('loading').style.display = 'block'; document.getElementById('shop-ui').style.display = 'none'; fetch(BACKEND_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "buy_item", userId: String(userId), itemId: itemId, price: price }) }).then(res => res.json()).then(data => { if (data.close) return tg.showAlert(data.message, () => tg.close()); if (!data.success) alert(data.message || "Purchase failed!"); refreshShop(); }).catch(err => { alert("Network error: " + err.message); refreshShop(); }); }
+        function sellItem(itemId, price) { tg.HapticFeedback.impactOccurred('medium'); document.getElementById('loading').style.display = 'block'; document.getElementById('shop-ui').style.display = 'none'; fetch(BACKEND_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "sell_item", userId: String(userId), itemId: itemId, price: price }) }).then(res => res.json()).then(data => { if (data.close) return tg.showAlert(data.message, () => tg.close()); if (!data.success) alert(data.message || "Sale failed!"); refreshShop(); }).catch(err => { alert("Network error: " + err.message); refreshShop(); }); }
 
         function switchCombatTab(tabId) {
             document.getElementById('tab-act-btn').className = tabId === 'action' ? 'tab-btn active' : 'tab-btn'; document.getElementById('tab-itm-btn').className = tabId === 'item' ? 'tab-btn active' : 'tab-btn';
@@ -329,7 +336,6 @@
                 const btn = document.createElement('div'); btn.className = 'action-btn';
                 if (char.mp < skill.mpCost) { btn.style.opacity = "0.5"; btn.style.pointerEvents = "none"; }
                 
-                // MAP ACTIVE PARAMETERS FOR THE COMBAT MENU
                 let p = skill.params || {};
                 let currentLvl = skill.level || 1;
                 let curStats = [];
@@ -389,7 +395,9 @@
                     battleId: combatCharRef.battleId 
                 }) 
             })
-            .then(() => {
+            .then(res => res.json())
+            .then((data) => {
+                if (data.close) return tg.showAlert(data.message, () => tg.close());
                 tg.close();
             })
             .catch(err => {
@@ -411,7 +419,7 @@
             tg.HapticFeedback.impactOccurred('medium'); 
             document.getElementById('loading').innerHTML = `📡 Consuming item...`; 
             document.getElementById('loading').style.display = 'block'; 
-            fetch(BACKEND_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "consume_item", userId: String(userId), itemId: itemId }) }).then(() => location.reload()); 
+            fetch(BACKEND_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "consume_item", userId: String(userId), itemId: itemId }) }).then(res => res.json()).then(data => { if (data.close) return tg.showAlert(data.message, () => tg.close()); location.reload()}); 
         }
 
         function switchTab(tabId) { document.getElementById('tab-profile-btn').className = tabId === 'profile' ? 'tab-btn active' : 'tab-btn'; document.getElementById('tab-inventory-btn').className = tabId === 'inventory' ? 'tab-btn active' : 'tab-btn'; document.getElementById('hub-profile').style.display = tabId === 'profile' ? 'block' : 'none'; document.getElementById('hub-inventory').style.display = tabId === 'inventory' ? 'block' : 'none'; }
@@ -419,14 +427,12 @@
         function hasChanges() { return (dState.stats.str > 0 || dState.stats.dex > 0 || dState.stats.int > 0) || dState.skills.length > 0 || Object.keys(dState.equipment).length > 0; }
         function resetDraft() { dState = { stats: {str:0, dex:0, int:0}, skills: [], equipment: {} }; updateHubUI(); }
 
-        // HUB UI RENDERER (Cleanly separated Base vs Bonus stats)
         function updateHubUI() {
             let c = sData.character;
             let xpNeeded = c.level * 100;
             let xpPct = Math.max(0, Math.min(100, (c.xp / xpNeeded) * 100));
             document.getElementById('hub-name').innerText = `${c.name} (Lv.${c.level} ${c.className})`;
             
-            // Clean Base vs Bonus Stat breakdown
             let baseHp = parseInt(sData.stats.max_hp) || 0;
             let bonusHp = parseInt(sData.bonus?.hp) || 0;
             let totalHp = baseHp + bonusHp;
@@ -520,6 +526,10 @@
                 if (p.ac_base !== undefined) {
                     curStats.push(`-AC: ${Math.floor(p.ac_base + (Math.max(0, currentLvl - 1) * (p.ac_lvl || 0)))}`);
                     if (currentLvl < maxLvl) nxtStats.push(`-AC: ${Math.floor(p.ac_base + (currentLvl * (p.ac_lvl || 0)))}`);
+                }
+                if (p.ac_buff_base !== undefined) {
+                    curStats.push(`+AC: ${Math.floor(p.ac_buff_base + (Math.max(0, currentLvl - 1) * (p.ac_buff_lvl || 0)))}`);
+                    if (currentLvl < maxLvl) nxtStats.push(`+AC: ${Math.floor(p.ac_buff_base + (currentLvl * (p.ac_buff_lvl || 0)))}`);
                 }
                 if (p.mp_dmg_base !== undefined) {
                     curStats.push(`MP Cost: ${((p.mp_dmg_base + (Math.max(0, currentLvl - 1) * (p.mp_dmg_lvl || 0)))).toFixed(1)}x`);
@@ -658,7 +668,7 @@
 
         function saveBatch() {
             tg.HapticFeedback.impactOccurred('heavy'); document.getElementById('loading').innerHTML = `📡 Locking in your choices...`; document.getElementById('loading').style.display = 'block'; document.getElementById('hub-ui').style.display = 'none'; document.getElementById('save-bar').style.display = 'none';
-            fetch(BACKEND_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "save_character_batch", userId: String(userId), updates: dState }) }).then(() => location.reload()).catch((e) => { document.getElementById('loading').innerHTML = `<span style="color:var(--danger-color); font-weight:bold;">⚠️ Save Failed</span><br><br>${e.message}`; });
+            fetch(BACKEND_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "save_character_batch", userId: String(userId), updates: dState }) }).then(res => res.json()).then(data => { if (data.close) return tg.showAlert(data.message, () => tg.close()); location.reload()}).catch((e) => { document.getElementById('loading').innerHTML = `<span style="color:var(--danger-color); font-weight:bold;">⚠️ Save Failed</span><br><br>${e.message}`; });
         }
 
         function renderRoster(roster) {
@@ -674,8 +684,8 @@
         }
 
         function showCreation() { document.getElementById('roster-ui').style.display = 'none'; document.getElementById('creation-ui').style.display = 'block'; }
-        function switchChar(charId) { tg.HapticFeedback.impactOccurred('medium'); fetch(BACKEND_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "switch_character", userId: String(userId), charId: charId }) }).then(() => location.reload()); }
-        function deleteChar(charId, charName) { if (!confirm(`Are you absolutely sure you want to delete ${charName}? This cannot be undone.`)) return; tg.HapticFeedback.impactOccurred('heavy'); fetch(BACKEND_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "delete_character", userId: String(userId), charId: charId }) }).then(() => location.reload()); }
+        function switchChar(charId) { tg.HapticFeedback.impactOccurred('medium'); fetch(BACKEND_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "switch_character", userId: String(userId), charId: charId }) }).then(res => res.json()).then(data => { if (data.close) return tg.showAlert(data.message, () => tg.close()); location.reload()}); }
+        function deleteChar(charId, charName) { if (!confirm(`Are you absolutely sure you want to delete ${charName}? This cannot be undone.`)) return; tg.HapticFeedback.impactOccurred('heavy'); fetch(BACKEND_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "delete_character", userId: String(userId), charId: charId }) }).then(res => res.json()).then(data => { if (data.close) return tg.showAlert(data.message, () => tg.close()); location.reload()}); }
 
         let selectedClass = "";
         function selectClass(cls) { selectedClass = cls; document.querySelectorAll('#creation-ui .action-btn').forEach(btn => btn.style.borderColor = '#333'); document.getElementById(`class-${cls}`).style.borderColor = 'var(--accent-color)'; }
@@ -683,7 +693,7 @@
             const name = document.getElementById('char-name').value.trim();
             if (!name || !selectedClass) return tg.showAlert("Please enter a name and select a class.");
             tg.HapticFeedback.impactOccurred('heavy'); document.getElementById('loading').style.display = 'block'; document.getElementById('creation-ui').style.display = 'none';
-            fetch(BACKEND_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "create_character", userId: String(userId), name: name, charClass: selectedClass }) }).then(res => res.json()).then(data => { if (data.success) { tg.close(); } else { document.getElementById('loading').style.display = 'none'; document.getElementById('creation-ui').style.display = 'block'; tg.showAlert(data.message); } }).catch(e => { document.getElementById('loading').innerHTML = `<span style="color:var(--danger-color); font-weight:bold;">⚠️ Creation Failed</span><br><br>${e.message}`; });
+            fetch(BACKEND_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "create_character", userId: String(userId), name: name, charClass: selectedClass }) }).then(res => res.json()).then(data => { if (data.close) return tg.showAlert(data.message, () => tg.close()); if (data.success) { tg.close(); } else { document.getElementById('loading').style.display = 'none'; document.getElementById('creation-ui').style.display = 'block'; tg.showAlert(data.message); } }).catch(e => { document.getElementById('loading').innerHTML = `<span style="color:var(--danger-color); font-weight:bold;">⚠️ Creation Failed</span><br><br>${e.message}`; });
         }
     </script>
 </body>

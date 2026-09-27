@@ -155,12 +155,20 @@
                     <button class="stat-btn" id="btn-plus-dex" onclick="changeStat('dex', 1)">+</button>
                 </div>
             </div>
-            <div class="stat-row" style="margin-bottom: 24px;">
+            <div class="stat-row">
                 <div>🧠 Intelligence</div>
                 <div class="stat-controls">
                     <button class="stat-btn" id="btn-minus-int" onclick="changeStat('int', -1)">-</button>
                     <span id="stat-val-int" style="min-width:30px; text-align:center; font-weight:bold;"></span>
                     <button class="stat-btn" id="btn-plus-int" onclick="changeStat('int', 1)">+</button>
+                </div>
+            </div>
+            <div class="stat-row" style="margin-bottom: 24px;">
+                <div>❤️ Vitality</div>
+                <div class="stat-controls">
+                    <button class="stat-btn" id="btn-minus-vit" onclick="changeStat('vit', -1)">-</button>
+                    <span id="stat-val-vit" style="min-width:30px; text-align:center; font-weight:bold;"></span>
+                    <button class="stat-btn" id="btn-plus-vit" onclick="changeStat('vit', 1)">+</button>
                 </div>
             </div>
 
@@ -223,7 +231,7 @@
 
         let sData = null; 
         let localItemDB = {}; 
-        let dState = { stats: {str:0, dex:0, int:0}, skills: [], equipment: {} }; 
+        let dState = { stats: {str:0, dex:0, int:0, vit:0}, skills: [], equipment: {} }; 
         let combatCharRef = null;
         let currentInvTab = 'cons';
 
@@ -284,6 +292,7 @@
             if (statsObj.str) s.push(`+${statsObj.str} STR`);
             if (statsObj.dex) s.push(`+${statsObj.dex} DEX`);
             if (statsObj.int) s.push(`+${statsObj.int} INT`);
+            if (statsObj.vit) s.push(`+${statsObj.vit} VIT`);
             return s.join(" | ");
         }
 
@@ -426,8 +435,8 @@
 
         function switchTab(tabId) { document.getElementById('tab-profile-btn').className = tabId === 'profile' ? 'tab-btn active' : 'tab-btn'; document.getElementById('tab-inventory-btn').className = tabId === 'inventory' ? 'tab-btn active' : 'tab-btn'; document.getElementById('hub-profile').style.display = tabId === 'profile' ? 'block' : 'none'; document.getElementById('hub-inventory').style.display = tabId === 'inventory' ? 'block' : 'none'; }
         function setInvTab(tabId) { currentInvTab = tabId; updateHubUI(); }
-        function hasChanges() { return (dState.stats.str > 0 || dState.stats.dex > 0 || dState.stats.int > 0) || dState.skills.length > 0 || Object.keys(dState.equipment).length > 0; }
-        function resetDraft() { dState = { stats: {str:0, dex:0, int:0}, skills: [], equipment: {} }; updateHubUI(); }
+        function hasChanges() { return (dState.stats.str > 0 || dState.stats.dex > 0 || dState.stats.int > 0 || dState.stats.vit > 0) || dState.skills.length > 0 || Object.keys(dState.equipment).length > 0; }
+        function resetDraft() { dState = { stats: {str:0, dex:0, int:0, vit:0}, skills: [], equipment: {} }; updateHubUI(); }
 
         function updateHubUI() {
             let c = sData.character;
@@ -451,10 +460,10 @@
             document.getElementById('hub-xp-fill').style.width = `${xpPct}%`;
             document.getElementById('hub-xp-text').innerText = `${c.xp} / ${xpNeeded}`;
 
-            let effStatPoints = c.statPoints - (dState.stats.str + dState.stats.dex + dState.stats.int);
+            let effStatPoints = c.statPoints - (dState.stats.str + dState.stats.dex + dState.stats.int + dState.stats.vit);
             document.getElementById('stat-pts-tracker').innerText = `Unallocated Stat Points: ${effStatPoints}`;
             
-            ['str', 'dex', 'int'].forEach(stat => {
+            ['str', 'dex', 'int', 'vit'].forEach(stat => {
                 let base = sData.stats[stat] !== undefined ? parseInt(sData.stats[stat]) : 0;
                 let added = dState.stats[stat] || 0;
                 let bonus = sData.bonus ? parseInt(sData.bonus[stat] || 0) : 0;

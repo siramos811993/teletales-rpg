@@ -226,6 +226,7 @@
         const BACKEND_URL = "https://teletales-backend.sir-amos81.workers.dev"; 
         
         let globalMonsters = []; 
+        let globalParty = [];
         let userId = tg.initDataUnsafe?.user?.id || "123456789";
         const startParam = tg.initDataUnsafe?.start_param || "";
 
@@ -265,6 +266,7 @@
                 } else if (response.mode === "combat") {
                     document.getElementById('combat-ui').style.display = 'block';
                     globalMonsters = response.data.monsters;
+                    globalParty = response.data.party || [];
                     combatCharRef = response.data.character;
                     renderCombatHeader(response.data.character);
                     renderActions(response.data.skills, response.data.consumables, response.data.character);
@@ -479,7 +481,7 @@ let currentShopGold = 0;
                 let statStr = curStats.length > 0 ? `<div style="font-size:11px; color:#4caf50; font-weight:bold; margin-top:6px; background:#111; padding:4px; border-radius:4px;">${curStats.join(" • ")}</div>` : "";
 
                 btn.innerHTML = `<div class="action-title"><span>✨ ${skill.name}</span> <span style="color:#1e90ff">${skill.mpCost} MP</span></div><div class="action-desc">${skill.description}</div>${statStr}`;
-                btn.onclick = () => { skill.targetType === "SINGLE_ENEMY" || skill.targetType === "SINGLE_ALLY" ? openTargetMenu(skill.id) : submitAction(skill.id, null); };
+                btn.onclick = () => { skill.targetType === "SINGLE_ENEMY" || skill.targetType === "SINGLE_ALLY" ? openTargetMenu(skill.id, skill.targetType) : submitAction(skill.id, null); };
                 list.appendChild(btn);
             });
 
@@ -488,15 +490,27 @@ let currentShopGold = 0;
             else { consumables.forEach(item => { const btn = document.createElement('div'); btn.className = 'action-btn'; btn.innerHTML = `<div class="action-title"><span>🧪 ${item.name}</span> <span style="color:#e2b714">x${item.qty}</span></div><div class="action-desc">${item.desc}</div>`; btn.onclick = () => submitAction('item_' + item.id, null); iList.appendChild(btn); }); }
         }
 
-        function openTargetMenu(skillId) {
+            function openTargetMenu(skillId, targetType) {
             document.getElementById('skill-menu').style.display = 'none'; document.getElementById('item-menu').style.display = 'none'; document.getElementById('target-menu').style.display = 'block';
             const tList = document.getElementById('target-list'); tList.innerHTML = "";
-            globalMonsters.forEach(m => {
-                const btn = document.createElement('div'); btn.className = 'action-btn';
-                const hpPct = Math.max(0, Math.min(100, (m.hp / m.maxHp) * 100));
-                btn.innerHTML = `<div class="action-title"><span>👹 ${m.name}</span></div><div class="bar-container" style="margin-top: 6px;"><div class="hp-fill" style="width: ${hpPct}%;"></div></div><div class="stat-labels"><span>HP: ${m.hp} / ${m.maxHp}</span></div>`;
-                btn.onclick = () => submitAction(skillId, m.id); tList.appendChild(btn);
-            });
+            
+            if (targetType === "SINGLE_ALLY") {
+                document.querySelector('#target-menu h2').innerText = "👥 Select Ally";
+                globalParty.forEach(m => {
+                    const btn = document.createElement('div'); btn.className = 'action-btn';
+                    const hpPct = Math.max(0, Math.min(100, (m.hp / m.maxHp) * 100));
+                    btn.innerHTML = `<div class="action-title"><span>👤 ${m.name}</span></div><div class="bar-container" style="margin-top: 6px;"><div class="hp-fill" style="background:#4caf50; width: ${hpPct}%;"></div></div><div class="stat-labels"><span>HP: ${m.hp} / ${m.maxHp}</span></div>`;
+                    btn.onclick = () => submitAction(skillId, m.userId); tList.appendChild(btn);
+                });
+            } else {
+                document.querySelector('#target-menu h2').innerText = "🎯 Select Target";
+                globalMonsters.forEach(m => {
+                    const btn = document.createElement('div'); btn.className = 'action-btn';
+                    const hpPct = Math.max(0, Math.min(100, (m.hp / m.maxHp) * 100));
+                    btn.innerHTML = `<div class="action-title"><span>👹 ${m.name}</span></div><div class="bar-container" style="margin-top: 6px;"><div class="hp-fill" style="width: ${hpPct}%;"></div></div><div class="stat-labels"><span>HP: ${m.hp} / ${m.maxHp}</span></div>`;
+                    btn.onclick = () => submitAction(skillId, m.id); tList.appendChild(btn);
+                });
+            }
         }
 
         function backToSkills() { document.getElementById('target-menu').style.display = 'none'; document.getElementById('skill-menu').style.display = 'block'; document.getElementById('tab-act-btn').className = 'tab-btn active'; document.getElementById('tab-itm-btn').className = 'tab-btn'; }
